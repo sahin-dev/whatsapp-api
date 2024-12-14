@@ -1,0 +1,68 @@
+import { Request, Response } from "express";
+import catchAsync from "../../../shared/catchAsync";
+import { messageService } from "./message.service";
+import sendResponse from "../../../shared/sendResponse";
+import { channelClients } from "../../../server";
+import prisma from "../../../shared/prisma";
+const createMessage = catchAsync(async (req: Request, res: Response) => {
+  const chanelId = req.params.chanelId;
+  await messageService.createMessageInDB(req);
+
+  // Send the single message only to clients connected to the specific channel
+  // const result = await messageService.createMessageInDB(req);
+
+  //send all the messages only to clients connected to the specific channel
+  const results = await prisma.message.findMany({
+    where: { channelId: chanelId },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          avatar: true,
+          email: true,
+          role: true,
+          status: true,
+        },
+      },
+    },
+  });
+
+  const messagePayload = {
+    type: "message",
+    channelId: chanelId,
+    message: results,
+  };
+
+  // Send the message only to clients connected to the specific channel
+  const channelClient = channelClients.get(chanelId) || [];
+  channelClient.forEach((client: any) => {
+    if (client.readyState === 1) {
+      client.send(JSON.stringify(messagePayload));
+    }
+  });
+
+  sendResponse(res, {
+    statusCode: 201,
+    success: true,
+    message: "Message created successfully",
+    data: results,
+  });
+});
+
+const getSingleMessage = catchAsync(async (req: Request, res: Response) => {
+  const messageId = req.params.messageId;
+  const message = await messageService.getSingleMessageFromDB(messageId);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "message retrived successfully",
+    data: message,
+  });
+});
+
+export const messageController = {
+  createMessage,
+  getSingleMessage,
+};
