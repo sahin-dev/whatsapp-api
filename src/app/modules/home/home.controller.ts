@@ -16,7 +16,7 @@ const createHomeContent = catchAsync(async (req: Request, res: Response) => {
 
 const getHomeContent = catchAsync(async (req: Request, res: Response) => {
   const contentId = req.params.id;
-  const homeContent = await homeContentServices.getHomeContentFromDB(contentId);
+  const homeContent = await homeContentServices.getHomeContentFromDB();
 
   sendResponse(res, {
     statusCode: 200,
