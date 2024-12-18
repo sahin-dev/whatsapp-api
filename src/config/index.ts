@@ -29,4 +29,7 @@ export default {
     sslPaymentApi: process.env.SSL_PAYMENT_API,
     sslValidationApi: process.env.SSL_VALIDATIOIN_API,
   },
+  stripe: {
+    stripe_secret_key: process.env.STRIPE_SK,
+  },
 };

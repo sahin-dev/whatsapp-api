@@ -5,6 +5,8 @@ import router from "./app/routes";
 import GlobalErrorHandler from "./app/middlewares/globalErrorHandler";
 import { PrismaClient } from "@prisma/client";
 import path from "path";
+import { auth,requiresAuth  } from "express-openid-connect";
+import { authZeroConfig } from "./config/autZero";
 
 const app: Application = express();
 const prisma = new PrismaClient();
@@ -19,16 +21,26 @@ prisma
     console.error("Failed to connect to the database:", error);
   });
 
+app.use(auth(authZeroConfig));
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 // Route handler for root endpoint
-app.get("/", (req: Request, res: Response) => {
-  res.send({
-    Message: "Welcome to api main route",
-  });
+// app.get("/", (req: Request, res: Response) => {
+//   res.send({
+//     Message: "Welcome to api main route",
+//   });
+// });
+
+app.get("/", (req, res) => {
+  res.send(req.oidc.isAuthenticated() ? "Logged in" : "Logged out");
+});
+
+app.get("/profile", requiresAuth(), (req, res) => {
+  res.send(JSON.stringify(req.oidc.user));
 });
 
 // Router setup

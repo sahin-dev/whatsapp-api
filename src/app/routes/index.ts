@@ -7,6 +7,7 @@ import { messageRoute } from "../modules/message/message.routes";
 import { notificationsRoute } from "../modules/notifications/notification.route";
 import { homeContentRoute } from "../modules/home/home.routes";
 import { sessionRoute } from "../modules/session/session.route";
+import { paymentRoute } from "../modules/payment/payment.routes";
 
 const router = express.Router();
 
@@ -43,6 +44,10 @@ const moduleRoutes = [
   {
     path: "/session",
     route: sessionRoute,
+  },
+  {
+    path: "/payment",
+    route: paymentRoute,
   },
 ];
 
