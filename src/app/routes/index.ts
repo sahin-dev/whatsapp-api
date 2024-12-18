@@ -8,6 +8,7 @@ import { notificationsRoute } from "../modules/notifications/notification.route"
 import { homeContentRoute } from "../modules/home/home.routes";
 import { sessionRoute } from "../modules/session/session.route";
 import { paymentRoute } from "../modules/payment/payment.routes";
+import { authZeroRoutes } from "../modules/auth-zero/auth-zero.routes";
 
 const router = express.Router();
 
@@ -48,6 +49,10 @@ const moduleRoutes = [
   {
     path: "/payment",
     route: paymentRoute,
+  },
+  {
+    path: "/auth-zero",
+    route: authZeroRoutes,
   },
 ];
 

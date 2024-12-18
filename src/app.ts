@@ -5,7 +5,7 @@ import router from "./app/routes";
 import GlobalErrorHandler from "./app/middlewares/globalErrorHandler";
 import { PrismaClient } from "@prisma/client";
 import path from "path";
-import { auth,requiresAuth  } from "express-openid-connect";
+import { auth, requiresAuth } from "express-openid-connect";
 import { authZeroConfig } from "./config/autZero";
 
 const app: Application = express();
@@ -29,14 +29,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 // Route handler for root endpoint
-// app.get("/", (req: Request, res: Response) => {
-//   res.send({
-//     Message: "Welcome to api main route",
-//   });
-// });
-
-app.get("/", (req, res) => {
-  res.send(req.oidc.isAuthenticated() ? "Logged in" : "Logged out");
+app.get("/", (req: Request, res: Response) => {
+  res.send({
+    Message: "Welcome to api main route",
+  });
 });
 
 app.get("/profile", requiresAuth(), (req, res) => {
