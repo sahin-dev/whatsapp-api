@@ -1,3 +1,4 @@
+import { Request } from "express";
 import admin from "../../../helpers/firebaseAdmin";
 import prisma from "../../../shared/prisma";
 import ApiError from "../../errors/ApiErrors";
@@ -107,6 +108,76 @@ const sendNotifications = async (req: any) => {
   };
 };
 
+const sendChannelNofitications = async (req: Request) => {
+  const channelId = req.params.channelId;
+  const channel = await prisma.chanel.findUnique({
+    where: { id: channelId },
+    select: { memberIds: true },
+  });
+
+  if (!channel) {
+    throw new ApiError(404, "Channel not found");
+  }
+
+  const channelInfo = await prisma.chanel.findUnique({
+    where: { id: channelId },
+  });
+
+  const members = await prisma.user.findMany({
+    where: {
+      id: { in: channel.memberIds },
+    },
+  });
+
+  const fcmTokens = members.map((user) => user.fcmToken);
+
+  const message = {
+    notification: {
+      title: `get notification in ${channelInfo?.chanelName}`,
+      body: req.body.body,
+    },
+    tokens: fcmTokens,
+  };
+
+  const response = await admin.messaging().sendEachForMulticast(message as any);
+
+  // Find indices of successful responses
+  const successIndices = response.responses
+    .map((res, idx) => (res.success ? idx : null))
+    .filter((idx) => idx !== null) as number[];
+
+  // Filter users by success indices
+  const successfulUsers = successIndices.map((idx) => members[idx]);
+
+  if (successfulUsers.length === 0) {
+    throw new ApiError(500, "Failed to send notifications to some users");
+  }
+
+  // Prepare notifications data for only successfully notified users
+  const notificationData = successfulUsers.map((user) => ({
+    receiverId: user?.id,
+    channelId: channelId,
+    title: req.body.title,
+    body: req.body.body,
+  }));
+
+  // Save notifications for successfully notified users
+  await prisma.notifications.createMany({
+    data: notificationData,
+  });
+
+  // Collect failed tokens
+  const failedTokens = response.responses
+    .map((res, idx) => (!res.success ? fcmTokens[idx] : null))
+    .filter((token) => token !== null);
+
+  return {
+    successCount: response.successCount,
+    failureCount: response.failureCount,
+    failedTokens,
+  };
+};
+
 const getNotificationsFromDB = async (req: any) => {
   const notifications = await prisma.notifications.findMany({
     where: {
@@ -150,4 +221,5 @@ export const notificationServices = {
   sendNotifications,
   getNotificationsFromDB,
   getSingleNotificationFromDB,
+  sendChannelNofitications,
 };

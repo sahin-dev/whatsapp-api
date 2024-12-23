@@ -1,3 +1,4 @@
+import { Request, Response } from "express";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import { notificationServices } from "./notification.services";
@@ -50,9 +51,23 @@ const getSingleNotificationById = catchAsync(async (req: any, res: any) => {
   });
 });
 
+const sendChannelNotification = catchAsync(
+  async (req: Request, res: Response) => {
+    const members = await notificationServices.sendChannelNofitications(req);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: 200,
+      message: "Channel members retrieved successfully",
+      data: members,
+    });
+  }
+);
+
 export const notificationController = {
   sendNotification,
   sendNotifications,
   getNotifications,
   getSingleNotificationById,
+  sendChannelNotification,
 };
