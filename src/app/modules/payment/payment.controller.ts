@@ -16,6 +16,34 @@ const stripePortalSession = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const createSubcription = catchAsync(async (req: any, res: Response) => {
+  const userId = req.user.id;
+
+  const result = await paymentSevices.createSubcriptionInStripe(
+    userId,
+    req.body
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Payment successfull",
+    data: result,
+  });
+});
+
+const cancelSubcription = catchAsync(async (req: any, res: Response) => {
+  const subscriptionId = req.body.subscriptionId;
+
+  await paymentSevices.cancelSubscriptionInStripe(subscriptionId);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "cancel subscription successfully",
+  });
+});
+
 const loginWithAuthZero = catchAsync(async (req: Request, res: Response) => {
   const userEmail = req.body.userEmail;
 
@@ -41,6 +69,8 @@ const handelPaymentWebhook = catchAsync(async (req: Request, res: Response) => {
 
 export const paymentControllers = {
   stripePortalSession,
+  createSubcription,
   loginWithAuthZero,
   handelPaymentWebhook,
+  cancelSubcription,
 };
