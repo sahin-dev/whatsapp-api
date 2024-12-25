@@ -157,7 +157,7 @@ const sendChannelNofitications = async (req: Request) => {
   const notificationData = successfulUsers.map((user) => ({
     receiverId: user?.id,
     channelId: channelId,
-    title: req.body.title,
+    title: `get notification in ${channelInfo?.chanelName}`,
     body: req.body.body,
   }));
 
@@ -184,6 +184,15 @@ const getNotificationsFromDB = async (req: any) => {
       receiverId: req.user.id,
     },
     orderBy: { createdAt: "desc" },
+    include: {
+      channel: {
+        select: {
+          chanelImage: true,
+          description: true,
+          chanelName: true,
+        },
+      },
+    },
   });
 
   if (notifications.length === 0) {

@@ -20,6 +20,7 @@ const uploadChanelImage = upload.single("chanelImage");
 const sendFiles = upload.fields([
   // { name: "companyLogo", maxCount: 1 }, // Single file for company logo
   { name: "sendFiles", maxCount: 10 }, // Multiple files for company images
+  { name: "messageFiles", maxCount: 10 },
 ]);
 
 export const fileUploader = {
