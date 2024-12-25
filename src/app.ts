@@ -7,6 +7,7 @@ import { PrismaClient } from "@prisma/client";
 import path from "path";
 import { auth, requiresAuth } from "express-openid-connect";
 import { authZeroConfig } from "./config/autZero";
+import { paymentControllers } from "./app/modules/payment/payment.controller";
 
 const app: Application = express();
 const prisma = new PrismaClient();
@@ -21,8 +22,13 @@ prisma
     console.error("Failed to connect to the database:", error);
   });
 
-app.use(auth(authZeroConfig));
+app.use(
+  "/webhook",
+  express.raw({ type: "application/json" }),
+  paymentControllers.handelPaymentWebhook
+);
 
+app.use(auth(authZeroConfig));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
