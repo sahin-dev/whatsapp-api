@@ -19,11 +19,15 @@ const stripePortalSessionInStripe = async (customerId: string) => {
   return session.url;
 };
 
-const createSubcriptionInStripe = async (userId: string, payload: any) => {
-  const { paymentMethodId, priceId } = payload;
+const createSubcriptionInStripe = async (payload: {
+  email: string;
+  paymentMethodId: string;
+  priceId: string;
+}) => {
+  const { email, paymentMethodId, priceId } = payload;
 
   const userInfo = await prisma.user.findUnique({
-    where: { id: userId },
+    where: { email: email },
   });
 
   if (!userInfo) {
@@ -38,7 +42,7 @@ const createSubcriptionInStripe = async (userId: string, payload: any) => {
 
   if (!customerId) {
     const customer = await stripe.customers.create({
-      email: userInfo.email,
+      email: email,
     });
     customerId = customer.id;
     await prisma.user.update({

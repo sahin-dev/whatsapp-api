@@ -17,10 +17,8 @@ const stripePortalSession = catchAsync(async (req: Request, res: Response) => {
 });
 
 const createSubcription = catchAsync(async (req: any, res: Response) => {
-  const userId = req.user.id;
 
   const result = await paymentSevices.createSubcriptionInStripe(
-    userId,
     req.body
   );
 
