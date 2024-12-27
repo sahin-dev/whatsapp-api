@@ -40,11 +40,6 @@ const loginUserIntoDB = async (payload: any) => {
 
     const { password, status, createdAt, updatedAt, ...others } = createUser;
     userInfo = others;
-
-    // return {
-    //   accessToken,
-    //   userInfo,
-    // };
   } else {
     const isPasswordValid = await bcrypt.compare(
       payload.password,

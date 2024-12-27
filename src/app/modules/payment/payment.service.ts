@@ -31,14 +31,20 @@ const createSubcriptionInStripe = async (payload: {
   });
 
   if (!userInfo) {
-    throw new ApiError(404, "User not found");
+    await prisma.user.create({
+      data: {
+        email: email,
+        username: email,
+        password: "",
+      },
+    });
   }
 
-  if (userInfo.priceId === priceId) {
+  if (userInfo?.priceId === priceId) {
     throw new ApiError(409, "You already have subscription this plan");
   }
 
-  let customerId = userInfo.customerId;
+  let customerId = userInfo?.customerId;
 
   if (!customerId) {
     const customer = await stripe.customers.create({
@@ -46,7 +52,7 @@ const createSubcriptionInStripe = async (payload: {
     });
     customerId = customer.id;
     await prisma.user.update({
-      where: { id: userInfo.id },
+      where: { id: userInfo?.id },
       data: { customerId: customer.id },
     });
   }
@@ -71,7 +77,7 @@ const createSubcriptionInStripe = async (payload: {
     subcription: true,
   };
   await prisma.user.update({
-    where: { id: userInfo.id },
+    where: { id: userInfo?.id },
     data: updateData,
   });
   return subscription;
