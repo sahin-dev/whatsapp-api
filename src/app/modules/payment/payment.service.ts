@@ -22,29 +22,29 @@ const stripePortalSessionInStripe = async (customerId: string) => {
 const createSubcriptionInStripe = async (userId: string, payload: any) => {
   const { paymentMethodId, priceId } = payload;
 
-  const user = await prisma.user.findUnique({
+  const userInfo = await prisma.user.findUnique({
     where: { id: userId },
   });
 
-  if (!user) {
+  if (!userInfo) {
     throw new ApiError(404, "User not found");
   }
 
-  // if (user.planType === planType) {
-  //   throw new ApiError(409, "You already have subscription this plan");
-  // }
+  if (userInfo.priceId === priceId) {
+    throw new ApiError(409, "You already have subscription this plan");
+  }
 
-  let customerId;
+  let customerId = userInfo.customerId;
 
   if (!customerId) {
     const customer = await stripe.customers.create({
-      email: user.email,
+      email: userInfo.email,
     });
     customerId = customer.id;
-    // await prisma.company.update({
-    //   where: { id: companyInfo.id },
-    //   data: { customerId: customer.id },
-    // });
+    await prisma.user.update({
+      where: { id: userInfo.id },
+      data: { customerId: customer.id },
+    });
   }
 
   await stripe.paymentMethods.attach(paymentMethodId, {
@@ -61,14 +61,15 @@ const createSubcriptionInStripe = async (userId: string, payload: any) => {
     expand: ["latest_invoice.payment_intent"],
   });
 
-  // const updateData = {
-  //   subscriptionId: subscription.id,
-  //   planType: planType,
-  // };
-  // await prisma.company.update({
-  //   where: { id: companyInfo.id },
-  //   data: updateData,
-  // });
+  const updateData = {
+    subscriptionId: subscription.id,
+    priceId: priceId,
+    subcription: true,
+  };
+  await prisma.user.update({
+    where: { id: userInfo.id },
+    data: updateData,
+  });
   return subscription;
 };
 
@@ -94,7 +95,8 @@ const loginwithAuth = async (userEmail: string) => {
         client_secret: auth0ClientSecret,
         audience: `https://${auth0Domain}/api/v2/`,
         grant_type: "client_credentials",
-        scope: "read:users read:users_by_email create:roles",
+        scope:
+          "read:users read:users_by_email update:users create:passwords_tickets",
       },
       {
         headers: {
@@ -103,6 +105,7 @@ const loginwithAuth = async (userEmail: string) => {
       }
     );
     const managementToken = tokenResponse.data.access_token;
+    console.log(managementToken);
 
     // Get User by Email
     const userResponse = await axios.get(
@@ -174,12 +177,7 @@ const loginwithAuth = async (userEmail: string) => {
 };
 
 const handleSubscriptionDeleted = async (event: Stripe.Event) => {
-  const subscription = event.data.object as Stripe.Subscription;
-
-  // const result = await prisma.company.update({
-  //   where: { subscriptionId: subscription.id },
-  //   data: { planType: "FREE", subscriptionId: null },
-  // });
+  event.data.object as Stripe.Subscription;
 
   return;
 };
