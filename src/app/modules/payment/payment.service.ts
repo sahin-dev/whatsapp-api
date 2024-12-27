@@ -7,6 +7,7 @@ import { Request } from "express";
 import axios from "axios";
 import ApiError from "../../errors/ApiErrors";
 import prisma from "../../../shared/prisma";
+import bcrypt from "bcryptjs";
 
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
@@ -26,16 +27,18 @@ const createSubcriptionInStripe = async (payload: {
 }) => {
   const { email, paymentMethodId, priceId } = payload;
 
-  const userInfo = await prisma.user.findUnique({
+  let userInfo;
+
+  userInfo = await prisma.user.findUnique({
     where: { email: email },
   });
 
   if (!userInfo) {
-    await prisma.user.create({
+    userInfo = await prisma.user.create({
       data: {
         email: email,
         username: email,
-        password: "",
+        password: await bcrypt.hash(email, 10),
       },
     });
   }
