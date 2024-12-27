@@ -6,6 +6,6 @@ const router = express.Router();
 router.post("/create-portal-session", paymentControllers.stripePortalSession);
 router.post("/create-subscription", paymentControllers.createSubcription);
 router.post("/cancel-subscription", paymentControllers.cancelSubcription);
-router.post("/login-with-auth", paymentControllers.loginWithAuthZero);
+router.post("/handle-auth-user", paymentControllers.handleAuthUser);
 
 export const paymentRoute = router;

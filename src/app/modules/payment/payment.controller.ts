@@ -17,10 +17,7 @@ const stripePortalSession = catchAsync(async (req: Request, res: Response) => {
 });
 
 const createSubcription = catchAsync(async (req: any, res: Response) => {
-
-  const result = await paymentSevices.createSubcriptionInStripe(
-    req.body
-  );
+  const result = await paymentSevices.createSubcriptionInStripe(req.body);
 
   sendResponse(res, {
     statusCode: 200,
@@ -42,10 +39,9 @@ const cancelSubcription = catchAsync(async (req: any, res: Response) => {
   });
 });
 
-const loginWithAuthZero = catchAsync(async (req: Request, res: Response) => {
+const handleAuthUser = catchAsync(async (req: Request, res: Response) => {
   const userEmail = req.body.userEmail;
-
-  const result = await paymentSevices.loginwithAuth(userEmail);
+  const result = await paymentSevices.handleUserInAuth(userEmail);
 
   sendResponse(res, {
     statusCode: 200,
@@ -68,7 +64,7 @@ const handelPaymentWebhook = catchAsync(async (req: Request, res: Response) => {
 export const paymentControllers = {
   stripePortalSession,
   createSubcription,
-  loginWithAuthZero,
+  handleAuthUser,
   handelPaymentWebhook,
   cancelSubcription,
 };

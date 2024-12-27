@@ -92,24 +92,31 @@ const cancelSubscriptionInStripe = async (subscriptionId: string) => {
   return cancelSubcription;
 };
 
-const loginwithAuth = async (userEmail: string) => {
+const handleUserInAuth = async (
+  event: Stripe.CustomerSubscriptionCreatedEvent
+) => {
+  const customerId = event.data.object.customer as string;
   const auth0Domain = process.env.AUTH0_DOMAIN;
   const auth0ClientId = process.env.AUTH0_CLIENT_ID;
   const auth0ClientSecret = process.env.AUTH0_CLIENT_SECRET;
   const stockMarketRoleId = process.env.STOCK_MARKET_ROLE_ID;
   const cryptoAlertsRoleId = process.env.CRYPTO_ALERTS_ROLE_ID;
 
-  try {
-    // Get Management Token
+  const customer = await stripe.customers.retrieve(customerId);
+  const userEmail = (customer as Stripe.Customer).email;
+  if (!userEmail) {
+    throw new ApiError(404, "Email not found for the given customer ID");
+  }
+
+  const getAuth0Token = async () => {
     const tokenResponse = await axios.post(
-      `https://${auth0Domain}/oauth/token`,
+      `https://${process.env.AUTH0_DOMAIN}/oauth/token`,
       {
         client_id: auth0ClientId,
         client_secret: auth0ClientSecret,
         audience: `https://${auth0Domain}/api/v2/`,
         grant_type: "client_credentials",
-        scope:
-          "read:users read:users_by_email update:users create:passwords_tickets",
+        scope: "read:users update:users create:user_tickets",
       },
       {
         headers: {
@@ -117,75 +124,74 @@ const loginwithAuth = async (userEmail: string) => {
         },
       }
     );
-    const managementToken = tokenResponse.data.access_token;
-    console.log(managementToken);
 
-    // Get User by Email
-    const userResponse = await axios.get(
-      `https://${auth0Domain}/api/v2/users-by-email?email=${userEmail}`,
+    const managementToken = tokenResponse.data.access_token;
+    return managementToken;
+  };
+
+  const managementToken = await getAuth0Token();
+
+  // Get User by Email
+  const userResponse = await axios.get(
+    `https://${auth0Domain}/api/v2/users-by-email?email=${userEmail}`,
+    {
+      headers: {
+        Authorization: `Bearer ${managementToken}`,
+      },
+    }
+  );
+
+  const users = userResponse.data;
+  console.log(users);
+  const userId = users[0]?.user_id;
+
+  if (!userId) {
+    throw new ApiError(404, "User not found by email address");
+  }
+
+  const priceId = users[0]?.app_metadata?.priceId;
+
+  let roleId: string | undefined;
+  let groupName: string | undefined;
+
+  if (priceId === "stockmarketslayer") {
+    roleId = stockMarketRoleId;
+    groupName = "360 Elite Stock Market Slayer";
+  } else if (priceId === "elitecryptoalerts") {
+    roleId = cryptoAlertsRoleId;
+    groupName = "360 Elite Crypto Trading Alerts";
+  }
+
+  if (roleId && groupName) {
+    // Assign Role to User
+    await axios.post(
+      `https://${auth0Domain}/api/v2/users/${userId}/roles`,
+      {
+        roles: [roleId],
+      },
       {
         headers: {
           Authorization: `Bearer ${managementToken}`,
+          "Content-Type": "application/json",
         },
       }
     );
-    const users = userResponse.data;
-    const userId = users[0]?.user_id;
+    console.log(`✅ Role assigned to user ${userId} based on Price ID`);
 
-    if (userId) {
-      // Get User Metadata (priceId)
-      const priceId = users[0]?.app_metadata?.priceId;
-
-      let roleId: string | undefined;
-      let groupName: string | undefined;
-
-      if (priceId === "stockmarketslayer") {
-        roleId = stockMarketRoleId;
-        groupName = "360 Elite Stock Market Slayer";
-      } else if (priceId === "elitecryptoalerts") {
-        roleId = cryptoAlertsRoleId;
-        groupName = "360 Elite Crypto Trading Alerts";
+    // Assign User to Group
+    await axios.post(
+      `https://${auth0Domain}/api/v2/users/${userId}/groups`,
+      {
+        groups: [groupName],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${managementToken}`,
+          "Content-Type": "application/json",
+        },
       }
-
-      if (roleId && groupName) {
-        // Assign Role to User
-        await axios.post(
-          `https://${auth0Domain}/api/v2/users/${userId}/roles`,
-          {
-            roles: [roleId],
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${managementToken}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        console.log(`✅ Role assigned to user ${userId} based on Price ID`);
-
-        // Assign User to Group
-        await axios.post(
-          `https://${auth0Domain}/api/v2/users/${userId}/groups`,
-          {
-            groups: [groupName],
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${managementToken}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        console.log(`✅ Group ${groupName} assigned to user ${userId}`);
-      }
-    } else {
-      console.error("❌ User not found by email.");
-    }
-  } catch (error: any) {
-    console.error(
-      "❌ Error in loginwithAuth:",
-      error.response?.data || error.message
     );
+    console.log(`✅ Group ${groupName} assigned to user ${userId}`);
   }
 };
 
@@ -217,6 +223,10 @@ const handelPaymentWebhook = async (req: Request) => {
         result = await handleSubscriptionDeleted(event);
         break;
 
+      case "customer.subscription.created":
+        result = await handleUserInAuth(event);
+        break;
+
       default:
         break;
     }
@@ -231,6 +241,6 @@ export const paymentSevices = {
   stripePortalSessionInStripe,
   createSubcriptionInStripe,
   cancelSubscriptionInStripe,
-  loginwithAuth,
+  handleUserInAuth,
   handelPaymentWebhook,
 };
