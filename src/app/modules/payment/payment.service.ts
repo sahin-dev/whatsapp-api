@@ -155,10 +155,10 @@ const handleUserInAuth = async (
   let groupName: string | undefined;
 
   if (priceId === "stockmarketslayer") {
-    roleId = stockMarketRoleId;
+    roleId = "rol_kFz6E1TzYWKHnoNb";
     groupName = "360 Elite Stock Market Slayer";
   } else if (priceId === "elitecryptoalerts") {
-    roleId = cryptoAlertsRoleId;
+    roleId = "rol_sXYkL5QJc6ЗEVHJ!";
     groupName = "360 Elite Crypto Trading Alerts";
   }
 
