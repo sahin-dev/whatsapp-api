@@ -39,18 +39,6 @@ const cancelSubcription = catchAsync(async (req: any, res: Response) => {
   });
 });
 
-const handleAuthUser = catchAsync(async (req: Request, res: Response) => {
-  const userEmail = req.body.userEmail;
-  const result = await paymentSevices.handleUserInAuth(userEmail);
-
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: "return url successfully",
-    data: result,
-  });
-});
-
 const handelPaymentWebhook = catchAsync(async (req: Request, res: Response) => {
   const result = await paymentSevices.handelPaymentWebhook(req);
   sendResponse(res, {
@@ -64,7 +52,6 @@ const handelPaymentWebhook = catchAsync(async (req: Request, res: Response) => {
 export const paymentControllers = {
   stripePortalSession,
   createSubcription,
-  handleAuthUser,
   handelPaymentWebhook,
   cancelSubcription,
 };

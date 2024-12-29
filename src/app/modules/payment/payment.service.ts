@@ -96,9 +96,9 @@ const handleUserInAuth = async (
   event: Stripe.CustomerSubscriptionCreatedEvent
 ) => {
   const customerId = event.data.object.customer as string;
-  const auth0Domain = process.env.AUTH0_DOMAIN;
-  const auth0ClientId = process.env.AUTH0_CLIENT_ID;
-  const auth0ClientSecret = process.env.AUTH0_CLIENT_SECRET;
+  const auth0Domain = process.env.M2M_DOMAIN;
+  const auth0ClientId = process.env.M2M_CLIENT_ID;
+  const auth0ClientSecret = process.env.M2M_CLIENT_SECRET;
 
   const customer = await stripe.customers.retrieve(customerId);
   const userEmail = (customer as Stripe.Customer).email;
@@ -108,7 +108,7 @@ const handleUserInAuth = async (
 
   const getAuth0Token = async () => {
     const tokenResponse = await axios.post(
-      `https://${process.env.AUTH0_DOMAIN}/oauth/token`,
+      `https://${auth0Domain}/oauth/token`,
       {
         client_id: auth0ClientId,
         client_secret: auth0ClientSecret,
@@ -239,6 +239,5 @@ export const paymentSevices = {
   stripePortalSessionInStripe,
   createSubcriptionInStripe,
   cancelSubscriptionInStripe,
-  handleUserInAuth,
   handelPaymentWebhook,
 };
