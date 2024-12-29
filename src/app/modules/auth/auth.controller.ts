@@ -49,8 +49,20 @@ const updateProfile = catchAsync(async (req: any, res: Response) => {
   });
 });
 
+const loginWithAuth = catchAsync(async (req: Request, res: Response) => {
+  const {username, password } = req.body;
+  const result = await authService.loginAuthProvider(username, password);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "User successfully logged in",
+    data: result,
+  });
+});
+
 export const authController = {
   loginUser,
   getProfile,
   updateProfile,
+  loginWithAuth,
 };

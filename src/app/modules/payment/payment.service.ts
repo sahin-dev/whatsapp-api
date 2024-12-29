@@ -99,8 +99,6 @@ const handleUserInAuth = async (
   const auth0Domain = process.env.AUTH0_DOMAIN;
   const auth0ClientId = process.env.AUTH0_CLIENT_ID;
   const auth0ClientSecret = process.env.AUTH0_CLIENT_SECRET;
-  const stockMarketRoleId = process.env.STOCK_MARKET_ROLE_ID;
-  const cryptoAlertsRoleId = process.env.CRYPTO_ALERTS_ROLE_ID;
 
   const customer = await stripe.customers.retrieve(customerId);
   const userEmail = (customer as Stripe.Customer).email;

@@ -22,4 +22,6 @@ router.put(
   authController.updateProfile
 );
 
+router.post("/login-with-auth", authController.loginWithAuth);
+
 export const authRoute = router;
