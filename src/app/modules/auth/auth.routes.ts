@@ -7,11 +7,7 @@ import auth from "../../middlewares/auth";
 const router = express.Router();
 
 //login user
-router.post(
-  "/login",
-  validateRequest(authValidation.authLoginSchema),
-  authController.loginUser
-);
+router.post("/login", authController.loginUser);
 
 router.get("/profile", auth(), authController.getProfile);
 

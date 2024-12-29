@@ -1,9 +1,5 @@
 import { z } from "zod";
 
-const authLoginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-});
-
 const updateProfileSchema = z.object({
   firstName: z
     .string()
@@ -21,5 +17,4 @@ const updateProfileSchema = z.object({
 
 export const authValidation = {
   updateProfileSchema,
-  authLoginSchema,
 };
