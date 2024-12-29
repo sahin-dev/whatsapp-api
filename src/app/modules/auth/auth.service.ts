@@ -110,8 +110,14 @@ const loginUserIntoDB = async (payload: any) => {
       },
     });
 
-    const { password, status, createdAt, updatedAt, ...others } =
-      updateUserInfo;
+    const {
+      password,
+      status,
+      createdAt,
+      updatedAt,
+      accessToken: token,
+      ...others
+    } = updateUserInfo;
     userInfo = others;
   }
 
