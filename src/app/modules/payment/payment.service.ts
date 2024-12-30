@@ -149,23 +149,23 @@ const handleUserInAuth = async (
 
   const priceId = users[0]?.app_metadata?.priceId;
 
-  let roleId: string | undefined;
+  let role: string | undefined;
   let groupName: string | undefined;
 
   if (priceId === "stockmarketslayer") {
-    roleId = "rol_kFz6E1TzYWKHnoNb";
+    role = "rol_kFz6E1TzYWKHnoNb";
     groupName = "360 Elite Stock Market Slayer";
   } else if (priceId === "elitecryptoalerts") {
-    roleId = "rol_sXYkL5QJc6ЗEVHJ!";
+    role = "rol_sXYkL5QJc6ЗEVHJ!";
     groupName = "360 Elite Crypto Trading Alerts";
   }
 
-  if (roleId && groupName) {
+  if (role && groupName) {
     // Assign Role to User
     await axios.post(
       `https://${auth0Domain}/api/v2/users/${userId}/roles`,
       {
-        roles: [roleId],
+        roles: [role],
       },
       {
         headers: {
