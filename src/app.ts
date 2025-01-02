@@ -34,6 +34,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
+app.post("/api/handleSubscription", paymentControllers.handleSubscription);
+
 // Route handler for root endpoint
 app.get("/", (req: Request, res: Response) => {
   res.send({
