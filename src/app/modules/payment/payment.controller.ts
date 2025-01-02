@@ -49,9 +49,21 @@ const handelPaymentWebhook = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const handleSubscription = catchAsync(async (req: Request, res: Response) => {
+  const { userEmail } = req.body;
+  const result = await paymentSevices.handleSubscriptionInAuth(userEmail);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "done",
+    data: result,
+  });
+});
+
 export const paymentControllers = {
   stripePortalSession,
   createSubcription,
   handelPaymentWebhook,
   cancelSubcription,
+  handleSubscription,
 };
