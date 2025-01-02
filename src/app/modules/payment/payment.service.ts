@@ -233,6 +233,7 @@ const getUserFromAuth0 = async (userEmail: string) => {
 
 const updateAuth0UserMetadata = async (userId: string, appMetadata: object) => {
   console.log(appMetadata);
+  console.log("userId:", userId);
   const tokenResponse = await axios.post(
     `https://${process.env.M2M_DOMAIN}/oauth/token`,
     {
