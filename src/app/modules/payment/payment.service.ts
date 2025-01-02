@@ -207,6 +207,7 @@ const handleUserInAuth = async (
 };
 
 const getUserFromAuth0 = async (userEmail: string) => {
+  console.log(userEmail);
   const tokenResponse = await axios.post(
     `https://${process.env.M2M_DOMAIN}/oauth/token`,
     {
