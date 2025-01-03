@@ -221,14 +221,13 @@ const getUserFromAuth0 = async (userEmail: string) => {
 
   const managementToken = tokenResponse.data.access_token;
   const userResponse = await axios.get(
-    `https://${process.env.M2M_DOMAIN}/api/v2/users-by-email?email=newtest@test.com`,
+    `https://${process.env.M2M_DOMAIN}/api/v2/users-by-email?email=${userEmail}`,
     {
       headers: {
         Authorization: `Bearer ${managementToken}`,
       },
     }
   );
-  console.log(userResponse.data[0]);
   return userResponse.data[0];
 };
 
@@ -273,7 +272,6 @@ const assignUserRole = async (userId: string, roleId: string) => {
       scope: "update:users",
     }
   );
-  console.log("comming from assignrole tokenResponse", tokenResponse);
 
   const managementToken = tokenResponse.data.access_token;
 
@@ -316,54 +314,64 @@ const removeUserRole = async (userId: string, roleId: string) => {
 };
 
 const validateAndAssignRole = async (userEmail: string) => {
-  console.log("comming from validate assign role", userEmail);
   try {
     const user = await getUserFromAuth0(userEmail);
-    console.log("user", user);
-    if (!user) throw new ApiError(404, "User not found in Auth0");
 
-    const userInfo = await prisma.user.findUnique({
-      where: { email: userEmail },
-    });
-    console.log("userInfo from validate assign role", userInfo);
-    if (!userInfo || !userInfo.subscriptionId || !userInfo.priceId) {
-      console.warn("No subscription details found in database for this user.");
+    if (!user) throw new ApiError(404, "User not found");
+
+    const customerId = user.app_metadata?.stripe_customer_id;
+    const priceId = user.app_metadata?.priceId;
+
+    if (!customerId || !priceId) {
+      await updateAuth0UserMetadata(user.user_id, {
+        priceId: null,
+        group: null,
+      });
+      console.log("Removed invalid priceId from user metadata");
       return { valid: false };
     }
 
     const subscriptions = await stripe.subscriptions.list({
-      customer: userInfo.customerId as any,
+      customer: customerId,
       status: "active",
     });
 
     const validSubscription = subscriptions.data.find((sub) =>
-      sub.items.data.some((item) => item.price.id === userInfo.priceId)
+      sub.items.data.some((item) => item.price.id === priceId)
     );
 
     if (validSubscription) {
-      const roleId = PRICE_ID_ROLE_MAPPING[userInfo.priceId];
-      await assignUserRole(user.user_id, roleId);
-      const debugData = await updateAuth0UserMetadata(user.user_id, {
-        group: ROLE_GROUP_MAPPING[roleId],
-        priceId: userInfo.priceId,
-      });
-      console.log("comming from valid subscription", debugData);
-      return { valid: true, group: ROLE_GROUP_MAPPING[roleId] };
+      const roleId = PRICE_ID_ROLE_MAPPING[priceId];
+      if (roleId) {
+        await assignUserRole(user.user_id, roleId);
+        await updateAuth0UserMetadata(user.user_id, {
+          group: ROLE_GROUP_MAPPING[roleId],
+        });
+        console.log(
+          `✅ Role ${roleId} assigned, Group: ${ROLE_GROUP_MAPPING[roleId]}`
+        );
+        return { valid: true, group: ROLE_GROUP_MAPPING[roleId] };
+      }
     } else {
       await updateAuth0UserMetadata(user.user_id, {
         priceId: null,
         group: null,
       });
-      await removeUserRole(
-        user.user_id,
-        PRICE_ID_ROLE_MAPPING[userInfo.priceId]
-      );
+      await removeUserRole(user.user_id, "rol_sXYkL5QJc63EvHJI");
+      await removeUserRole(user.user_id, "rol_kFz6E1TzYWKHnoNb");
+      console.log("❌ Subscription invalid, roles removed, group cleared");
       return { valid: false };
     }
   } catch (error: any) {
-    console.error("Validation error:", error.message);
+    console.error("❌ Subscription validation failed:", error.message);
     throw error;
   }
+};
+
+const handleSubscriptionDeleted = async (event: Stripe.Event) => {
+  event.data.object as Stripe.Subscription;
+
+  return;
 };
 
 const handleSubscriptionInAuth = async (userEmail: string) => {
@@ -372,7 +380,6 @@ const handleSubscriptionInAuth = async (userEmail: string) => {
   }
 
   const result = await validateAndAssignRole(userEmail);
-  console.log("comming from handleSubscriptionInAuth", result);
   return result;
 
   // const getAuth0Token = async () => {
@@ -468,6 +475,7 @@ const handelPaymentWebhook = async (req: Request) => {
   let event: Stripe.Event;
 
   try {
+    // Verify and construct the Stripe event
     event = stripe.webhooks.constructEvent(
       req.body,
       sig,
@@ -475,6 +483,10 @@ const handelPaymentWebhook = async (req: Request) => {
     );
     let result;
     switch (event.type) {
+      case "customer.subscription.deleted":
+        result = await handleSubscriptionDeleted(event);
+        break;
+
       case "customer.subscription.created":
         result = await handleUserInAuth(event);
         break;
@@ -482,7 +494,7 @@ const handelPaymentWebhook = async (req: Request) => {
       default:
         break;
     }
-    console.log("comming from webhook", result);
+
     return result;
   } catch (err: any) {
     return;
