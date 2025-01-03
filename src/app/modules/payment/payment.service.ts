@@ -28,9 +28,8 @@ const PRICE_ID_ROLE_MAPPING: { [key: string]: string } = {
 const stripePortalSessionInStripe = async (customerId: string) => {
   const session = await stripe.billingPortal.sessions.create({
     customer: customerId,
-    return_url: "https://360trader.com",
+    return_url: "https://boom360trader.com",
   });
-
   return session.url;
 };
 
@@ -313,26 +312,25 @@ const removeUserRole = async (userId: string, roleId: string) => {
   );
 };
 
+// Validate Subscription
 const validateAndAssignRole = async (userEmail: string) => {
   try {
     const user = await getUserFromAuth0(userEmail);
+    if (!user) throw new ApiError(404, "User not found in Auth0");
 
-    if (!user) throw new ApiError(404, "User not found");
+    const { stripe_customer_id, priceId } = user.app_metadata || {};
 
-    const customerId = user.app_metadata?.stripe_customer_id;
-    const priceId = user.app_metadata?.priceId;
-
-    if (!customerId || !priceId) {
+    if (!stripe_customer_id || !priceId) {
       await updateAuth0UserMetadata(user.user_id, {
         priceId: null,
         group: null,
       });
-      console.log("Removed invalid priceId from user metadata");
+      console.log("Removed invalid metadata.");
       return { valid: false };
     }
 
     const subscriptions = await stripe.subscriptions.list({
-      customer: customerId,
+      customer: stripe_customer_id,
       status: "active",
     });
 
@@ -342,28 +340,21 @@ const validateAndAssignRole = async (userEmail: string) => {
 
     if (validSubscription) {
       const roleId = PRICE_ID_ROLE_MAPPING[priceId];
-      if (roleId) {
-        await assignUserRole(user.user_id, roleId);
-        await updateAuth0UserMetadata(user.user_id, {
-          group: ROLE_GROUP_MAPPING[roleId],
-        });
-        console.log(
-          `✅ Role ${roleId} assigned, Group: ${ROLE_GROUP_MAPPING[roleId]}`
-        );
-        return { valid: true, group: ROLE_GROUP_MAPPING[roleId] };
-      }
+      await assignUserRole(user.user_id, roleId);
+      await updateAuth0UserMetadata(user.user_id, {
+        group: ROLE_GROUP_MAPPING[roleId],
+      });
+      return { valid: true, group: ROLE_GROUP_MAPPING[roleId] };
     } else {
       await updateAuth0UserMetadata(user.user_id, {
         priceId: null,
         group: null,
       });
-      await removeUserRole(user.user_id, "rol_sXYkL5QJc63EvHJI");
-      await removeUserRole(user.user_id, "rol_kFz6E1TzYWKHnoNb");
-      console.log("❌ Subscription invalid, roles removed, group cleared");
+      await removeUserRole(user.user_id, PRICE_ID_ROLE_MAPPING[priceId]);
       return { valid: false };
     }
   } catch (error: any) {
-    console.error("❌ Subscription validation failed:", error.message);
+    console.error("Validation error:", error.message);
     throw error;
   }
 };
@@ -467,37 +458,23 @@ const handleSubscriptionInAuth = async (userEmail: string) => {
 
 const handelPaymentWebhook = async (req: Request) => {
   const sig = req.headers["stripe-signature"] as string;
-
-  if (!sig) {
-    console.error("Missing Stripe signature header");
-  }
-
   let event: Stripe.Event;
 
   try {
-    // Verify and construct the Stripe event
     event = stripe.webhooks.constructEvent(
       req.body,
       sig,
       config.stripe.webhook_secret as string
     );
-    let result;
-    switch (event.type) {
-      case "customer.subscription.deleted":
-        result = await handleSubscriptionDeleted(event);
-        break;
 
-      case "customer.subscription.created":
-        result = await handleUserInAuth(event);
-        break;
-
-      default:
-        break;
+    if (event.type === "customer.subscription.created") {
+      await handleUserInAuth(event);
+    } else if (event.type === "customer.subscription.deleted") {
+      await handleSubscriptionDeleted(event);
     }
-
-    return result;
   } catch (err: any) {
-    return;
+    console.error("Webhook error:", err.message);
+    throw err;
   }
 };
 
