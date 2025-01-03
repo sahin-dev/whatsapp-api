@@ -221,13 +221,14 @@ const getUserFromAuth0 = async (userEmail: string) => {
 
   const managementToken = tokenResponse.data.access_token;
   const userResponse = await axios.get(
-    `https://${process.env.M2M_DOMAIN}/api/v2/users-by-email?email=${userEmail}`,
+    `https://${process.env.M2M_DOMAIN}/api/v2/users-by-email?email=newtest@test.com`,
     {
       headers: {
         Authorization: `Bearer ${managementToken}`,
       },
     }
   );
+  console.log(userResponse.data[0]);
   return userResponse.data[0];
 };
 
@@ -272,6 +273,7 @@ const assignUserRole = async (userId: string, roleId: string) => {
       scope: "update:users",
     }
   );
+  console.log("comming from assignrole tokenResponse", tokenResponse);
 
   const managementToken = tokenResponse.data.access_token;
 
@@ -314,8 +316,10 @@ const removeUserRole = async (userId: string, roleId: string) => {
 };
 
 const validateAndAssignRole = async (userEmail: string) => {
+  console.log("comming from validate assign role", userEmail);
   try {
     const user = await getUserFromAuth0(userEmail);
+    console.log("user", user);
     if (!user) throw new ApiError(404, "User not found in Auth0");
 
     const userInfo = await prisma.user.findUnique({
@@ -366,6 +370,7 @@ const handleSubscriptionInAuth = async (userEmail: string) => {
   }
 
   const result = await validateAndAssignRole(userEmail);
+  console.log("comming from handleSubscriptionInAuth", result);
   return result;
 
   // const getAuth0Token = async () => {
@@ -475,7 +480,7 @@ const handelPaymentWebhook = async (req: Request) => {
       default:
         break;
     }
-
+    console.log("comming from webhook", result);
     return result;
   } catch (err: any) {
     return;
