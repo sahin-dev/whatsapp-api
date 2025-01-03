@@ -219,6 +219,7 @@ const getUserFromAuth0 = async (userEmail: string) => {
   );
 
   const managementToken = tokenResponse.data.access_token;
+  console.log(managementToken)
   const userResponse = await axios.get(
     `https://${process.env.M2M_DOMAIN}/api/v2/users-by-email?email=${userEmail}`,
     {
