@@ -325,6 +325,7 @@ const validateAndAssignRole = async (userEmail: string) => {
     const userInfo = await prisma.user.findUnique({
       where: { email: userEmail },
     });
+    console.log("userInfo from validate assign role", userInfo);
     if (!userInfo || !userInfo.subscriptionId || !userInfo.priceId) {
       console.warn("No subscription details found in database for this user.");
       return { valid: false };
