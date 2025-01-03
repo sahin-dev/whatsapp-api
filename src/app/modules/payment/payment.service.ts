@@ -342,10 +342,11 @@ const validateAndAssignRole = async (userEmail: string) => {
     if (validSubscription) {
       const roleId = PRICE_ID_ROLE_MAPPING[userInfo.priceId];
       await assignUserRole(user.user_id, roleId);
-      await updateAuth0UserMetadata(user.user_id, {
+      const debugData = await updateAuth0UserMetadata(user.user_id, {
         group: ROLE_GROUP_MAPPING[roleId],
         priceId: userInfo.priceId,
       });
+      console.log("comming from valid subscription", debugData);
       return { valid: true, group: ROLE_GROUP_MAPPING[roleId] };
     } else {
       await updateAuth0UserMetadata(user.user_id, {
