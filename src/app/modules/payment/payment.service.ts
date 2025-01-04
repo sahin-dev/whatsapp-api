@@ -110,6 +110,7 @@ const handleUserInAuth = async (
   event: Stripe.CustomerSubscriptionCreatedEvent
 ) => {
   const customerId = event.data.object.customer as string;
+  console.log("customerId:################################### " + customerId);
 
   const customer = await stripe.customers.retrieve(customerId);
   console.log("customer: ####################################", 115, +customer);
