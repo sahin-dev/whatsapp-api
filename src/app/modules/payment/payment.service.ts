@@ -211,9 +211,13 @@ const subscriptionCreateHelperFunc = async (
       subscriptionId: activeSubscription.id,
       subcription: true,
       roleId: roleId,
-      group: ROLE_GROUP_MAPPING[roleId],
+      accessGroup: [ROLE_GROUP_MAPPING[roleId]],
     };
     console.log(data);
+    // await prisma.user.update({
+    //   where: { id: userId },
+    //   data: data,
+    // });
   }
 };
 

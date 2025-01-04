@@ -20,9 +20,11 @@ model User {
   priceId        String?
   subscriptionId String?
   role           UserRole        @default(USER)
+  roleId         String?
   status         UserStatus      @default(ACTIVE)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+  accessGroup    String[]
   group          Group[]
   chanel         Chanel[]
   message        Message[]
