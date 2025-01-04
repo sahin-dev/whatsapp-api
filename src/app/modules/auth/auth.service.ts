@@ -61,7 +61,6 @@ const loginUserIntoDB = async (payload: any) => {
     const createUser = await prisma.user.create({
       data: {
         ...payload,
-
         fcmToken: payload.fcmToken,
         password: await bcrypt.hash(payload.password, 10),
       },
@@ -218,7 +217,14 @@ const loginAuthProvider = async (username: string, password: string) => {
     const token = response.data.access_token;
 
     verifyToken(token);
-    const userInfo = await fetchUserProfile(token);
+    const user = await fetchUserProfile(token);
+
+    const userInfo = await prisma.user.update({
+      where: { email: user.email },
+      data: {
+        password: bcrypt.hashSync(password, 10),
+      },
+    });
 
     return {
       token,
