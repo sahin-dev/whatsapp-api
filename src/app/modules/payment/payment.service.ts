@@ -112,9 +112,17 @@ const handleUserInAuth = async (
   const customerId = event.data.object.customer as string;
   console.log("customerId:################################### " + customerId);
 
-  const customer = await stripe.customers.retrieve(customerId);
+  const customer = (await stripe.customers.retrieve(
+    customerId
+  )) as Stripe.Customer;
   console.log("customer: ####################################", 115, customer);
-  const userEmail = (customer as Stripe.Customer).email;
+  if (!customer) {
+    throw new ApiError(404, "Customer not found for the given customer ID");
+  }
+  const userEmail = customer.email;
+  console.log(
+    "rturn userEmail:################################### " + userEmail
+  );
 
   if (!userEmail) {
     throw new ApiError(404, "Email not found for the given customer ID");
