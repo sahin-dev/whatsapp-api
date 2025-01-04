@@ -50,8 +50,7 @@ const updateProfile = catchAsync(async (req: any, res: Response) => {
 });
 
 const loginWithAuth = catchAsync(async (req: Request, res: Response) => {
-  const {username, password } = req.body;
-  const result = await authService.loginAuthProvider(username, password);
+  const result = await authService.loginAuthProvider(req.body);
   sendResponse(res, {
     statusCode: 200,
     success: true,

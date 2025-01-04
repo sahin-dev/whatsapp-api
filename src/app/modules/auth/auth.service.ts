@@ -12,42 +12,6 @@ import jwt from "jsonwebtoken";
 
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
-// Auth0 Domain
-const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN;
-
-// **M2M App (360Trader API)** credentials for backend operations
-// const M2M_CLIENT_ID = process.env.M2M_CLIENT_ID;
-// const M2M_CLIENT_SECRET = process.env.M2M_CLIENT_SECRET;
-// const M2M_AUDIENCE = `https://${AUTH0_DOMAIN}/api/v2/`;
-
-// **Original App (360Trader)** credentials for user authentication
-const USER_AUTH_CLIENT_ID = process.env.USER_AUTH_CLIENT_ID;
-const USER_AUTH_CLIENT_SECRET = process.env.USER_AUTH_CLIENT_SECRET;
-// const USER_AUTH_AUDIENCE = `https://${AUTH0_DOMAIN}/api/v2/`;
-
-// const getAuth0Token = async () => {
-//   const tokenResponse = await axios.post(
-//     `https://${process.env.AUTH0_DOMAIN}/oauth/token`,
-//     {
-//       client_id: auth0ClientId,
-//       client_secret: auth0ClientSecret,
-//       audience: `https://${auth0Domain}/api/v2/`,
-//       grant_type: "client_credentials",
-//       scope: "read:users update:users create:user_tickets",
-//     },
-//     {
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//     }
-//   );
-
-//   const managementToken = tokenResponse.data.access_token;
-//   return managementToken;
-// };
-
-//login user
-
 const loginUserIntoDB = async (payload: any) => {
   let accessToken;
   let userInfo;
@@ -194,14 +158,18 @@ const fetchUserProfile = async (token: string) => {
   return response.data;
 };
 
-const loginAuthProvider = async (username: string, password: string) => {
+const loginAuthProvider = async (payload: {
+  username: string;
+  password: string;
+  fcmToken?: string;
+}) => {
   try {
     const response = await axios.post(
       `${process.env.AUTH0_DOMAIN}/oauth/token`,
       {
         grant_type: "password",
-        username: username,
-        password: password,
+        username: payload.username,
+        password: payload.password,
         audience: process.env.AUTH0_AUDIENCE,
         client_id: process.env.AUTH0_CLIENT_ID,
         client_secret: process.env.AUTH0_CLIENT_SECRET,
@@ -219,12 +187,14 @@ const loginAuthProvider = async (username: string, password: string) => {
     verifyToken(token);
     const user = await fetchUserProfile(token);
 
-    const userInfo = await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { email: user.email },
       data: {
-        password: bcrypt.hashSync(password, 10),
+        password: bcrypt.hashSync(payload.password, 10),
       },
     });
+
+    const { password, ...userInfo } = updatedUser;
 
     return {
       token,
