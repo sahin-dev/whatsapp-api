@@ -78,111 +78,6 @@ const cancelSubscriptionInStripe = async (subscriptionId: string) => {
   return cancelSubcription;
 };
 
-const subscriptionCreateHelperFunc = async (
-  event: Stripe.CustomerSubscriptionCreatedEvent
-) => {
-  const customerId = event.data.object.customer as string;
-
-  const customer = (await stripe.customers.retrieve(
-    customerId
-  )) as Stripe.Customer;
-  if (!customer) {
-    throw new ApiError(404, "Customer not found for the given customer ID");
-  }
-  const userEmail = customer.email;
-
-  if (!userEmail) {
-    throw new ApiError(404, "Email not found for the given customer ID");
-  }
-
-  const getAuth0Token = async () => {
-    const tokenResponse = await axios.post(
-      `https://${auth0Domain}/oauth/token`,
-      {
-        client_id: auth0ClientId,
-        client_secret: auth0ClientSecret,
-        audience: `https://${auth0Domain}/api/v2/`,
-        grant_type: "client_credentials",
-        scope:
-          "read:users update:users create:user_tickets read:roles update:users_app_metadata",
-      }
-    );
-
-    const managementToken = tokenResponse.data.access_token;
-    return managementToken;
-  };
-
-  const managementToken = await getAuth0Token();
-
-  const userResponse = await axios.get(
-    `https://${auth0Domain}/api/v2/users-by-email?email=${userEmail}`,
-    {
-      headers: {
-        Authorization: `Bearer ${managementToken}`,
-      },
-    }
-  );
-
-  const user = userResponse.data;
-  const userId = user[0]?.user_id;
-
-  if (!user) {
-    throw new ApiError(404, "User not found by email address");
-  }
-
-  const subscriptions = await stripe.subscriptions.list({
-    customer: customerId,
-  });
-
-  const activeSubscription = subscriptions.data.find(
-    (subscription) => subscription.status === "active"
-  );
-
-  if (!activeSubscription) {
-    throw new ApiError(404, "No active subscription found for the customer");
-  }
-
-  const priceId = activeSubscription.items.data[0]?.price.id;
-
-  if (!priceId) {
-    throw new ApiError(404, "PriceId not found in the subscription");
-  }
-
-  const roleId = PRICE_ID_ROLE_MAPPING[priceId];
-  if (roleId) {
-    await assignUserRole(userId, roleId);
-    await updateAuth0UserMetadata(userId, {
-      group: ROLE_GROUP_MAPPING[roleId],
-    });
-    console.log(
-      `✅ Role ${roleId} assigned, Group: ${ROLE_GROUP_MAPPING[roleId]}`
-    );
-    const data = {
-      email: userEmail,
-      username: user[0].username,
-      customerId: customerId,
-      priceId: priceId,
-      subscriptionId: activeSubscription.id,
-      subcription: true,
-      roleId: roleId,
-      accessGroup: ROLE_GROUP_MAPPING[roleId],
-    };
-    const isExisting = await prisma.user.findUnique({
-      where: { email: userEmail },
-    });
-    if (isExisting) {
-      await prisma.user.update({
-        where: { email: userEmail },
-        data: data as User,
-      });
-    } else {
-      await prisma.user.create({
-        data: data as User,
-      });
-    }
-  }
-};
-
 const getUserFromAuth0 = async (userEmail: string) => {
   const tokenResponse = await axios.post(
     `https://${process.env.M2M_DOMAIN}/oauth/token`,
@@ -205,60 +100,6 @@ const getUserFromAuth0 = async (userEmail: string) => {
     }
   );
   return userResponse.data[0];
-};
-
-const updateAuth0UserMetadata = async (userId: string, appMetadata: object) => {
-  const tokenResponse = await axios.post(
-    `https://${process.env.M2M_DOMAIN}/oauth/token`,
-    {
-      client_id: process.env.M2M_CLIENT_ID,
-      client_secret: process.env.M2M_CLIENT_SECRET,
-      audience: `https://${process.env.M2M_DOMAIN}/api/v2/`,
-      grant_type: "client_credentials",
-      scope: "update:users_app_metadata",
-    }
-  );
-
-  const managementToken = tokenResponse.data.access_token;
-
-  await axios.patch(
-    `https://${process.env.M2M_DOMAIN}/api/v2/users/${userId}`,
-    {
-      app_metadata: appMetadata,
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${managementToken}`,
-        "Content-Type": "application/json",
-      },
-    }
-  );
-};
-
-const assignUserRole = async (userId: string, roleId: string) => {
-  const tokenResponse = await axios.post(
-    `https://${process.env.M2M_DOMAIN}/oauth/token`,
-    {
-      client_id: process.env.M2M_CLIENT_ID,
-      client_secret: process.env.M2M_CLIENT_SECRET,
-      audience: `https://${process.env.M2M_DOMAIN}/api/v2/`,
-      grant_type: "client_credentials",
-      scope: "update:users",
-    }
-  );
-
-  const managementToken = tokenResponse.data.access_token;
-
-  await axios.post(
-    `https://${process.env.M2M_DOMAIN}/api/v2/users/${userId}/roles`,
-    { roles: [roleId] },
-    {
-      headers: {
-        Authorization: `Bearer ${managementToken}`,
-        "Content-Type": "application/json",
-      },
-    }
-  );
 };
 
 const removeUserRole = async (userId: string, roleId: string) => {
@@ -432,6 +273,169 @@ const handleSubscriptionInAuth = async (userEmail: string) => {
   }
 };
 
+//using for webhook
+const updateAuth0UserMetadata = async (userId: string, appMetadata: object) => {
+  const tokenResponse = await axios.post(
+    `https://${process.env.M2M_DOMAIN}/oauth/token`,
+    {
+      client_id: process.env.M2M_CLIENT_ID,
+      client_secret: process.env.M2M_CLIENT_SECRET,
+      audience: `https://${process.env.M2M_DOMAIN}/api/v2/`,
+      grant_type: "client_credentials",
+      scope: "update:users_app_metadata",
+    }
+  );
+
+  const managementToken = tokenResponse.data.access_token;
+
+  await axios.patch(
+    `https://${process.env.M2M_DOMAIN}/api/v2/users/${userId}`,
+    {
+      app_metadata: appMetadata,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${managementToken}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+};
+
+//using for webhook
+const assignUserRole = async (userId: string, roleId: string) => {
+  const tokenResponse = await axios.post(
+    `https://${process.env.M2M_DOMAIN}/oauth/token`,
+    {
+      client_id: process.env.M2M_CLIENT_ID,
+      client_secret: process.env.M2M_CLIENT_SECRET,
+      audience: `https://${process.env.M2M_DOMAIN}/api/v2/`,
+      grant_type: "client_credentials",
+      scope: "update:users",
+    }
+  );
+
+  const managementToken = tokenResponse.data.access_token;
+
+  await axios.post(
+    `https://${process.env.M2M_DOMAIN}/api/v2/users/${userId}/roles`,
+    { roles: [roleId] },
+    {
+      headers: {
+        Authorization: `Bearer ${managementToken}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+};
+
+//using for webhook
+const subscriptionCreateHelperFunc = async (
+  event: Stripe.CustomerSubscriptionCreatedEvent
+) => {
+  const customerId = event.data.object.customer as string;
+
+  const customer = (await stripe.customers.retrieve(
+    customerId
+  )) as Stripe.Customer;
+  if (!customer) {
+    throw new ApiError(404, "Customer not found for the given customer ID");
+  }
+  const userEmail = customer.email;
+
+  if (!userEmail) {
+    throw new ApiError(404, "Email not found for the given customer ID");
+  }
+
+  const getAuth0Token = async () => {
+    const tokenResponse = await axios.post(
+      `https://${auth0Domain}/oauth/token`,
+      {
+        client_id: auth0ClientId,
+        client_secret: auth0ClientSecret,
+        audience: `https://${auth0Domain}/api/v2/`,
+        grant_type: "client_credentials",
+        scope:
+          "read:users update:users create:user_tickets read:roles update:users_app_metadata",
+      }
+    );
+
+    const managementToken = tokenResponse.data.access_token;
+    return managementToken;
+  };
+
+  const managementToken = await getAuth0Token();
+
+  const userResponse = await axios.get(
+    `https://${auth0Domain}/api/v2/users-by-email?email=${userEmail}`,
+    {
+      headers: {
+        Authorization: `Bearer ${managementToken}`,
+      },
+    }
+  );
+
+  const user = userResponse.data;
+  const userId = user[0]?.user_id;
+
+  if (!user) {
+    throw new ApiError(404, "User not found by email address");
+  }
+
+  const subscriptions = await stripe.subscriptions.list({
+    customer: customerId,
+  });
+
+  const activeSubscription = subscriptions.data.find(
+    (subscription) => subscription.status === "active"
+  );
+
+  if (!activeSubscription) {
+    throw new ApiError(404, "No active subscription found for the customer");
+  }
+
+  const priceId = activeSubscription.items.data[0]?.price.id;
+
+  if (!priceId) {
+    throw new ApiError(404, "PriceId not found in the subscription");
+  }
+
+  const roleId = PRICE_ID_ROLE_MAPPING[priceId];
+  if (roleId) {
+    await assignUserRole(userId, roleId);
+    await updateAuth0UserMetadata(userId, {
+      group: ROLE_GROUP_MAPPING[roleId],
+    });
+    console.log(
+      `✅ Role ${roleId} assigned, Group: ${ROLE_GROUP_MAPPING[roleId]}`
+    );
+    const data = {
+      email: userEmail,
+      username: user[0].username,
+      customerId: customerId,
+      priceId: priceId,
+      subscriptionId: activeSubscription.id,
+      subcription: true,
+      roleId: roleId,
+      accessGroup: ROLE_GROUP_MAPPING[roleId],
+    };
+    const isExisting = await prisma.user.findUnique({
+      where: { email: userEmail },
+    });
+    if (isExisting) {
+      await prisma.user.update({
+        where: { email: userEmail },
+        data: data as User,
+      });
+    } else {
+      await prisma.user.create({
+        data: data as User,
+      });
+    }
+  }
+};
+
+//using for webhook
 const handelPaymentWebhook = async (req: Request) => {
   const sig = req.headers["stripe-signature"] as string;
 
