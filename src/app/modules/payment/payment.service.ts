@@ -51,34 +51,10 @@ const createSubcriptionInStripe = async (payload: {
 }) => {
   const { email, paymentMethodId, priceId } = payload;
 
-  let userInfo;
-
-  // if (!userInfo) {
-  //   userInfo = await prisma.user.create({
-  //     data: {
-  //       email: email,
-  //       username: email,
-  //       password: await bcrypt.hash(email, 10),
-  //     },
-  //   });
-  // }
-
-  // if (userInfo?.priceId === priceId) {
-  //   throw new ApiError(409, "You already have subscription this plan");
-  // }
-
-  // let customerId = userInfo?.customerId;
-
-  // if (!customerId) {
   const customer = await stripe.customers.create({
     email: email,
   });
   const customerId = customer.id;
-  // await prisma.user.update({
-  //   where: { id: userInfo?.id },
-  //   data: { customerId: customer.id },
-  // });
-  // }
 
   await stripe.paymentMethods.attach(paymentMethodId, {
     customer: customerId,
@@ -93,16 +69,6 @@ const createSubcriptionInStripe = async (payload: {
     items: [{ price: priceId }],
     expand: ["latest_invoice.payment_intent"],
   });
-
-  // const updateData = {
-  //   subscriptionId: subscription.id,
-  //   priceId: priceId,
-  //   subcription: true,
-  // };
-  // await prisma.user.update({
-  //   where: { id: userInfo?.id },
-  //   data: updateData,
-  // });
   return subscription;
 };
 
@@ -112,24 +78,18 @@ const cancelSubscriptionInStripe = async (subscriptionId: string) => {
   return cancelSubcription;
 };
 
-//working
 const subscriptionCreateHelperFunc = async (
   event: Stripe.CustomerSubscriptionCreatedEvent
 ) => {
   const customerId = event.data.object.customer as string;
-  console.log("customerId:################################### " + customerId);
 
   const customer = (await stripe.customers.retrieve(
     customerId
   )) as Stripe.Customer;
-  console.log("customer: ####################################", 115, customer);
   if (!customer) {
     throw new ApiError(404, "Customer not found for the given customer ID");
   }
   const userEmail = customer.email;
-  console.log(
-    "rturn userEmail:################################### " + userEmail
-  );
 
   if (!userEmail) {
     throw new ApiError(404, "Email not found for the given customer ID");
@@ -154,7 +114,6 @@ const subscriptionCreateHelperFunc = async (
 
   const managementToken = await getAuth0Token();
 
-  // Get User by Email
   const userResponse = await axios.get(
     `https://${auth0Domain}/api/v2/users-by-email?email=${userEmail}`,
     {
@@ -165,19 +124,16 @@ const subscriptionCreateHelperFunc = async (
   );
 
   const user = userResponse.data;
-  console.log(user);
   const userId = user[0]?.user_id;
 
   if (!user) {
     throw new ApiError(404, "User not found by email address");
   }
 
-  // Retrieve the customer's subscriptions to get the priceId
   const subscriptions = await stripe.subscriptions.list({
     customer: customerId,
   });
 
-  // Assuming there's only one active subscription
   const activeSubscription = subscriptions.data.find(
     (subscription) => subscription.status === "active"
   );
@@ -186,9 +142,7 @@ const subscriptionCreateHelperFunc = async (
     throw new ApiError(404, "No active subscription found for the customer");
   }
 
-  // Retrieve the priceId from the subscription
   const priceId = activeSubscription.items.data[0]?.price.id;
-  console.log("priceId:################################### " + priceId);
 
   if (!priceId) {
     throw new ApiError(404, "PriceId not found in the subscription");
@@ -213,10 +167,19 @@ const subscriptionCreateHelperFunc = async (
       roleId: roleId,
       accessGroup: ROLE_GROUP_MAPPING[roleId],
     };
-    console.log(data);
-    await prisma.user.create({
-      data: data as User,
+    const isExisting = await prisma.user.findUnique({
+      where: { email: userEmail },
     });
+    if (isExisting) {
+      await prisma.user.update({
+        where: { email: userEmail },
+        data: data as User,
+      });
+    } else {
+      await prisma.user.create({
+        data: data as User,
+      });
+    }
   }
 };
 
@@ -246,8 +209,6 @@ const getUserFromAuth0 = async (userEmail: string) => {
 };
 
 const updateAuth0UserMetadata = async (userId: string, appMetadata: object) => {
-  console.log(appMetadata);
-  console.log("userId:", userId);
   const tokenResponse = await axios.post(
     `https://${process.env.M2M_DOMAIN}/oauth/token`,
     {
