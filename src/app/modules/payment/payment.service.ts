@@ -11,25 +11,25 @@ import { User } from "@prisma/client";
 
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
-// const ROLE_GROUP_MAPPING: { [key: string]: string } = {
-//   rol_sXYkL5QJc63EvHJI: "360 Elite Crypto Trading Alerts",
-//   rol_kFz6E1TzYWKHnoNb: "360 Elite Stock Market Slayer",
-// };
-
-// const PRICE_ID_ROLE_MAPPING: { [key: string]: string } = {
-//   elitecryptoalerts: "rol_sXYkL5QJc63EvHJI",
-//   stockmarketslayer: "rol_kFz6E1TzYWKHnoNb",
-// };
-
 const ROLE_GROUP_MAPPING: { [key: string]: string } = {
   rol_sXYkL5QJc63EvHJI: "360 Elite Crypto Trading Alerts",
   rol_kFz6E1TzYWKHnoNb: "360 Elite Stock Market Slayer",
 };
 
 const PRICE_ID_ROLE_MAPPING: { [key: string]: string } = {
-  price_1QWxVRFQDM8OhwJHQ3ZhKBrB: "rol_sXYkL5QJc63EvHJI",
-  price_1QUjNEFQDM8OhwJHDpoZ9bAZ: "rol_kFz6E1TzYWKHnoNb",
+  elitecryptoalerts: "rol_sXYkL5QJc63EvHJI",
+  stockmarketslayer: "rol_kFz6E1TzYWKHnoNb",
 };
+
+// const ROLE_GROUP_MAPPING: { [key: string]: string } = {
+//   rol_sXYkL5QJc63EvHJI: "360 Elite Crypto Trading Alerts",
+//   rol_kFz6E1TzYWKHnoNb: "360 Elite Stock Market Slayer",
+// };
+
+// const PRICE_ID_ROLE_MAPPING: { [key: string]: string } = {
+//   price_1QWxVRFQDM8OhwJHQ3ZhKBrB: "rol_sXYkL5QJc63EvHJI",
+//   price_1QUjNEFQDM8OhwJHDpoZ9bAZ: "rol_kFz6E1TzYWKHnoNb",
+// };
 
 const auth0Domain = process.env.M2M_DOMAIN;
 const auth0ClientId = process.env.M2M_CLIENT_ID;
@@ -184,7 +184,6 @@ const subscriptionCreateHelperFunc = async (
 };
 
 const getUserFromAuth0 = async (userEmail: string) => {
-  console.log(userEmail);
   const tokenResponse = await axios.post(
     `https://${process.env.M2M_DOMAIN}/oauth/token`,
     {
@@ -290,15 +289,20 @@ const removeUserRole = async (userId: string, roleId: string) => {
 
 const validateAndAssignRole = async (userEmail: string) => {
   try {
-    const user = await getUserFromAuth0(userEmail);
+    const userFromAuth = await getUserFromAuth0(userEmail);
+    const user = await prisma.user.findUnique({
+      where: { email: userEmail },
+    });
 
-    if (!user) throw new ApiError(404, "User not found");
+    if (!user) {
+      throw new ApiError(404, "User not found by email address");
+    }
 
-    const customerId = user.app_metadata?.stripe_customer_id;
-    const priceId = user.app_metadata?.priceId;
+    const customerId = user.customerId;
+    const priceId = user.priceId;
 
     if (!customerId || !priceId) {
-      await updateAuth0UserMetadata(user.user_id, {
+      await updateAuth0UserMetadata(userFromAuth.user_id, {
         priceId: null,
         group: null,
       });
@@ -318,8 +322,8 @@ const validateAndAssignRole = async (userEmail: string) => {
     if (validSubscription) {
       const roleId = PRICE_ID_ROLE_MAPPING[priceId];
       if (roleId) {
-        await assignUserRole(user.user_id, roleId);
-        await updateAuth0UserMetadata(user.user_id, {
+        await assignUserRole(userFromAuth.user_id, roleId);
+        await updateAuth0UserMetadata(userFromAuth.user_id, {
           group: ROLE_GROUP_MAPPING[roleId],
         });
         console.log(
@@ -328,12 +332,12 @@ const validateAndAssignRole = async (userEmail: string) => {
         return { valid: true, group: ROLE_GROUP_MAPPING[roleId] };
       }
     } else {
-      await updateAuth0UserMetadata(user.user_id, {
+      await updateAuth0UserMetadata(userFromAuth.user_id, {
         priceId: null,
         group: null,
       });
-      await removeUserRole(user.user_id, "rol_sXYkL5QJc63EvHJI");
-      await removeUserRole(user.user_id, "rol_kFz6E1TzYWKHnoNb");
+      await removeUserRole(userFromAuth.user_id, "rol_sXYkL5QJc63EvHJI");
+      await removeUserRole(userFromAuth.user_id, "rol_kFz6E1TzYWKHnoNb");
       console.log("❌ Subscription invalid, roles removed, group cleared");
       return { valid: false };
     }
@@ -344,10 +348,6 @@ const validateAndAssignRole = async (userEmail: string) => {
 };
 
 const handleSubscriptionInAuth = async (userEmail: string) => {
-  if (!userEmail) {
-    throw new ApiError(404, "Email not found for the given customer ID");
-  }
-
   await validateAndAssignRole(userEmail);
 
   const getAuth0Token = async () => {
@@ -380,7 +380,6 @@ const handleSubscriptionInAuth = async (userEmail: string) => {
   );
 
   const users = userResponse.data;
-  console.log(users);
   const userId = users[0]?.user_id;
 
   if (!userId) {
