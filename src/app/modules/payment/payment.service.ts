@@ -158,7 +158,7 @@ const subscriptionCreateHelperFunc = async (
 
   const user = userResponse.data;
   console.log(user);
-  // const userId = user[0]?.user_id;
+  const userId = user[0]?.user_id;
 
   if (!user) {
     throw new ApiError(404, "User not found by email address");
@@ -186,8 +186,8 @@ const subscriptionCreateHelperFunc = async (
     throw new ApiError(404, "PriceId not found in the subscription");
   }
 
-  // let role: string | undefined;
-  // let groupName: string | undefined;
+  let role: string | undefined;
+  let groupName: string | undefined;
 
   // if (priceId === "stockmarketslayer") {
   //   role = "rol_kFz6E1TzYWKHnoNb";
@@ -197,37 +197,45 @@ const subscriptionCreateHelperFunc = async (
   //   groupName = "360 Elite Crypto Trading Alerts";
   // }
 
-  // if (role && groupName) {
-  //   // Assign Role to User
-  //   await axios.post(
-  //     `https://${auth0Domain}/api/v2/users/${userId}/roles`,
-  //     {
-  //       roles: [role],
-  //     },
-  //     {
-  //       headers: {
-  //         Authorization: `Bearer ${managementToken}`,
-  //         "Content-Type": "application/json",
-  //       },
-  //     }
-  //   );
-  //   console.log(`✅ Role assigned to user ${userId} based on Price ID`);
+  if (priceId === "price_1QWxVRFQDM8OhwJHQ3ZhKBrB") {
+    role = "rol_kFz6E1TzYWKHnoNb";
+    groupName = "360 Elite Stock Market Slayer";
+  } else if (priceId === "price_1QUjNEFQDM8OhwJHDpoZ9bAZ") {
+    role = "rol_sXYkL5QJc6ЗEVHJ!";
+    groupName = "360 Elite Crypto Trading Alerts";
+  }
 
-  //   // Assign User to Group
-  //   await axios.post(
-  //     `https://${auth0Domain}/api/v2/users/${userId}/groups`,
-  //     {
-  //       groups: [groupName],
-  //     },
-  //     {
-  //       headers: {
-  //         Authorization: `Bearer ${managementToken}`,
-  //         "Content-Type": "application/json",
-  //       },
-  //     }
-  //   );
-  //   console.log(`✅ Group ${groupName} assigned to user ${userId}`);
-  // }
+  if (role && groupName) {
+    // Assign Role to User
+    await axios.post(
+      `https://${auth0Domain}/api/v2/users/${userId}/roles`,
+      {
+        roles: [role],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${managementToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log(`✅ Role assigned to user ${userId} based on Price ID`);
+
+    // Assign User to Group
+    await axios.post(
+      `https://${auth0Domain}/api/v2/users/${userId}/groups`,
+      {
+        groups: [groupName],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${managementToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log(`✅ Group ${groupName} assigned to user ${userId}`);
+  }
 };
 
 const getUserFromAuth0 = async (userEmail: string) => {
