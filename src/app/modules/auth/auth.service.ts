@@ -191,25 +191,30 @@ const loginAuthProvider = async (payload: {
       where: { email: user.email },
     });
 
+    if (!existingUser) {
+      throw new ApiError(404, "User not found");
+    }
+
+    const accessToken = jwtHelpers.generateToken(
+      {
+        id: existingUser.id,
+        email: existingUser.email,
+        role: existingUser.role,
+        fcmToken: existingUser?.fcmToken,
+        subscription: existingUser.subcription,
+      },
+      config.jwt.jwt_secret as string,
+      config.jwt.expires_in as string
+    );
+
     const updatedUser = await prisma.user.update({
       where: { email: user.email },
       data: {
         password: bcrypt.hashSync(payload.password, 10),
         fcmToken: payload.fcmToken ? payload.fcmToken : existingUser?.fcmToken,
+        accessToken: accessToken,
       },
     });
-
-    const accessToken = jwtHelpers.generateToken(
-      {
-        id: updatedUser.id,
-        email: updatedUser.email,
-        role: updatedUser.role,
-        fcmToken: updatedUser?.fcmToken,
-        subscription: updatedUser.subcription,
-      },
-      config.jwt.jwt_secret as string,
-      config.jwt.expires_in as string
-    );
 
     const { password, ...userInfo } = updatedUser;
 
