@@ -102,7 +102,7 @@ const cancelSubscriptionInStripe = async (subscriptionId: string) => {
   return cancelSubcription;
 };
 
-const handleUserInAuth = async (
+const subscriptionCreateHelperFunc = async (
   event: Stripe.CustomerSubscriptionCreatedEvent
 ) => {
   const customerId = event.data.object.customer as string;
@@ -164,7 +164,27 @@ const handleUserInAuth = async (
     throw new ApiError(404, "User not found by email address");
   }
 
-  // const priceId = users[0]?.app_metadata?.priceId;
+  // Retrieve the customer's subscriptions to get the priceId
+  const subscriptions = await stripe.subscriptions.list({
+    customer: customerId,
+  });
+
+  // Assuming there's only one active subscription
+  const activeSubscription = subscriptions.data.find(
+    (subscription) => subscription.status === "active"
+  );
+
+  if (!activeSubscription) {
+    throw new ApiError(404, "No active subscription found for the customer");
+  }
+
+  // Retrieve the priceId from the subscription
+  const priceId = activeSubscription.items.data[0]?.price.id;
+  console.log("priceId:################################### " + priceId);
+
+  if (!priceId) {
+    throw new ApiError(404, "PriceId not found in the subscription");
+  }
 
   // let role: string | undefined;
   // let groupName: string | undefined;
@@ -482,7 +502,7 @@ const handelPaymentWebhook = async (req: Request) => {
     let result;
     switch (event.type) {
       case "customer.subscription.created":
-        result = await handleUserInAuth(event);
+        result = await subscriptionCreateHelperFunc(event);
         break;
 
       default:
