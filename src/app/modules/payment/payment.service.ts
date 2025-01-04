@@ -11,25 +11,25 @@ import { User } from "@prisma/client";
 
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
-const ROLE_GROUP_MAPPING: { [key: string]: string } = {
-  rol_sXYkL5QJc63EvHJI: "360 Elite Crypto Trading Alerts",
-  rol_kFz6E1TzYWKHnoNb: "360 Elite Stock Market Slayer",
-};
-
-const PRICE_ID_ROLE_MAPPING: { [key: string]: string } = {
-  elitecryptoalerts: "rol_sXYkL5QJc63EvHJI",
-  stockmarketslayer: "rol_kFz6E1TzYWKHnoNb",
-};
-
 // const ROLE_GROUP_MAPPING: { [key: string]: string } = {
 //   rol_sXYkL5QJc63EvHJI: "360 Elite Crypto Trading Alerts",
 //   rol_kFz6E1TzYWKHnoNb: "360 Elite Stock Market Slayer",
 // };
 
 // const PRICE_ID_ROLE_MAPPING: { [key: string]: string } = {
-//   price_1QWxVRFQDM8OhwJHQ3ZhKBrB: "rol_sXYkL5QJc63EvHJI",
-//   price_1QUjNEFQDM8OhwJHDpoZ9bAZ: "rol_kFz6E1TzYWKHnoNb",
+//   elitecryptoalerts: "rol_sXYkL5QJc63EvHJI",
+//   stockmarketslayer: "rol_kFz6E1TzYWKHnoNb",
 // };
+
+const ROLE_GROUP_MAPPING: { [key: string]: string } = {
+  rol_sXYkL5QJc63EvHJI: "360 Elite Crypto Trading Alerts",
+  rol_kFz6E1TzYWKHnoNb: "360 Elite Stock Market Slayer",
+};
+
+const PRICE_ID_ROLE_MAPPING: { [key: string]: string } = {
+  price_1QWxVRFQDM8OhwJHQ3ZhKBrB: "rol_sXYkL5QJc63EvHJI",
+  price_1QUjNEFQDM8OhwJHDpoZ9bAZ: "rol_kFz6E1TzYWKHnoNb",
+};
 
 const auth0Domain = process.env.M2M_DOMAIN;
 const auth0ClientId = process.env.M2M_CLIENT_ID;
@@ -348,90 +348,89 @@ const handleSubscriptionInAuth = async (userEmail: string) => {
     throw new ApiError(404, "Email not found for the given customer ID");
   }
 
-  const result = await validateAndAssignRole(userEmail);
-  return result;
+  await validateAndAssignRole(userEmail);
 
-  // const getAuth0Token = async () => {
-  //   const tokenResponse = await axios.post(
-  //     `https://${auth0Domain}/oauth/token`,
-  //     {
-  //       client_id: auth0ClientId,
-  //       client_secret: auth0ClientSecret,
-  //       audience: `https://${auth0Domain}/api/v2/`,
-  //       grant_type: "client_credentials",
-  //       scope:
-  //         "read:users update:users create:user_tickets read:roles update:users_app_metadata",
-  //     }
-  //   );
+  const getAuth0Token = async () => {
+    const tokenResponse = await axios.post(
+      `https://${auth0Domain}/oauth/token`,
+      {
+        client_id: auth0ClientId,
+        client_secret: auth0ClientSecret,
+        audience: `https://${auth0Domain}/api/v2/`,
+        grant_type: "client_credentials",
+        scope:
+          "read:users update:users create:user_tickets read:roles update:users_app_metadata",
+      }
+    );
 
-  //   const managementToken = tokenResponse.data.access_token;
-  //   return managementToken;
-  // };
+    const managementToken = tokenResponse.data.access_token;
+    return managementToken;
+  };
 
-  // const managementToken = await getAuth0Token();
+  const managementToken = await getAuth0Token();
 
-  // // Get User by Email
-  // const userResponse = await axios.get(
-  //   `https://${auth0Domain}/api/v2/users-by-email?email=${userEmail}`,
-  //   {
-  //     headers: {
-  //       Authorization: `Bearer ${managementToken}`,
-  //     },
-  //   }
-  // );
+  // Get User by Email
+  const userResponse = await axios.get(
+    `https://${auth0Domain}/api/v2/users-by-email?email=${userEmail}`,
+    {
+      headers: {
+        Authorization: `Bearer ${managementToken}`,
+      },
+    }
+  );
 
-  // const users = userResponse.data;
-  // console.log(users);
-  // const userId = users[0]?.user_id;
+  const users = userResponse.data;
+  console.log(users);
+  const userId = users[0]?.user_id;
 
-  // if (!userId) {
-  //   throw new ApiError(404, "User not found by email address");
-  // }
+  if (!userId) {
+    throw new ApiError(404, "User not found by email address");
+  }
 
-  // const priceId = users[0]?.app_metadata?.priceId;
+  const priceId = users[0]?.app_metadata?.priceId;
 
-  // let role: string | undefined;
-  // let groupName: string | undefined;
+  let role: string | undefined;
+  let groupName: string | undefined;
 
-  // if (priceId === "stockmarketslayer") {
-  //   role = "rol_kFz6E1TzYWKHnoNb";
-  //   groupName = "360 Elite Stock Market Slayer";
-  // } else if (priceId === "elitecryptoalerts") {
-  //   role = "rol_sXYkL5QJc6ЗEVHJ!";
-  //   groupName = "360 Elite Crypto Trading Alerts";
-  // }
+  if (priceId === "stockmarketslayer") {
+    role = "rol_kFz6E1TzYWKHnoNb";
+    groupName = "360 Elite Stock Market Slayer";
+  } else if (priceId === "elitecryptoalerts") {
+    role = "rol_sXYkL5QJc6ЗEVHJ!";
+    groupName = "360 Elite Crypto Trading Alerts";
+  }
 
-  // if (role && groupName) {
-  //   // Assign Role to User
-  //   await axios.post(
-  //     `https://${auth0Domain}/api/v2/users/${userId}/roles`,
-  //     {
-  //       roles: [role],
-  //     },
-  //     {
-  //       headers: {
-  //         Authorization: `Bearer ${managementToken}`,
-  //         "Content-Type": "application/json",
-  //       },
-  //     }
-  //   );
-  //   console.log(`✅ Role assigned to user ${userId} based on Price ID`);
+  if (role && groupName) {
+    // Assign Role to User
+    await axios.post(
+      `https://${auth0Domain}/api/v2/users/${userId}/roles`,
+      {
+        roles: [role],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${managementToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log(`✅ Role assigned to user ${userId} based on Price ID`);
 
-  //   // Assign User to Group
-  //   await axios.post(
-  //     `https://${auth0Domain}/api/v2/users/${userId}/groups`,
-  //     {
-  //       groups: [groupName],
-  //     },
-  //     {
-  //       headers: {
-  //         Authorization: `Bearer ${managementToken}`,
-  //         "Content-Type": "application/json",
-  //       },
-  //     }
-  //   );
-  //   console.log(`✅ Group ${groupName} assigned to user ${userId}`);
-  // }
+    // Assign User to Group
+    await axios.post(
+      `https://${auth0Domain}/api/v2/users/${userId}/groups`,
+      {
+        groups: [groupName],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${managementToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log(`✅ Group ${groupName} assigned to user ${userId}`);
+  }
 };
 
 const handelPaymentWebhook = async (req: Request) => {
