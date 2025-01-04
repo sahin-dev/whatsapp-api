@@ -222,7 +222,7 @@ const subscriptionCreateHelperFunc = async (
     console.log(`✅ Role assigned to user ${userId} based on Price ID`);
 
     // Assign User to Group
-    await axios.post(
+    const testResult = await axios.post(
       `https://${auth0Domain}/api/v2/users/${userId}/groups`,
       {
         groups: [groupName],
@@ -234,6 +234,7 @@ const subscriptionCreateHelperFunc = async (
         },
       }
     );
+    console.log("test result", testResult);
     console.log(`✅ Group ${groupName} assigned to user ${userId}`);
   }
 };
