@@ -209,7 +209,9 @@ const subscriptionCreateHelperFunc = async (
       customerId: customerId,
       priceId: priceId,
       subscriptionId: activeSubscription.id,
+      subcription: true,
       roleId: roleId,
+      group: ROLE_GROUP_MAPPING[roleId],
     };
     console.log(data);
   }
