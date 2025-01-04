@@ -7,7 +7,7 @@ import { Request } from "express";
 import axios from "axios";
 import ApiError from "../../errors/ApiErrors";
 import prisma from "../../../shared/prisma";
-import bcrypt from "bcryptjs";
+import { userInfo } from "os";
 
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
@@ -135,9 +135,6 @@ const subscriptionCreateHelperFunc = async (
     throw new ApiError(404, "Email not found for the given customer ID");
   }
 
-  // const result = await validateAndAssignRole(userEmail);
-  // return result;
-
   const getAuth0Token = async () => {
     const tokenResponse = await axios.post(
       `https://${auth0Domain}/oauth/token`,
@@ -197,17 +194,6 @@ const subscriptionCreateHelperFunc = async (
     throw new ApiError(404, "PriceId not found in the subscription");
   }
 
-  // let role: string | undefined;
-  // let groupName: string | undefined;
-
-  // if (priceId === "stockmarketslayer") {
-  //   role = "rol_kFz6E1TzYWKHnoNb";
-  //   groupName = "360 Elite Stock Market Slayer";
-  // } else if (priceId === "elitecryptoalerts") {
-  //   role = "rol_sXYkL5QJc6ЗEVHJ!";
-  //   groupName = "360 Elite Crypto Trading Alerts";
-  // }
-
   const roleId = PRICE_ID_ROLE_MAPPING[priceId];
   if (roleId) {
     await assignUserRole(userId, roleId);
@@ -217,49 +203,16 @@ const subscriptionCreateHelperFunc = async (
     console.log(
       `✅ Role ${roleId} assigned, Group: ${ROLE_GROUP_MAPPING[roleId]}`
     );
-    return { valid: true, group: ROLE_GROUP_MAPPING[roleId] };
+    const data = {
+      email: userEmail,
+      username: user[0].username,
+      customerId: customerId,
+      priceId: priceId,
+      subscriptionId: activeSubscription.id,
+      roleId: roleId,
+    };
+    console.log(data);
   }
-
-  // if (priceId === "price_1QWxVRFQDM8OhwJHQ3ZhKBrB") {
-  //   role = "rol_kFz6E1TzYWKHnoNb";
-  //   groupName = "360 Elite Stock Market Slayer";
-  // } else if (priceId === "price_1QUjNEFQDM8OhwJHDpoZ9bAZ") {
-  //   role = "rol_sXYkL5QJc6ЗEVHJ!";
-  //   groupName = "360 Elite Crypto Trading Alerts";
-  // }
-
-  // if (role && groupName) {
-  //   // Assign Role to User
-  //   await axios.post(
-  //     `https://${auth0Domain}/api/v2/users/${userId}/roles`,
-  //     {
-  //       roles: [role],
-  //     },
-  //     {
-  //       headers: {
-  //         Authorization: `Bearer ${managementToken}`,
-  //         "Content-Type": "application/json",
-  //       },
-  //     }
-  //   );
-  //   console.log(`✅ Role assigned to user ${userId} based on Price ID`);
-  //   console.log(223, "line working");
-  //   // Assign User to Group
-  //   const testResult = await axios.post(
-  //     `https://${auth0Domain}/api/v2/users/${userId}/groups`,
-  //     {
-  //       groups: [groupName],
-  //     },
-  //     {
-  //       headers: {
-  //         Authorization: `Bearer ${managementToken}`,
-  //         "Content-Type": "application/json",
-  //       },
-  //     }
-  //   );
-  //   console.log("test result", testResult);
-  //   console.log(`✅ Group ${groupName} assigned to user ${userId}`);
-  // }
 };
 
 const getUserFromAuth0 = async (userEmail: string) => {
