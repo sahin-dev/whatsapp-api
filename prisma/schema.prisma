@@ -24,7 +24,7 @@ model User {
   status         UserStatus      @default(ACTIVE)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
-  accessGroup    String[]
+  accessGroup    String?
   group          Group[]
   chanel         Chanel[]
   message        Message[]
