@@ -110,18 +110,18 @@ const handleUserInAuth = async (
   event: Stripe.CustomerSubscriptionCreatedEvent
 ) => {
   const customerId = event.data.object.customer as string;
-  // const auth0Domain = process.env.M2M_DOMAIN;
-  // const auth0ClientId = process.env.M2M_CLIENT_ID;
-  // const auth0ClientSecret = process.env.M2M_CLIENT_SECRET;
 
   const customer = await stripe.customers.retrieve(customerId);
+  console.log("customer: " + customer);
   const userEmail = (customer as Stripe.Customer).email;
+
   if (!userEmail) {
     throw new ApiError(404, "Email not found for the given customer ID");
   }
+  return;
 
-  const result = await validateAndAssignRole(userEmail);
-  return result;
+  // const result = await validateAndAssignRole(userEmail);
+  // return result;
 
   // const getAuth0Token = async () => {
   //   const tokenResponse = await axios.post(
@@ -368,12 +368,6 @@ const validateAndAssignRole = async (userEmail: string) => {
   }
 };
 
-const handleSubscriptionDeleted = async (event: Stripe.Event) => {
-  event.data.object as Stripe.Subscription;
-
-  return;
-};
-
 const handleSubscriptionInAuth = async (userEmail: string) => {
   if (!userEmail) {
     throw new ApiError(404, "Email not found for the given customer ID");
@@ -483,10 +477,6 @@ const handelPaymentWebhook = async (req: Request) => {
     );
     let result;
     switch (event.type) {
-      case "customer.subscription.deleted":
-        result = await handleSubscriptionDeleted(event);
-        break;
-
       case "customer.subscription.created":
         result = await handleUserInAuth(event);
         break;
