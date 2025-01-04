@@ -190,6 +190,7 @@ const loginAuthProvider = async (payload: {
     const updatedUser = await prisma.user.update({
       where: { email: user.email },
       data: {
+        ...payload,
         password: bcrypt.hashSync(payload.password, 10),
       },
     });
