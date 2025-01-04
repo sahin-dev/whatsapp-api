@@ -113,7 +113,7 @@ const handleUserInAuth = async (
   console.log("customerId:################################### " + customerId);
 
   const customer = await stripe.customers.retrieve(customerId);
-  console.log("customer: ####################################", 115, +customer);
+  console.log("customer: ####################################", 115, customer);
   const userEmail = (customer as Stripe.Customer).email;
 
   if (!userEmail) {
