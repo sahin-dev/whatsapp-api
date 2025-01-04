@@ -159,11 +159,11 @@ const handleUserInAuth = async (
       },
     }
   );
-  console.log("user response: " + userResponse.data);
 
-  // const users = userResponse.data;
-  // console.log(users);
-  // const userId = users[0]?.user_id;
+  const users = userResponse.data;
+  console.log(users);
+  const userId = users[0]?.user_id;
+  console.log("user id: " + userId);
 
   // if (!userId) {
   //   throw new ApiError(404, "User not found by email address");
