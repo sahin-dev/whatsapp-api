@@ -195,10 +195,22 @@ const loginAuthProvider = async (payload: {
       },
     });
 
+    const accessToken = jwtHelpers.generateToken(
+      {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        fcmToken: updatedUser?.fcmToken,
+        subscription: updatedUser.subcription,
+      },
+      config.jwt.jwt_secret as string,
+      config.jwt.expires_in as string
+    );
+
     const { password, ...userInfo } = updatedUser;
 
     return {
-      token,
+      accessToken,
       userInfo,
     };
   } catch (error: any) {
