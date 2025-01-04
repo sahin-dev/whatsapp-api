@@ -187,11 +187,15 @@ const loginAuthProvider = async (payload: {
     verifyToken(token);
     const user = await fetchUserProfile(token);
 
+    const existingUser = await prisma.user.findUnique({
+      where: { email: user.email },
+    });
+
     const updatedUser = await prisma.user.update({
       where: { email: user.email },
       data: {
-        ...payload,
         password: bcrypt.hashSync(payload.password, 10),
+        fcmToken: payload.fcmToken ? payload.fcmToken : existingUser?.fcmToken,
       },
     });
 
