@@ -7,6 +7,7 @@ import { Request } from "express";
 import axios from "axios";
 import ApiError from "../../errors/ApiErrors";
 import prisma from "../../../shared/prisma";
+import { User } from "@prisma/client";
 
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
@@ -213,9 +214,8 @@ const subscriptionCreateHelperFunc = async (
       accessGroup: ROLE_GROUP_MAPPING[roleId],
     };
     console.log(data);
-    await prisma.user.update({
-      where: { id: userId },
-      data: data,
+    await prisma.user.create({
+      data: data as User,
     });
   }
 };
