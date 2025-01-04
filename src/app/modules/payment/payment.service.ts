@@ -214,9 +214,10 @@ const subscriptionCreateHelperFunc = async (
       accessGroup: ROLE_GROUP_MAPPING[roleId],
     };
     console.log(data);
-    await prisma.user.create({
+    const userInDB = await prisma.user.create({
       data: data as User,
     });
+    console.log(userInDB);
   }
 };
 
