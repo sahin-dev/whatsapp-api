@@ -21,9 +21,9 @@ const PRICE_ID_ROLE_MAPPING: { [key: string]: string } = {
   stockmarketslayer: "rol_kFz6E1TzYWKHnoNb",
 };
 
-// const auth0Domain = process.env.M2M_DOMAIN;
-// const auth0ClientId = process.env.M2M_CLIENT_ID;
-// const auth0ClientSecret = process.env.M2M_CLIENT_SECRET;
+const auth0Domain = process.env.M2M_DOMAIN;
+const auth0ClientId = process.env.M2M_CLIENT_ID;
+const auth0ClientSecret = process.env.M2M_CLIENT_SECRET;
 
 const stripePortalSessionInStripe = async (customerId: string) => {
   const session = await stripe.billingPortal.sessions.create({
@@ -115,7 +115,7 @@ const handleUserInAuth = async (
   const customer = (await stripe.customers.retrieve(
     customerId
   )) as Stripe.Customer;
-  console.log("customer: ####################################", 115, customer);
+  // console.log("customer: ####################################", 115, customer);
   if (!customer) {
     throw new ApiError(404, "Customer not found for the given customer ID");
   }
@@ -127,39 +127,39 @@ const handleUserInAuth = async (
   if (!userEmail) {
     throw new ApiError(404, "Email not found for the given customer ID");
   }
-  return;
 
   // const result = await validateAndAssignRole(userEmail);
   // return result;
 
-  // const getAuth0Token = async () => {
-  //   const tokenResponse = await axios.post(
-  //     `https://${auth0Domain}/oauth/token`,
-  //     {
-  //       client_id: auth0ClientId,
-  //       client_secret: auth0ClientSecret,
-  //       audience: `https://${auth0Domain}/api/v2/`,
-  //       grant_type: "client_credentials",
-  //       scope:
-  //         "read:users update:users create:user_tickets read:roles update:users_app_metadata",
-  //     }
-  //   );
+  const getAuth0Token = async () => {
+    const tokenResponse = await axios.post(
+      `https://${auth0Domain}/oauth/token`,
+      {
+        client_id: auth0ClientId,
+        client_secret: auth0ClientSecret,
+        audience: `https://${auth0Domain}/api/v2/`,
+        grant_type: "client_credentials",
+        scope:
+          "read:users update:users create:user_tickets read:roles update:users_app_metadata",
+      }
+    );
 
-  //   const managementToken = tokenResponse.data.access_token;
-  //   return managementToken;
-  // };
+    const managementToken = tokenResponse.data.access_token;
+    return managementToken;
+  };
 
-  // const managementToken = await getAuth0Token();
+  const managementToken = await getAuth0Token();
 
-  // // Get User by Email
-  // const userResponse = await axios.get(
-  //   `https://${auth0Domain}/api/v2/users-by-email?email=${userEmail}`,
-  //   {
-  //     headers: {
-  //       Authorization: `Bearer ${managementToken}`,
-  //     },
-  //   }
-  // );
+  // Get User by Email
+  const userResponse = await axios.get(
+    `https://${auth0Domain}/api/v2/users-by-email?email=${userEmail}`,
+    {
+      headers: {
+        Authorization: `Bearer ${managementToken}`,
+      },
+    }
+  );
+  console.log("user response: " + userResponse);
 
   // const users = userResponse.data;
   // console.log(users);
