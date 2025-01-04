@@ -159,7 +159,7 @@ const handleUserInAuth = async (
       },
     }
   );
-  console.log("user response: " + userResponse);
+  console.log("user response: " + userResponse.data);
 
   // const users = userResponse.data;
   // console.log(users);
