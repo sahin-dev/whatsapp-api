@@ -43,36 +43,32 @@ const createSubcriptionInStripe = async (payload: {
 
   let userInfo;
 
-  userInfo = await prisma.user.findUnique({
-    where: { email: email },
+  // if (!userInfo) {
+  //   userInfo = await prisma.user.create({
+  //     data: {
+  //       email: email,
+  //       username: email,
+  //       password: await bcrypt.hash(email, 10),
+  //     },
+  //   });
+  // }
+
+  // if (userInfo?.priceId === priceId) {
+  //   throw new ApiError(409, "You already have subscription this plan");
+  // }
+
+  // let customerId = userInfo?.customerId;
+
+  // if (!customerId) {
+  const customer = await stripe.customers.create({
+    email: email,
   });
-
-  if (!userInfo) {
-    userInfo = await prisma.user.create({
-      data: {
-        email: email,
-        username: email,
-        password: await bcrypt.hash(email, 10),
-      },
-    });
-  }
-
-  if (userInfo?.priceId === priceId) {
-    throw new ApiError(409, "You already have subscription this plan");
-  }
-
-  let customerId = userInfo?.customerId;
-
-  if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: email,
-    });
-    customerId = customer.id;
-    await prisma.user.update({
-      where: { id: userInfo?.id },
-      data: { customerId: customer.id },
-    });
-  }
+  const customerId = customer.id;
+  // await prisma.user.update({
+  //   where: { id: userInfo?.id },
+  //   data: { customerId: customer.id },
+  // });
+  // }
 
   await stripe.paymentMethods.attach(paymentMethodId, {
     customer: customerId,
@@ -88,15 +84,15 @@ const createSubcriptionInStripe = async (payload: {
     expand: ["latest_invoice.payment_intent"],
   });
 
-  const updateData = {
-    subscriptionId: subscription.id,
-    priceId: priceId,
-    subcription: true,
-  };
-  await prisma.user.update({
-    where: { id: userInfo?.id },
-    data: updateData,
-  });
+  // const updateData = {
+  //   subscriptionId: subscription.id,
+  //   priceId: priceId,
+  //   subcription: true,
+  // };
+  // await prisma.user.update({
+  //   where: { id: userInfo?.id },
+  //   data: updateData,
+  // });
   return subscription;
 };
 
@@ -163,11 +159,10 @@ const handleUserInAuth = async (
   const users = userResponse.data;
   console.log(users);
   const userId = users[0]?.user_id;
-  console.log("user id: " + userId);
 
-  // if (!userId) {
-  //   throw new ApiError(404, "User not found by email address");
-  // }
+  if (!userId) {
+    throw new ApiError(404, "User not found by email address");
+  }
 
   // const priceId = users[0]?.app_metadata?.priceId;
 
