@@ -11,25 +11,25 @@ import { User } from "@prisma/client";
 
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
-const ROLE_GROUP_MAPPING: { [key: string]: string } = {
-  rol_sXYkL5QJc63EvHJI: "360 Elite Crypto Trading Alerts",
-  rol_kFz6E1TzYWKHnoNb: "360 Elite Stock Market Slayer",
-};
-
-const PRICE_ID_ROLE_MAPPING: { [key: string]: string } = {
-  elitecryptoalerts: "rol_sXYkL5QJc63EvHJI",
-  stockmarketslayer: "rol_kFz6E1TzYWKHnoNb",
-};
-
 // const ROLE_GROUP_MAPPING: { [key: string]: string } = {
 //   rol_sXYkL5QJc63EvHJI: "360 Elite Crypto Trading Alerts",
 //   rol_kFz6E1TzYWKHnoNb: "360 Elite Stock Market Slayer",
 // };
 
 // const PRICE_ID_ROLE_MAPPING: { [key: string]: string } = {
-//   price_1QWxVRFQDM8OhwJHQ3ZhKBrB: "rol_sXYkL5QJc63EvHJI",
-//   price_1QUjNEFQDM8OhwJHDpoZ9bAZ: "rol_kFz6E1TzYWKHnoNb",
+//   elitecryptoalerts: "rol_sXYkL5QJc63EvHJI",
+//   stockmarketslayer: "rol_kFz6E1TzYWKHnoNb",
 // };
+
+const ROLE_GROUP_MAPPING: { [key: string]: string } = {
+  rol_sXYkL5QJc63EvHJI: "360 Elite Crypto Trading Alerts",
+  rol_kFz6E1TzYWKHnoNb: "360 Elite Stock Market Slayer",
+};
+
+const PRICE_ID_ROLE_MAPPING: { [key: string]: string } = {
+  price_1QWxVRFQDM8OhwJHQ3ZhKBrB: "rol_sXYkL5QJc63EvHJI",
+  price_1QUjNEFQDM8OhwJHDpoZ9bAZ: "rol_kFz6E1TzYWKHnoNb",
+};
 
 const auth0Domain = process.env.M2M_DOMAIN;
 const auth0ClientId = process.env.M2M_CLIENT_ID;
