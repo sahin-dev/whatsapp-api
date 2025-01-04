@@ -84,7 +84,7 @@ const loginUserIntoDB = async (payload: any) => {
   } else {
     const isPasswordValid = await bcrypt.compare(
       payload.password,
-      user.password
+      user.password as string
     );
     if (!isPasswordValid) {
       throw new ApiError(401, "Invalid credentials");
