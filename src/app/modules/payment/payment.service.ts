@@ -455,10 +455,6 @@ const subscriptionCreateHelperFunc = async (
     });
   }
 
-  if (user?.priceId === priceId) {
-    throw new ApiError(409, "You have already subscribed to this group");
-  }
-
   const newAccessGroup = [ROLE_GROUP_MAPPING[roleId]] as any;
 
   await prisma.user.update({
