@@ -373,7 +373,7 @@ const handleSubscriptionDeleted = async (event: Stripe.Event) => {
 
   const priceId = subscription.items.data[0]?.price.id;
   const roleId = PRICE_ID_ROLE_MAPPING[priceId];
-  const removeGroup = ROLE_GROUP_MAPPING[roleId];
+  const removeGroup = [ROLE_GROUP_MAPPING[roleId]] as any;
 
   // Filter out the group from the current access groups
   const updatedAccessGroups = isUserExist.accessGroup.filter(
