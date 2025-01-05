@@ -363,8 +363,8 @@ const assignUserRole = async (userId: string, roleId: string) => {
 const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   const subscription = event.data.object as Stripe.Subscription;
 
-  const isUserExist = await prisma.user.findUnique({
-    where: { email: subscription.id },
+  const isUserExist = await prisma.user.findFirst({
+    where: { subscriptionId: subscription.id },
   });
 
   if (!isUserExist) {
