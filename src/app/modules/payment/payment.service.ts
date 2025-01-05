@@ -362,33 +362,53 @@ const assignUserRole = async (userId: string, roleId: string) => {
 //using for subscription delete operation
 const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   const customer = event.data.object as Stripe.Customer;
+  const customerId = customer.id;
   const email = customer.email;
 
-  const subscription = event.data.object as Stripe.Subscription;
-  const priceId = subscription.items.data[0]?.price.id;
+  if (!email) {
+    throw new ApiError(404, "Email not found");
+  }
+
+  // Retrieve active subscriptions for the customer
+  const subscriptions = await stripe.subscriptions.list({
+    customer: customerId,
+  });
+
+  // Find the active subscription
+  const activeSubscription = subscriptions.data.find(
+    (subscription) => subscription.status === "active"
+  );
+
+  if (!activeSubscription) {
+    throw new ApiError(404, "Active subscription not found");
+  }
+
+  // Extract the priceId from the subscription
+  const priceId = activeSubscription.items.data[0]?.price.id;
 
   if (!priceId) {
     throw new ApiError(404, "Price ID not found in the subscription");
   }
 
-  if (!email) {
-    throw new ApiError(404, "email not found");
-  }
-
+  // Find the user in the database
   const isUserExist = await prisma.user.findUnique({
     where: { email: email },
   });
 
   if (!isUserExist) {
-    throw new ApiError(404, "user not found");
+    throw new ApiError(404, "User not found");
   }
-  const roleId = PRICE_ID_ROLE_MAPPING[priceId];
-  const removeGroup = ROLE_GROUP_MAPPING[roleId];
 
+  // Get the roleId corresponding to the priceId
+  const roleId = PRICE_ID_ROLE_MAPPING[priceId];
+  const removeGroup = ROLE_GROUP_MAPPING[roleId]; // The group to remove
+
+  // Filter out the group from the user's accessGroups
   const updatedAccessGroups = isUserExist.accessGroup.filter(
     (group) => group !== removeGroup
   );
 
+  // Update the user by removing the access group and disabling subscription
   const result = await prisma.user.update({
     where: { id: isUserExist.id },
     data: {
