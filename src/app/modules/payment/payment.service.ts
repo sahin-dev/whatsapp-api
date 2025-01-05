@@ -486,7 +486,7 @@ const subscriptionCreateHelperFunc = async (
     data: {
       ...data,
       accessGroup: {
-        push: [ROLE_GROUP_MAPPING[roleId], newAccessGroup],
+        push: newAccessGroup,
       },
     },
   });
