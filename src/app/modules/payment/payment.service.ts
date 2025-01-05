@@ -359,6 +359,25 @@ const assignUserRole = async (userId: string, roleId: string) => {
   );
 };
 
+const handleSubscriptionDeleted = async (event: Stripe.Event) => {
+  const subscription = event.data.object as Stripe.Subscription;
+
+  const isUserExist = await prisma.user.findFirst({
+    where: { subscriptionId: subscription.id },
+  });
+
+  if (!isUserExist) {
+    throw new ApiError(404, "company not found");
+  }
+
+  const result = await prisma.user.update({
+    where: { id: isUserExist.id },
+    data: { subcription: false, subscriptionId: null },
+  });
+
+  return result;
+};
+
 //using for webhook
 const subscriptionCreateHelperFunc = async (
   event: Stripe.CustomerSubscriptionCreatedEvent
@@ -478,6 +497,10 @@ const handelPaymentWebhook = async (req: Request) => {
     switch (event.type) {
       case "customer.subscription.created":
         result = await subscriptionCreateHelperFunc(event);
+        break;
+
+      case "customer.subscription.deleted":
+        result = await handleSubscriptionDeleted(event);
         break;
 
       default:
