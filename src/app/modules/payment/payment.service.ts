@@ -156,6 +156,14 @@ const validateAndAssignRole = async (userEmail: string) => {
       status: "active",
     });
 
+    const activeSubscription = subscriptions.data.find(
+      (subscription) => subscription.status === "active"
+    );
+
+    if (!activeSubscription) {
+      throw new ApiError(404, "No active subscription found for the customer");
+    }
+
     const validSubscription = subscriptions.data.find((sub) =>
       sub.items.data.some((item) => item.price.id === priceId)
     );
@@ -165,7 +173,10 @@ const validateAndAssignRole = async (userEmail: string) => {
       if (roleId) {
         await assignUserRole(userFromAuth.user_id, roleId);
         await updateAuth0UserMetadata(userFromAuth.user_id, {
-          group: ROLE_GROUP_MAPPING[roleId],
+          // group: ROLE_GROUP_MAPPING[roleId],
+          stripe_customer_id: customerId,
+          priceId: priceId,
+          subscriptionId: activeSubscription.id,
         });
         console.log(
           `✅ Role ${roleId} assigned, Group: ${ROLE_GROUP_MAPPING[roleId]}`
