@@ -392,8 +392,6 @@ const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   const result = await prisma.user.update({
     where: { id: isUserExist.id },
     data: {
-      subcription: false,
-      subscriptionId: null,
       accessGroup: updatedAccessGroups,
     },
   });
@@ -459,9 +457,9 @@ const subscriptionCreateHelperFunc = async (
 
   const newAccessGroup = [ROLE_GROUP_MAPPING[roleId]] as any;
 
-  // if (user?.accessGroup.includes(newAccessGroup)) {
-  //   throw new ApiError(409, "You have already subscribed to this group");
-  // }
+  if (user?.priceId === PRICE_ID_ROLE_MAPPING[roleId]) {
+    throw new ApiError(409, "You have already subscribed to this group");
+  }
 
   await prisma.user.update({
     where: { id: user?.id },
