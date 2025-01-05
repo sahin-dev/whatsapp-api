@@ -173,7 +173,6 @@ const validateAndAssignRole = async (userEmail: string) => {
       if (roleId) {
         await assignUserRole(userFromAuth.user_id, roleId);
         await updateAuth0UserMetadata(userFromAuth.user_id, {
-          // group: ROLE_GROUP_MAPPING[roleId],
           stripe_customer_id: customerId,
           priceId: priceId,
           subscriptionId: activeSubscription.id,
@@ -277,20 +276,21 @@ const handleSubscriptionInAuth = async (userEmail: string) => {
         },
       }
     );
-
+    
     // Assign User to Group
-    await axios.post(
-      `https://${auth0Domain}/api/v2/users/${userId}/groups`,
-      {
-        groups: [groupName],
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${managementToken}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    // const result = await axios.post(
+    //   `https://${auth0Domain}/api/v2/users/${userId}/groups`,
+    //   {
+    //     groups: [groupName],
+    //   },
+    //   {
+    //     headers: {
+    //       Authorization: `Bearer ${managementToken}`,
+    //       "Content-Type": "application/json",
+    //     },
+    //   }
+    // );
+    console.log("working in", 294)
 
     return {
       stripeCustomerId: user.customerId,
@@ -359,6 +359,7 @@ const assignUserRole = async (userId: string, roleId: string) => {
   );
 };
 
+//using for subscription delete operation
 const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   const subscription = event.data.object as Stripe.Subscription;
 
