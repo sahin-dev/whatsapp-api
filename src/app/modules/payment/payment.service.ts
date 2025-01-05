@@ -11,25 +11,25 @@ import { User } from "@prisma/client";
 
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
-const ROLE_GROUP_MAPPING: { [key: string]: string } = {
-  rol_sXYkL5QJc63EvHJI: "360 Elite Crypto Trading Alerts",
-  rol_kFz6E1TzYWKHnoNb: "360 Elite Stock Market Slayer",
-};
-
-const PRICE_ID_ROLE_MAPPING: { [key: string]: string } = {
-  elitecryptoalerts: "rol_sXYkL5QJc63EvHJI",
-  stockmarketslayer: "rol_kFz6E1TzYWKHnoNb",
-};
-
 // const ROLE_GROUP_MAPPING: { [key: string]: string } = {
 //   rol_sXYkL5QJc63EvHJI: "360 Elite Crypto Trading Alerts",
 //   rol_kFz6E1TzYWKHnoNb: "360 Elite Stock Market Slayer",
 // };
 
 // const PRICE_ID_ROLE_MAPPING: { [key: string]: string } = {
-//   price_1QWxVRFQDM8OhwJHQ3ZhKBrB: "rol_sXYkL5QJc63EvHJI",
-//   price_1QUjNEFQDM8OhwJHDpoZ9bAZ: "rol_kFz6E1TzYWKHnoNb",
+//   elitecryptoalerts: "rol_sXYkL5QJc63EvHJI",
+//   stockmarketslayer: "rol_kFz6E1TzYWKHnoNb",
 // };
+
+const ROLE_GROUP_MAPPING: { [key: string]: string } = {
+  rol_sXYkL5QJc63EvHJI: "360 Elite Crypto Trading Alerts",
+  rol_kFz6E1TzYWKHnoNb: "360 Elite Stock Market Slayer",
+};
+
+const PRICE_ID_ROLE_MAPPING: { [key: string]: string } = {
+  price_1QWxVRFQDM8OhwJHQ3ZhKBrB: "rol_sXYkL5QJc63EvHJI",
+  price_1QUjNEFQDM8OhwJHDpoZ9bAZ: "rol_kFz6E1TzYWKHnoNb",
+};
 
 const auth0Domain = process.env.M2M_DOMAIN;
 const auth0ClientId = process.env.M2M_CLIENT_ID;
@@ -347,40 +347,40 @@ const subscriptionCreateHelperFunc = async (
     throw new ApiError(404, "Email not found for the given customer ID");
   }
 
-  const getAuth0Token = async () => {
-    const tokenResponse = await axios.post(
-      `https://${auth0Domain}/oauth/token`,
-      {
-        client_id: auth0ClientId,
-        client_secret: auth0ClientSecret,
-        audience: `https://${auth0Domain}/api/v2/`,
-        grant_type: "client_credentials",
-        scope:
-          "read:users update:users create:user_tickets read:roles update:users_app_metadata",
-      }
-    );
+  // const getAuth0Token = async () => {
+  //   const tokenResponse = await axios.post(
+  //     `https://${auth0Domain}/oauth/token`,
+  //     {
+  //       client_id: auth0ClientId,
+  //       client_secret: auth0ClientSecret,
+  //       audience: `https://${auth0Domain}/api/v2/`,
+  //       grant_type: "client_credentials",
+  //       scope:
+  //         "read:users update:users create:user_tickets read:roles update:users_app_metadata",
+  //     }
+  //   );
 
-    const managementToken = tokenResponse.data.access_token;
-    return managementToken;
-  };
+  //   const managementToken = tokenResponse.data.access_token;
+  //   return managementToken;
+  // };
 
-  const managementToken = await getAuth0Token();
+  // const managementToken = await getAuth0Token();
 
-  const userResponse = await axios.get(
-    `https://${auth0Domain}/api/v2/users-by-email?email=${userEmail}`,
-    {
-      headers: {
-        Authorization: `Bearer ${managementToken}`,
-      },
-    }
-  );
+  // const userResponse = await axios.get(
+  //   `https://${auth0Domain}/api/v2/users-by-email?email=${userEmail}`,
+  //   {
+  //     headers: {
+  //       Authorization: `Bearer ${managementToken}`,
+  //     },
+  //   }
+  // );
 
-  const user = userResponse.data;
-  const userId = user[0]?.user_id;
+  // const user = userResponse.data;
+  // const userId = user[0]?.user_id;
 
-  if (!user) {
-    throw new ApiError(404, "User not found by email address");
-  }
+  // if (!user) {
+  //   throw new ApiError(404, "User not found by email address");
+  // }
 
   const subscriptions = await stripe.subscriptions.list({
     customer: customerId,
@@ -400,39 +400,31 @@ const subscriptionCreateHelperFunc = async (
     throw new ApiError(404, "PriceId not found in the subscription");
   }
 
+  // if (roleId) {
+  //   await assignUserRole(userId, roleId);
+  //   await updateAuth0UserMetadata(userId, {
+  //     group: ROLE_GROUP_MAPPING[roleId],
+  //   });
+  //   console.log(
+  //     `✅ Role ${roleId} assigned, Group: ${ROLE_GROUP_MAPPING[roleId]}`
+  //   );
+  // }
+
   const roleId = PRICE_ID_ROLE_MAPPING[priceId];
-  if (roleId) {
-    await assignUserRole(userId, roleId);
-    await updateAuth0UserMetadata(userId, {
-      group: ROLE_GROUP_MAPPING[roleId],
-    });
-    console.log(
-      `✅ Role ${roleId} assigned, Group: ${ROLE_GROUP_MAPPING[roleId]}`
-    );
-    const data = {
-      email: userEmail,
-      username: user[0].username,
-      customerId: customerId,
-      priceId: priceId,
-      subscriptionId: activeSubscription.id,
-      subcription: true,
-      roleId: roleId,
-      accessGroup: ROLE_GROUP_MAPPING[roleId],
-    };
-    const isExisting = await prisma.user.findUnique({
-      where: { email: userEmail },
-    });
-    if (isExisting) {
-      await prisma.user.update({
-        where: { email: userEmail },
-        data: data as User,
-      });
-    } else {
-      await prisma.user.create({
-        data: data as User,
-      });
-    }
-  }
+  const data = {
+    email: userEmail,
+    username: userEmail,
+    customerId: customerId,
+    priceId: priceId,
+    subscriptionId: activeSubscription.id,
+    subcription: true,
+    roleId: roleId,
+    accessGroup: ROLE_GROUP_MAPPING[roleId],
+  };
+
+  await prisma.user.create({
+    data: data as User,
+  });
 };
 
 //using for webhook
