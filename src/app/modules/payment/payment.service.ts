@@ -11,25 +11,25 @@ import { User } from "@prisma/client";
 
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
-// const ROLE_GROUP_MAPPING: { [key: string]: string } = {
-//   rol_sXYkL5QJc63EvHJI: "360 Elite Crypto Trading Alerts",
-//   rol_kFz6E1TzYWKHnoNb: "360 Elite Stock Market Slayer",
-// };
-
-// const PRICE_ID_ROLE_MAPPING: { [key: string]: string } = {
-//   elitecryptoalerts: "rol_sXYkL5QJc63EvHJI",
-//   stockmarketslayer: "rol_kFz6E1TzYWKHnoNb",
-// };
-
 const ROLE_GROUP_MAPPING: { [key: string]: string } = {
   rol_sXYkL5QJc63EvHJI: "360 Elite Crypto Trading Alerts",
   rol_kFz6E1TzYWKHnoNb: "360 Elite Stock Market Slayer",
 };
 
 const PRICE_ID_ROLE_MAPPING: { [key: string]: string } = {
-  price_1QWxVRFQDM8OhwJHQ3ZhKBrB: "rol_sXYkL5QJc63EvHJI",
-  price_1QUjNEFQDM8OhwJHDpoZ9bAZ: "rol_kFz6E1TzYWKHnoNb",
+  elitecryptoalerts: "rol_sXYkL5QJc63EvHJI",
+  stockmarketslayer: "rol_kFz6E1TzYWKHnoNb",
 };
+
+// const ROLE_GROUP_MAPPING: { [key: string]: string } = {
+//   rol_sXYkL5QJc63EvHJI: "360 Elite Crypto Trading Alerts",
+//   rol_kFz6E1TzYWKHnoNb: "360 Elite Stock Market Slayer",
+// };
+
+// const PRICE_ID_ROLE_MAPPING: { [key: string]: string } = {
+//   price_1QWxVRFQDM8OhwJHQ3ZhKBrB: "rol_sXYkL5QJc63EvHJI",
+//   price_1QUjNEFQDM8OhwJHDpoZ9bAZ: "rol_kFz6E1TzYWKHnoNb",
+// };
 
 const auth0Domain = process.env.M2M_DOMAIN;
 const auth0ClientId = process.env.M2M_CLIENT_ID;
@@ -200,6 +200,9 @@ const validateAndAssignRole = async (userEmail: string) => {
 };
 
 const handleSubscriptionInAuth = async (userEmail: string) => {
+  if (!userEmail) {
+    throw new ApiError(400, "userEmail is required");
+  }
   await validateAndAssignRole(userEmail);
 
   const getAuth0Token = async () => {
@@ -260,6 +263,7 @@ const handleSubscriptionInAuth = async (userEmail: string) => {
   }
 
   if (role && groupName) {
+    console.log("working in role and groupName");
     // Assign Role to User
     await axios.post(
       `https://${auth0Domain}/api/v2/users/${userId}/roles`,
@@ -273,7 +277,6 @@ const handleSubscriptionInAuth = async (userEmail: string) => {
         },
       }
     );
-    console.log(`✅ Role assigned to user ${userId} based on Price ID`);
 
     // Assign User to Group
     await axios.post(
@@ -288,8 +291,18 @@ const handleSubscriptionInAuth = async (userEmail: string) => {
         },
       }
     );
-    console.log(`✅ Group ${groupName} assigned to user ${userId}`);
+
+    return {
+      stripeCustomerId: user.customerId,
+      priceId: user.priceId,
+      subscriptionId: user.subscriptionId,
+    };
   }
+  return {
+    stripeCustomerId: user.customerId,
+    priceId: user.priceId,
+    subscriptionId: user.subscriptionId,
+  };
 };
 
 const updateAuth0UserMetadata = async (userId: string, appMetadata: object) => {
