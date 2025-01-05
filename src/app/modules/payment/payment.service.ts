@@ -227,7 +227,15 @@ const handleSubscriptionInAuth = async (userEmail: string) => {
     throw new ApiError(404, "User not found by email address");
   }
 
-  const priceId = users[0]?.app_metadata?.priceId;
+  const user = await prisma.user.findUnique({ where: { email: userEmail } });
+
+  if (!user) {
+    throw new Error("User not found in database");
+  }
+
+  const priceId = user.priceId;
+
+  // const priceId = users[0]?.app_metadata?.priceId;
 
   let role: string | undefined;
   let groupName: string | undefined;
@@ -273,7 +281,6 @@ const handleSubscriptionInAuth = async (userEmail: string) => {
   }
 };
 
-//using for webhook
 const updateAuth0UserMetadata = async (userId: string, appMetadata: object) => {
   const tokenResponse = await axios.post(
     `https://${process.env.M2M_DOMAIN}/oauth/token`,
@@ -302,7 +309,6 @@ const updateAuth0UserMetadata = async (userId: string, appMetadata: object) => {
   );
 };
 
-//using for webhook
 const assignUserRole = async (userId: string, roleId: string) => {
   const tokenResponse = await axios.post(
     `https://${process.env.M2M_DOMAIN}/oauth/token`,
