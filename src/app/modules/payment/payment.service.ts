@@ -361,24 +361,30 @@ const assignUserRole = async (userId: string, roleId: string) => {
 
 //using for subscription delete operation
 const handleSubscriptionDeleted = async (event: Stripe.Event) => {
-  const customer = event.data.object as Stripe.Customer;
-  const email = customer.email;
-
-  if (!email) {
-    throw new ApiError(404, "email not found");
-  }
+  const subscription = event.data.object as Stripe.Subscription;
 
   const isUserExist = await prisma.user.findUnique({
-    where: { email: email },
+    where: { email: subscription.id },
   });
 
   if (!isUserExist) {
     throw new ApiError(404, "user not found");
   }
 
+  const priceId = subscription.items.data[0]?.price.id;
+  const roleId = PRICE_ID_ROLE_MAPPING[priceId];
+  const removeGroup = ROLE_GROUP_MAPPING[roleId];
+
+  // Filter out the group from the current access groups
+  const updatedAccessGroups = isUserExist.accessGroup.filter(
+    (group) => group !== removeGroup
+  );
+
   const result = await prisma.user.update({
     where: { id: isUserExist.id },
-    data: { subcription: false, subscriptionId: null },
+    data: {
+      accessGroup: updatedAccessGroups,
+    },
   });
 
   return result;
