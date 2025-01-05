@@ -480,11 +480,14 @@ const subscriptionCreateHelperFunc = async (
     });
   }
 
+  const newAccessGroup = [ROLE_GROUP_MAPPING[roleId]] as any;
   await prisma.user.update({
     where: { id: user?.id },
     data: {
       ...data,
-      accessGroup: [ROLE_GROUP_MAPPING[roleId]],
+      accessGroup: {
+        push: [ROLE_GROUP_MAPPING[roleId], newAccessGroup],
+      },
     },
   });
 };
