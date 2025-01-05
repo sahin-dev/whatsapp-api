@@ -481,6 +481,11 @@ const subscriptionCreateHelperFunc = async (
   }
 
   const newAccessGroup = [ROLE_GROUP_MAPPING[roleId]] as any;
+
+  if (user?.accessGroup.includes(newAccessGroup)) {
+    throw new Error("You have already subscribed to this group");
+  }
+
   await prisma.user.update({
     where: { id: user?.id },
     data: {
