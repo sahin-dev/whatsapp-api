@@ -360,21 +360,23 @@ const assignUserRole = async (userId: string, roleId: string) => {
 
 //using for subscription delete operation
 const handleSubscriptionDeleted = async (event: Stripe.Event) => {
-  const customer = event.data.object as Stripe.Customer;
-  console.log("customer ##############################", customer);
+  const customerData = event.data.object as Stripe.Customer;
+  const subscriptionData = event.data.object as Stripe.Subscription;
+  console.log("customer ##############################", customerData);
+  console.log("subscription ##############################", subscriptionData);
 
   // Check if user exists with the subscriptionId
   const isUserExist = await prisma.user.findFirst({
-    where: { email: customer.email as string },
+    where: { email: customerData.email as string },
   });
 
   if (!isUserExist) {
     throw new ApiError(404, "User not found");
   }
+  const subscriptions = isUserExist.subscriptions;
 
   // const priceId = subscription.items.data[0]?.price.id;
   const priceId = "price_1Qe8t2FQDM8OhwJHt1Wr8DJ9";
-  const subscriptions = isUserExist.subscriptions;
   console.log("subscriptions ###############################", subscriptions);
   const roleId = PRICE_ID_ROLE_MAPPING[priceId];
   const groupToRemove = ROLE_GROUP_MAPPING[roleId];
