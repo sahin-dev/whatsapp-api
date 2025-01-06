@@ -19,6 +19,7 @@ model User {
   customerId     String?
   priceId        String?
   subscriptionId String?
+  subscriptions  Json
   role           UserRole        @default(USER)
   roleId         String?
   status         UserStatus      @default(ACTIVE)
