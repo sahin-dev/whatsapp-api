@@ -467,7 +467,7 @@ const subscriptionCreateHelperFunc = async (
     data: {
       ...data,
       subscriptions: {
-        subscription,
+        push: subscription,
       },
       accessGroup: {
         push: newAccessGroup,
