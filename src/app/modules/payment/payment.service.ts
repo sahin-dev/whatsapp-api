@@ -424,6 +424,7 @@ const subscriptionCreateHelperFunc = async (
   }
 
   const priceId = activeSubscription.items.data[0]?.price.id;
+  console.log(priceId)
 
   if (!priceId) {
     throw new ApiError(404, "PriceId not found in the subscription");
@@ -440,8 +441,10 @@ const subscriptionCreateHelperFunc = async (
     roleId: roleId,
     accessGroup: [ROLE_GROUP_MAPPING[roleId]],
   };
+  console.log(data)
 
   const user = await prisma.user.findUnique({ where: { email: userEmail } });
+  console.log(user);
 
   if (!user) {
     await prisma.user.create({
