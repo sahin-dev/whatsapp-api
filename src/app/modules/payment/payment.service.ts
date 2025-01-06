@@ -360,31 +360,38 @@ const assignUserRole = async (userId: string, roleId: string) => {
 
 //using for subscription delete operation
 const handleSubscriptionDeleted = async (event: Stripe.Event) => {
-  const customerData = event.data.object as Stripe.Customer;
+  // const customerData = event.data.object as Stripe.Customer;
   const subscriptionData = event.data.object as any;
 
-  const isUserExist = await prisma.user.findFirst({
-    where: { email: customerData.email as string },
-  });
+  // const isUserExist = await prisma.user.findFirst({
+  //   where: { email: customerData.email as string },
+  // });
 
-  if (!isUserExist) {
-    throw new ApiError(404, "User not found");
-  }
-  const subscriptions = isUserExist.subscriptions as any;
+  // if (!isUserExist) {
+  //   throw new ApiError(404, "User not found");
+  // }
+
+  // const subscriptions = isUserExist.subscriptions as any;
   const priceId = subscriptionData.plan.id;
 
-  const updatedSubscriptions = subscriptions.filter(
-    (sub: any) => sub.priceId !== priceId
-  );
+  // const updatedSubscriptions = subscriptions.filter(
+  //   (sub: any) => sub.priceId !== priceId
+  // );
 
-  const result = await prisma.user.update({
-    where: { id: isUserExist.id },
-    data: {
-      subscriptions: updatedSubscriptions,
+  // const result = await prisma.user.update({
+  //   where: { id: isUserExist.id },
+  //   data: {
+  //     subscriptions: updatedSubscriptions,
+  //   },
+  // });
+
+  await prisma.subscription.deleteMany({
+    where: {
+      priceId: priceId,
     },
   });
 
-  return result;
+  return;
 };
 
 //using for webhook
@@ -448,10 +455,7 @@ const subscriptionCreateHelperFunc = async (
 
   if (!user) {
     const createdUser = await prisma.user.create({
-      data: {
-        ...data,
-        subscriptions: [subscription],
-      },
+      data: data,
     });
     await prisma.subscription.create({
       data: {
@@ -476,18 +480,18 @@ const subscriptionCreateHelperFunc = async (
     },
   });
 
-  await prisma.user.update({
-    where: { id: user?.id },
-    data: {
-      ...data,
-      subscriptions: [
-        {
-          ...newSubscription,
-        },
-        ...user?.subscriptions,
-      ],
-    },
-  });
+  // await prisma.user.update({
+  //   where: { id: user?.id },
+  //   data: {
+  //     ...data,
+  //     subscriptions: [
+  //       {
+  //         ...newSubscription,
+  //       },
+  //       ...user?.subscriptions,
+  //     ],
+  //   },
+  // });
 };
 
 //using for webhook
