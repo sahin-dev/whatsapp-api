@@ -363,10 +363,6 @@ const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   const customerData = event.data.object as Stripe.Customer;
   const subscriptionData = event.data.object as any;
   console.log("customer ##############################", customerData);
-  console.log(
-    "subscription ##############################",
-    subscriptionData.plan
-  );
 
   // Check if user exists with the subscriptionId
   const isUserExist = await prisma.user.findFirst({
@@ -379,7 +375,8 @@ const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   const subscriptions = isUserExist.subscriptions;
 
   // const priceId = subscription.items.data[0]?.price.id;
-  const priceId = "price_1Qe8t2FQDM8OhwJHt1Wr8DJ9";
+  const priceId = subscriptionData.plan.id;
+  console.log("priceId", priceId);
   console.log("subscriptions ###############################", subscriptions);
   const roleId = PRICE_ID_ROLE_MAPPING[priceId];
   const groupToRemove = ROLE_GROUP_MAPPING[roleId];
