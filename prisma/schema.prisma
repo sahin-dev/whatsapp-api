@@ -29,6 +29,7 @@ model User {
   chanel         Chanel[]
   message        Message[]
   notifications  Notifications[]
+  subscription   Subscription[]
 
   @@map("users")
 }
@@ -107,6 +108,21 @@ model HomeContent {
   updatedAt   DateTime @updatedAt
 
   @@map("home_contents")
+}
+
+model Subscription {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String?  @db.ObjectId
+  priceId        String
+  subscriptionId String
+  role           String
+  group          String
+  status         String
+  user           User?    @relation(fields: [userId], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("subscriptions")
 }
 
 enum UserStatus {

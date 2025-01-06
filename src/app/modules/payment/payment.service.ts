@@ -447,10 +447,16 @@ const subscriptionCreateHelperFunc = async (
   });
 
   if (!user) {
-    await prisma.user.create({
+    const createdUser = await prisma.user.create({
       data: {
         ...data,
         subscriptions: [subscription],
+      },
+    });
+    await prisma.subscription.create({
+      data: {
+        ...subscription,
+        userId: createdUser.id,
       },
     });
   }
@@ -462,6 +468,13 @@ const subscriptionCreateHelperFunc = async (
     role: roleId,
     group: ROLE_GROUP_MAPPING[roleId],
   };
+
+  await prisma.subscription.create({
+    data: {
+      ...newSubscription,
+      userId: user.id,
+    },
+  });
 
   await prisma.user.update({
     where: { id: user?.id },
