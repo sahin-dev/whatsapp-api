@@ -449,7 +449,9 @@ const subscriptionCreateHelperFunc = async (
     group: [ROLE_GROUP_MAPPING[roleId]],
   };
 
-  const user = await prisma.user.findUnique({ where: { email: userEmail } });
+  const user: any = await prisma.user.findUnique({
+    where: { email: userEmail },
+  });
 
   if (!user) {
     await prisma.user.create({
@@ -467,6 +469,7 @@ const subscriptionCreateHelperFunc = async (
     data: {
       ...data,
       subscriptions: {
+        set: user.subscriptions ? user.subscriptions : [],
         push: subscription,
       },
       accessGroup: {
