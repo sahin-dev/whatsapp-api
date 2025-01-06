@@ -290,7 +290,6 @@ const handleSubscriptionInAuth = async (userEmail: string) => {
     //     },
     //   }
     // );
-    console.log("working in", 294);
 
     return {
       stripeCustomerId: user.customerId,
@@ -361,19 +360,22 @@ const assignUserRole = async (userId: string, roleId: string) => {
 
 //using for subscription delete operation
 const handleSubscriptionDeleted = async (event: Stripe.Event) => {
-  const subscription = event.data.object as Stripe.Subscription;
+  const customer = event.data.object as Stripe.Customer;
+  console.log(customer);
 
   // Check if user exists with the subscriptionId
   const isUserExist = await prisma.user.findFirst({
-    where: { subscriptionId: subscription.id },
+    where: { email: customer.email as string },
   });
 
   if (!isUserExist) {
     throw new ApiError(404, "User not found");
   }
 
-  const priceId = subscription.items.data[0]?.price.id;
-  console.log(subscription.items.data);
+  // const priceId = subscription.items.data[0]?.price.id;
+  const priceId = "stockmarketslayer";
+  const subscriptions = isUserExist.subscriptions;
+  console.log(subscriptions);
   const roleId = PRICE_ID_ROLE_MAPPING[priceId];
   const groupToRemove = ROLE_GROUP_MAPPING[roleId];
   console.log("remove group", groupToRemove);
