@@ -464,13 +464,20 @@ const subscriptionCreateHelperFunc = async (
 
   const newAccessGroup = [ROLE_GROUP_MAPPING[roleId]] as any;
 
+  const newSubscription = {
+    subscriptionId: activeSubscription.id,
+    priceId: priceId,
+    status: "ACTIVE",
+    role: roleId,
+    group: [ROLE_GROUP_MAPPING[roleId]],
+  };
+
   await prisma.user.update({
     where: { id: user?.id },
     data: {
       ...data,
       subscriptions: {
-        set: user.subscriptions ? user.subscriptions : [],
-        push: subscription,
+        push: newSubscription,
       },
       accessGroup: {
         push: newAccessGroup,
