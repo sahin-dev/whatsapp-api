@@ -373,23 +373,14 @@ const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   const subscriptions = isUserExist.subscriptions as any;
   const priceId = subscriptionData.plan.id;
 
-  console.log("subscriptions ###############################", subscriptions);
-  const roleId = PRICE_ID_ROLE_MAPPING[priceId];
-  const groupToRemove = ROLE_GROUP_MAPPING[roleId];
-
   const updatedSubscriptions = subscriptions.filter(
     (sub: any) => sub.priceId !== priceId
-  );
-
-  const updatedAccessGroup = isUserExist.accessGroup.filter(
-    (group) => group !== groupToRemove
   );
 
   const result = await prisma.user.update({
     where: { id: isUserExist.id },
     data: {
       subscriptions: updatedSubscriptions,
-      accessGroup: updatedAccessGroup,
     },
   });
 
@@ -441,7 +432,6 @@ const subscriptionCreateHelperFunc = async (
     subscriptionId: activeSubscription.id,
     subcription: true,
     roleId: roleId,
-    accessGroup: [ROLE_GROUP_MAPPING[roleId]],
   };
 
   const subscription = {
@@ -465,8 +455,6 @@ const subscriptionCreateHelperFunc = async (
     });
   }
 
-  const newAccessGroup = [ROLE_GROUP_MAPPING[roleId]] as any;
-
   const newSubscription = {
     subscriptionId: activeSubscription.id,
     priceId: priceId,
@@ -485,9 +473,6 @@ const subscriptionCreateHelperFunc = async (
         },
         ...user?.subscriptions,
       ],
-      accessGroup: {
-        push: newAccessGroup,
-      },
     },
   });
 };
