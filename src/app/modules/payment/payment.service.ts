@@ -446,7 +446,7 @@ const subscriptionCreateHelperFunc = async (
     priceId: priceId,
     status: "ACTIVE",
     role: roleId,
-    group: [ROLE_GROUP_MAPPING[roleId]],
+    group: ROLE_GROUP_MAPPING[roleId],
   };
 
   const user = await prisma.user.findUnique({ where: { email: userEmail } });
