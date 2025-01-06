@@ -455,7 +455,7 @@ const subscriptionCreateHelperFunc = async (
     await prisma.user.create({
       data: {
         ...data,
-        subscriptions: subscription,
+        subscriptions: [subscription],
       },
     });
   }
