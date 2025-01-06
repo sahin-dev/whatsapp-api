@@ -466,6 +466,9 @@ const subscriptionCreateHelperFunc = async (
     where: { id: user?.id },
     data: {
       ...data,
+      subscriptions: {
+        push: subscription,
+      },
       accessGroup: {
         push: newAccessGroup,
       },
