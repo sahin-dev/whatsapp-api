@@ -27,8 +27,8 @@ const ROLE_GROUP_MAPPING: { [key: string]: string } = {
 };
 
 const PRICE_ID_ROLE_MAPPING: { [key: string]: string } = {
-  price_1QWxVRFQDM8OhwJHQ3ZhKBrB: "rol_sXYkL5QJc63EvHJI",
-  price_1QUjNEFQDM8OhwJHDpoZ9bAZ: "rol_kFz6E1TzYWKHnoNb",
+  price_1Qe8t2FQDM8OhwJHt1Wr8DJ9: "rol_sXYkL5QJc63EvHJI",
+  price_1Qe8tmFQDM8OhwJHgdBWauny: "rol_kFz6E1TzYWKHnoNb",
 };
 
 const auth0Domain = process.env.M2M_DOMAIN;
