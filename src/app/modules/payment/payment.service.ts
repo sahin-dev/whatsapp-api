@@ -429,7 +429,7 @@ const subscriptionCreateHelperFunc = async (
     throw new ApiError(404, "PriceId not found in the subscription");
   }
 
-  const roleId = PRICE_ID_ROLE_MAPPING[priceId];
+  const roleId = PRICE_ID_ROLE_MAPPING[priceId] as any;
   const data = {
     email: userEmail,
     username: userEmail,
