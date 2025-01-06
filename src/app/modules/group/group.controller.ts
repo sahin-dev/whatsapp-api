@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import catchAsync from "../../../shared/catchAsync";
 import { groupServices } from "./group.service";
 import sendResponse from "../../../shared/sendResponse";
+import { User } from "@prisma/client";
 
 // create a new group
 const createGroup = catchAsync(async (req: Request, res: Response) => {
@@ -58,10 +59,26 @@ const deleteGroup = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// get access group
+const accessGroups = catchAsync(async (req: any, res: Response) => {
+  console.log(req)
+  const user = req.user as User;
+  console.log(user.id)
+  const userId = user.id;
+  const accessGroups = await groupServices.accessGroupInDB(userId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Access groups retrieved successfully",
+    data: accessGroups,
+  });
+});
+
 export const groupControllers = {
   createGroup,
   getAllGroups,
   getSingleGroup,
   updateGroup,
   deleteGroup,
+  accessGroups,
 };

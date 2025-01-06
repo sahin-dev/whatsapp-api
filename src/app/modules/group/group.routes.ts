@@ -28,5 +28,5 @@ router.delete(
   auth(UserRole.SUPER_ADMIN),
   groupControllers.deleteGroup
 );
-
+router.get("/access/groups", auth(), groupControllers.accessGroups);
 export const groupRoutes = router;

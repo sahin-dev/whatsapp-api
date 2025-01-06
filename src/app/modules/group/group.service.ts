@@ -87,10 +87,25 @@ const deleteGroupInDB = async (groupId: string) => {
   return;
 };
 
+const accessGroupInDB = async (userId: string) => {
+  const mySubscriptions = await prisma.subscription.findMany({
+    where: { userId: userId },
+  });
+
+  const allGroups = await prisma.group.findMany();
+
+  const accessibleGroups = allGroups.filter((group) =>
+    mySubscriptions.some((sub) => sub.group === group.groupName)
+  );
+
+  return accessibleGroups;
+};
+
 export const groupServices = {
   createGroupInDB,
   getGroupsInDB,
   getGroupInDB,
   updateGroupInDB,
   deleteGroupInDB,
+  accessGroupInDB,
 };
