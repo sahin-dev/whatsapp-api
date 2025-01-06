@@ -2,6 +2,7 @@ import prisma from "../../../shared/prisma";
 import ApiError from "../../errors/ApiErrors";
 import config from "../../../config";
 import { Request } from "express";
+import { UserRole } from "@prisma/client";
 
 const createGroupInDB = async (req: any) => {
   const payload = req.body;
@@ -88,17 +89,21 @@ const deleteGroupInDB = async (groupId: string) => {
 };
 
 const accessGroupInDB = async (userId: string) => {
-  const mySubscriptions = await prisma.subscription.findMany({
-    where: { userId: userId },
-  });
-
+  const user = await prisma.user.findUnique({ where: { id: userId } });
   const allGroups = await prisma.group.findMany();
 
-  const accessibleGroups = allGroups.filter((group) =>
-    mySubscriptions.some((sub) => sub.group === group.groupName)
-  );
+  if (user?.role === UserRole.USER) {
+    const mySubscriptions = await prisma.subscription.findMany({
+      where: { userId: userId },
+    });
 
-  return accessibleGroups;
+    const accessibleGroups = allGroups.filter((group) =>
+      mySubscriptions.some((sub) => sub.group === group.groupName)
+    );
+    return accessibleGroups;
+  } else {
+    return allGroups;
+  }
 };
 
 export const groupServices = {
