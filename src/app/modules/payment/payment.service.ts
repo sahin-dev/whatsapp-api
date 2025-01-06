@@ -361,7 +361,7 @@ const assignUserRole = async (userId: string, roleId: string) => {
 //using for subscription delete operation
 const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   const customer = event.data.object as Stripe.Customer;
-  console.log(customer);
+  console.log("customer ##############################", customer);
 
   // Check if user exists with the subscriptionId
   const isUserExist = await prisma.user.findFirst({
@@ -373,9 +373,9 @@ const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   }
 
   // const priceId = subscription.items.data[0]?.price.id;
-  const priceId = "stockmarketslayer";
+  const priceId = "price_1Qe8t2FQDM8OhwJHt1Wr8DJ9";
   const subscriptions = isUserExist.subscriptions;
-  console.log(subscriptions);
+  console.log("subscriptions ###############################", subscriptions);
   const roleId = PRICE_ID_ROLE_MAPPING[priceId];
   const groupToRemove = ROLE_GROUP_MAPPING[roleId];
   console.log("remove group", groupToRemove);
