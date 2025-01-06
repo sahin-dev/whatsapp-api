@@ -373,6 +373,7 @@ const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   }
 
   const priceId = subscription.items.data[0]?.price.id;
+  console.log(subscription.items.data);
   const roleId = PRICE_ID_ROLE_MAPPING[priceId];
   const groupToRemove = ROLE_GROUP_MAPPING[roleId];
   console.log("remove group", groupToRemove);
