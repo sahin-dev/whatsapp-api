@@ -184,8 +184,9 @@ const validateAndAssignRole = async (userEmail: string) => {
       }
     } else {
       await updateAuth0UserMetadata(userFromAuth.user_id, {
+        stripe_customer_id: null,
         priceId: null,
-        group: null,
+        subscriptionId: null,
       });
       await removeUserRole(userFromAuth.user_id, "rol_sXYkL5QJc63EvHJI");
       await removeUserRole(userFromAuth.user_id, "rol_kFz6E1TzYWKHnoNb");
