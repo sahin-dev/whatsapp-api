@@ -31,4 +31,10 @@ router.patch(
   messageController.updateMessage
 );
 
+router.delete(
+  "/delete/multiple-messages",
+  auth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  messageController.deleteMultipleMessages
+);
+
 export const messageRoute = router;

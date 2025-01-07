@@ -107,6 +107,11 @@ const deleteAllMessagesFromChannel = async (channelId: string) => {
   return;
 };
 
+const deleteMultipleMessagesFromDB = async (ids: string[]) => {
+  await prisma.message.deleteMany({ where: { id: { in: ids } } });
+  return;
+};
+
 const updateSingleMessageInDB = async (messageId: string, payload: any) => {
   const message = await prisma.message.findUnique({
     where: { id: messageId },
@@ -128,4 +133,5 @@ export const messageService = {
   deleteSingleMessageFromDB,
   deleteAllMessagesFromChannel,
   updateSingleMessageInDB,
+  deleteMultipleMessagesFromDB,
 };

@@ -85,6 +85,19 @@ const deleteAllMessages = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const deleteMultipleMessages = catchAsync(
+  async (req: Request, res: Response) => {
+    const { ids } = req.body;
+    await messageService.deleteMultipleMessagesFromDB(ids);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Multiple Message deleted successfully",
+    });
+  }
+);
+
 const updateMessage = catchAsync(async (req: Request, res: Response) => {
   const { messageId } = req.params;
   const result = await messageService.updateSingleMessageInDB(
@@ -106,4 +119,5 @@ export const messageController = {
   deleteSingleMessage,
   deleteAllMessages,
   updateMessage,
+  deleteMultipleMessages,
 };
