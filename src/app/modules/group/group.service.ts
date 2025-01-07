@@ -90,7 +90,7 @@ const deleteGroupInDB = async (groupId: string) => {
 
 const accessGroupInDB = async (userId: string) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  const allGroups = await prisma.group.findMany();
+  const allGroups = await prisma.group.findMany({ include: { chanel: true } });
 
   if (user?.role === UserRole.USER) {
     const mySubscriptions = await prisma.subscription.findMany({
