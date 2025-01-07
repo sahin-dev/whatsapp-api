@@ -4,8 +4,9 @@ import { messageService } from "./message.service";
 import sendResponse from "../../../shared/sendResponse";
 import { channelClients } from "../../../server";
 import prisma from "../../../shared/prisma";
+
 const createMessage = catchAsync(async (req: Request, res: Response) => {
-  const chanelId = req.params.chanelId;
+  const { chanelId } = req.params;
   await messageService.createMessageInDB(req);
 
   // Send the single message only to clients connected to the specific channel
@@ -51,7 +52,7 @@ const createMessage = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getSingleMessage = catchAsync(async (req: Request, res: Response) => {
-  const messageId = req.params.messageId;
+  const { messageId } = req.params;
   const message = await messageService.getSingleMessageFromDB(messageId);
 
   sendResponse(res, {
@@ -62,7 +63,47 @@ const getSingleMessage = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const deleteSingleMessage = catchAsync(async (req: Request, res: Response) => {
+  const { messageId } = req.params;
+  await messageService.deleteSingleMessageFromDB(messageId);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "message deleted successfully",
+  });
+});
+
+const deleteAllMessages = catchAsync(async (req: Request, res: Response) => {
+  const { channelId } = req.params;
+  await messageService.deleteAllMessagesFromChannel(channelId);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "All messages deleted successfully from the channel",
+  });
+});
+
+const updateMessage = catchAsync(async (req: Request, res: Response) => {
+  const { messageId } = req.params;
+  const result = await messageService.updateSingleMessageInDB(
+    messageId,
+    req.body
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Message updated successfully",
+    data: result,
+  });
+});
+
 export const messageController = {
   createMessage,
   getSingleMessage,
+  deleteSingleMessage,
+  deleteAllMessages,
+  updateMessage,
 };

@@ -74,6 +74,7 @@ model Message {
   channelId String?  @db.ObjectId
   replyId   String?  @db.ObjectId
   isRead    Boolean  @default(false)
+  isPinned  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User?    @relation(fields: [senderId], references: [id])
