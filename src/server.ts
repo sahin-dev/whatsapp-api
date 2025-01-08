@@ -25,9 +25,14 @@ async function main() {
     ws.on("message", async (message) => {
       try {
         const parsedMessage = JSON.parse(message.toString());
-        const { type, channelId, messageId, messageIds, isPinned } =
-          parsedMessage;
-
+        const {
+          type,
+          channelId,
+          messageId,
+          messageIds,
+          isPinned,
+          message: updateText,
+        } = parsedMessage;
         if (type === "subscribe") {
           if (!channelId) {
             ws.send(
@@ -152,6 +157,29 @@ async function main() {
         } else if (type === "clearMessagesFromChannel" && channelId) {
           try {
             await messageService.deleteAllMessagesFromChannel(messageId);
+            const messages = await messageService.getMessagesFromDB(channelId);
+
+            const pastMessages = {
+              type: "pastMessages",
+              message: messages,
+            };
+            channelClients
+              .get(subscribedChannel as string)
+              ?.forEach((client) => {
+                if (client.readyState === WebSocket.OPEN) {
+                  client.send(JSON.stringify(pastMessages));
+                }
+              });
+          } catch (error: any) {
+            ws.send(
+              JSON.stringify({
+                error: `Failed to delete message: ${error.message}`,
+              })
+            );
+          }
+        } else if (type === "editMessage" && messageId) {
+          try {
+            await messageService.updateSingleMessageInDB(messageId, updateText);
             const messages = await messageService.getMessagesFromDB(channelId);
 
             const pastMessages = {

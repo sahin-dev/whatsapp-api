@@ -116,7 +116,10 @@ const deleteMultipleMessagesFromDB = async (ids: string[]) => {
   return;
 };
 
-const updateSingleMessageInDB = async (messageId: string, payload: any) => {
+const updateSingleMessageInDB = async (
+  messageId: string,
+  updateText: string
+) => {
   const message = await prisma.message.findUnique({
     where: { id: messageId },
   });
@@ -125,7 +128,9 @@ const updateSingleMessageInDB = async (messageId: string, payload: any) => {
   }
   const updatedMessage = await prisma.message.update({
     where: { id: messageId },
-    data: payload,
+    data: {
+      message: updateText,
+    },
   });
   return updatedMessage;
 };
