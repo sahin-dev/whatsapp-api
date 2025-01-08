@@ -2,6 +2,7 @@ import prisma from "../../../shared/prisma";
 import config from "../../../config";
 import ApiError from "../../errors/ApiErrors";
 
+//using for socket in controllers
 const createMessageInDB = async (req: any) => {
   const files = req.files;
   const uploadFiles = files?.sendFiles || [];
@@ -40,6 +41,7 @@ const createMessageInDB = async (req: any) => {
   return newMessage;
 };
 
+//using for socket
 const getMessagesFromDB = async (channelId: string) => {
   const message = await prisma.message.findMany({
     where: {
@@ -62,6 +64,7 @@ const getMessagesFromDB = async (channelId: string) => {
   return message;
 };
 
+//using for socket
 const deleteSingleMessageFromDB = async (messageId: string) => {
   const message = await prisma.message.findUnique({
     where: { id: messageId },
@@ -107,6 +110,7 @@ const deleteAllMessagesFromChannel = async (channelId: string) => {
   return;
 };
 
+//using for socket
 const deleteMultipleMessagesFromDB = async (ids: string[]) => {
   await prisma.message.deleteMany({ where: { id: { in: ids } } });
   return;
@@ -126,6 +130,21 @@ const updateSingleMessageInDB = async (messageId: string, payload: any) => {
   return updatedMessage;
 };
 
+//using for socket
+const pinUnpinMessage = async (messageId: string, isPinned: boolean) => {
+  const message = await prisma.message.findUnique({
+    where: { id: messageId },
+  });
+  if (!message) {
+    throw new ApiError(404, "Message not found for pin/unpin");
+  }
+  await prisma.message.update({
+    where: { id: messageId },
+    data: { isPinned },
+  });
+  return;
+};
+
 export const messageService = {
   createMessageInDB,
   getMessagesFromDB,
@@ -134,4 +153,5 @@ export const messageService = {
   deleteAllMessagesFromChannel,
   updateSingleMessageInDB,
   deleteMultipleMessagesFromDB,
+  pinUnpinMessage,
 };
