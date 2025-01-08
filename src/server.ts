@@ -21,6 +21,14 @@ async function main() {
 
     let subscribedChannel: string | null = null; // Track the client's subscribed channel
 
+    // Start sending ping messages every 30 seconds
+    ws.onopen = () => {
+      console.log("Connected");
+      setInterval(() => {
+        ws.send(JSON.stringify({ type: "ping" }));
+      }, 40000);
+    };
+
     // Listen for subscription messages
     ws.on("message", async (message) => {
       try {
