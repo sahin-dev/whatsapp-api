@@ -362,10 +362,12 @@ const assignUserRole = async (userId: string, roleId: string) => {
 const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   const subscriptionData = event.data.object as any;
   const priceId = subscriptionData.plan.id;
+  const subscriptionId = subscriptionData.id;
 
   await prisma.subscription.deleteMany({
     where: {
       priceId: priceId,
+      subscriptionId: subscriptionId,
     },
   });
 
