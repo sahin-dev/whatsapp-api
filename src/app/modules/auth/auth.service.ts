@@ -9,6 +9,8 @@ import { ObjectId } from "mongodb";
 import path from "path";
 import axios from "axios";
 import jwt from "jsonwebtoken";
+import { UserRole } from "@prisma/client";
+import e from "express";
 
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
@@ -231,9 +233,77 @@ const loginAuthProvider = async (payload: {
   }
 };
 
+const adminLoginAuth = async (payload: {
+  username: string;
+  password: string;
+}) => {
+  const response = await axios.post(
+    `${process.env.AUTH0_DOMAIN}/oauth/token`,
+    {
+      grant_type: "password",
+      username: payload.username,
+      password: payload.password,
+      audience: process.env.AUTH0_AUDIENCE,
+      client_id: process.env.AUTH0_CLIENT_ID,
+      client_secret: process.env.AUTH0_CLIENT_SECRET,
+      connection: "Username-Password-Authentication",
+      scope: "openid profile email",
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  const token = response.data.access_token;
+
+  verifyToken(token);
+  const user = await fetchUserProfile(token);
+
+  const existingUser = await prisma.user.findUnique({
+    where: { email: user.email },
+  });
+
+  if (!existingUser) {
+    throw new ApiError(404, "Admin user not found");
+  }
+
+  if (existingUser?.role !== "ADMIN" && existingUser?.role !== "SUPER_ADMIN") {
+    throw new ApiError(401, "You are not allowed to access this");
+  }
+
+  const authToken = jwtHelpers.generateToken(
+    {
+      id: existingUser.id,
+      email: existingUser.email,
+      role: existingUser.role,
+      fcmToken: existingUser?.fcmToken,
+      subscription: existingUser.subcription,
+    },
+    config.jwt.jwt_secret as string,
+    config.jwt.expires_in as string
+  );
+
+  const updatedUser = await prisma.user.update({
+    where: { email: user.email },
+    data: {
+      password: bcrypt.hashSync(payload.password, 10),
+      accessToken: authToken,
+    },
+  });
+
+  const { password, accessToken, ...userInfo } = updatedUser;
+
+  return {
+    accessToken: authToken,
+    userInfo,
+  };
+};
+
 export const authService = {
   loginUserIntoDB,
   getProfileFromDB,
   updateProfileIntoDB,
   loginAuthProvider,
+  adminLoginAuth,
 };

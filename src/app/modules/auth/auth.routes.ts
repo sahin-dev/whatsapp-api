@@ -19,5 +19,6 @@ router.put(
 );
 
 router.post("/login-with-auth", authController.loginWithAuth);
+router.post("/admin-login", authController.adminLogin);
 
 export const authRoute = router;

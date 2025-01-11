@@ -59,9 +59,20 @@ const loginWithAuth = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const adminLogin = catchAsync(async (req: Request, res: Response) => {
+  const result = await authService.adminLoginAuth(req.body);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Admin successfully logged in",
+    data: result,
+  });
+});
+
 export const authController = {
   loginUser,
   getProfile,
   updateProfile,
   loginWithAuth,
+  adminLogin,
 };
