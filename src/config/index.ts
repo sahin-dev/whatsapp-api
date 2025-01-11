@@ -34,4 +34,8 @@ export default {
     webhook_secret: process.env.STRIPE_WEBHOOK_SECRET,
     price_id: process.env.STRIPE_PRICE_ID,
   },
+  agora: {
+    app_id: process.env.AGORA_APP_ID,
+    app_certificate: process.env.AGORA_APP_CERTIFICATE,
+  },
 };

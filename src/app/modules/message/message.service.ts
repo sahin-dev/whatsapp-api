@@ -1,6 +1,7 @@
 import prisma from "../../../shared/prisma";
 import config from "../../../config";
 import ApiError from "../../errors/ApiErrors";
+import { RtcTokenBuilder, RtcRole } from "agora-access-token";
 
 //using for socket in controllers
 const createMessageInDB = async (req: any) => {
@@ -150,6 +151,33 @@ const pinUnpinMessage = async (messageId: string, isPinned: boolean) => {
   return;
 };
 
+// generate agora access token
+const generateAccessTokenInAgora = async (payload: {
+  role: string;
+  roomId: string;
+  uid: number;
+}) => {
+  const appID = config.agora.app_id as string;
+  const appCertificate = config.agora.app_certificate as string;
+  const channelName = payload.roomId;
+  const uid = payload.uid;
+  const expiredTimeInSeconds = 3600; // 1 hour
+  const currentTime = Math.floor(Date.now() / 1000);
+  const privilegeExpireTime = currentTime + expiredTimeInSeconds;
+  const role = payload.role;
+
+  const token = RtcTokenBuilder.buildTokenWithUid(
+    appID,
+    appCertificate,
+    channelName,
+    uid,
+    role === "publisher" ? RtcRole.PUBLISHER : RtcRole.SUBSCRIBER,
+    privilegeExpireTime
+  );
+
+  return token;
+};
+
 export const messageService = {
   createMessageInDB,
   getMessagesFromDB,
@@ -159,4 +187,5 @@ export const messageService = {
   updateSingleMessageInDB,
   deleteMultipleMessagesFromDB,
   pinUnpinMessage,
+  generateAccessTokenInAgora,
 };

@@ -113,6 +113,17 @@ const updateMessage = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const generateAccessToken = catchAsync(async (req, res) => {
+  const accessToken = await messageService.generateAccessTokenInAgora(req.body);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Access token generate successfully",
+    data: accessToken,
+  });
+});
+
 export const messageController = {
   createMessage,
   getSingleMessage,
@@ -120,4 +131,5 @@ export const messageController = {
   deleteAllMessages,
   updateMessage,
   deleteMultipleMessages,
+  generateAccessToken,
 };

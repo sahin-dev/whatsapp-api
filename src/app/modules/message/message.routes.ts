@@ -37,4 +37,10 @@ router.delete(
   messageController.deleteMultipleMessages
 );
 
+router.post(
+  "/generate-access-token",
+  auth(),
+  messageController.generateAccessToken
+);
+
 export const messageRoute = router;
