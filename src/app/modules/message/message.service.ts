@@ -144,11 +144,24 @@ const pinUnpinMessage = async (messageId: string, isPinned: boolean) => {
   if (!message) {
     throw new ApiError(404, "Message not found for pin/unpin");
   }
-  await prisma.message.update({
+  const result = await prisma.message.update({
     where: { id: messageId },
     data: { isPinned },
   });
-  return;
+  return result;
+};
+
+const pinnedMessageInDB = async (channelId: string) => {
+  const pinnedMessages = await prisma.message.findMany({
+    where: { isPinned: true, channelId: channelId },
+    orderBy: { updatedAt: "desc" },
+  });
+
+  if (pinnedMessages.length === 0) {
+    return null
+  }
+
+  return pinnedMessages[0];
 };
 
 // generate agora access token
@@ -188,4 +201,5 @@ export const messageService = {
   deleteMultipleMessagesFromDB,
   pinUnpinMessage,
   generateAccessTokenInAgora,
+  pinnedMessageInDB,
 };

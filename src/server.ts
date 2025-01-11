@@ -33,6 +33,7 @@ async function main() {
           isPinned,
           message: updateText,
         } = parsedMessage;
+
         if (type === "subscribe") {
           if (!channelId) {
             ws.send(
@@ -61,10 +62,15 @@ async function main() {
           const pastMessages = await messageService.getMessagesFromDB(
             channelId
           );
+          const pinnedMessage = await messageService.pinnedMessageInDB(
+            channelId
+          );
+
           ws.send(
             JSON.stringify({
               type: "pastMessages",
               message: pastMessages,
+              pinnedMessage: pinnedMessage,
             })
           );
         } else if (
@@ -89,10 +95,14 @@ async function main() {
           try {
             await messageService.deleteSingleMessageFromDB(messageId);
             const messages = await messageService.getMessagesFromDB(channelId);
+            const pinnedMessage = await messageService.pinnedMessageInDB(
+              channelId
+            );
 
             const pastMessages = {
               type: "pastMessages",
               message: messages,
+              pinnedMessage: pinnedMessage,
             };
             channelClients
               .get(subscribedChannel as string)
@@ -112,10 +122,14 @@ async function main() {
           try {
             await messageService.deleteMultipleMessagesFromDB(messageIds);
             const messages = await messageService.getMessagesFromDB(channelId);
+            const pinnedMessage = await messageService.pinnedMessageInDB(
+              channelId
+            );
 
             const pastMessages = {
               type: "pastMessages",
               message: messages,
+              pinnedMessage: pinnedMessage,
             };
             channelClients
               .get(subscribedChannel as string)
@@ -135,10 +149,14 @@ async function main() {
           try {
             await messageService.pinUnpinMessage(messageId, isPinned);
             const messages = await messageService.getMessagesFromDB(channelId);
+            const pinnedMessage = await messageService.pinnedMessageInDB(
+              channelId
+            );
 
             const pastMessages = {
               type: "pastMessages",
               message: messages,
+              pinnedMessage: pinnedMessage,
             };
             channelClients
               .get(subscribedChannel as string)
@@ -158,10 +176,14 @@ async function main() {
           try {
             await messageService.deleteAllMessagesFromChannel(messageId);
             const messages = await messageService.getMessagesFromDB(channelId);
+            const pinnedMessage = await messageService.pinnedMessageInDB(
+              channelId
+            );
 
             const pastMessages = {
               type: "pastMessages",
               message: messages,
+              pinnedMessage: pinnedMessage,
             };
             channelClients
               .get(subscribedChannel as string)
@@ -181,10 +203,14 @@ async function main() {
           try {
             await messageService.updateSingleMessageInDB(messageId, updateText);
             const messages = await messageService.getMessagesFromDB(channelId);
+            const pinnedMessage = await messageService.pinnedMessageInDB(
+              channelId
+            );
 
             const pastMessages = {
               type: "pastMessages",
               message: messages,
+              pinnedMessage: pinnedMessage,
             };
             channelClients
               .get(subscribedChannel as string)

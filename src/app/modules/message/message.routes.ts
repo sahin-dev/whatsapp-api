@@ -43,4 +43,6 @@ router.post(
   messageController.generateAccessToken
 );
 
+router.get("/pinned-message/:channelId", auth(), messageController.pinnedMessage);
+
 export const messageRoute = router;

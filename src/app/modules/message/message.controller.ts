@@ -124,6 +124,18 @@ const generateAccessToken = catchAsync(async (req, res) => {
   });
 });
 
+const pinnedMessage = catchAsync(async (req, res) => {
+  const { channelId } = req.params;
+  const result = await messageService.pinnedMessageInDB(channelId);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Retrive pinned message successfully",
+    data: result,
+  });
+});
+
 export const messageController = {
   createMessage,
   getSingleMessage,
@@ -132,4 +144,5 @@ export const messageController = {
   updateMessage,
   deleteMultipleMessages,
   generateAccessToken,
+  pinnedMessage,
 };
