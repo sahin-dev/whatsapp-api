@@ -14,7 +14,11 @@ router.post(
   parseBodyData,
   groupControllers.createGroup
 );
-router.get("/", auth(UserRole.SUPER_ADMIN), groupControllers.getAllGroups);
+router.get(
+  "/",
+  auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
+  groupControllers.getAllGroups
+);
 router.get("/:groupId", auth(), groupControllers.getSingleGroup);
 router.put(
   "/:groupId",
