@@ -55,7 +55,7 @@ model Chanel {
   description   String
   memberIds     String[]
   chanelType    ChanelType      @default(PRIVATE)
-  traderLink    String
+  traderLink    String?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   user          User?           @relation(fields: [userId], references: [id])
