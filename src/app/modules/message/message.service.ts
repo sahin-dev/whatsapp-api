@@ -11,6 +11,10 @@ const createMessageInDB = async (req: any) => {
   const senderId = req.user.id;
   const chanelId = req.params.chanelId;
 
+  if (payload?.message === undefined && files === undefined) {
+    throw new ApiError(400, "Message or file is required");
+  }
+
   const imageUrls = uploadFiles?.map((e: any) => {
     const result = e
       ? `${config.backend_base_url}/uploads/${e.filename}`
@@ -158,7 +162,7 @@ const pinnedMessageInDB = async (channelId: string) => {
   });
 
   if (pinnedMessages.length === 0) {
-    return null
+    return null;
   }
 
   return pinnedMessages[0];
