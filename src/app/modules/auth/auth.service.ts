@@ -165,72 +165,69 @@ const loginAuthProvider = async (payload: {
   password: string;
   fcmToken?: string;
 }) => {
-  try {
-    const response = await axios.post(
-      `${process.env.AUTH0_DOMAIN}/oauth/token`,
-      {
-        grant_type: "password",
-        username: payload.username,
-        password: payload.password,
-        audience: process.env.AUTH0_AUDIENCE,
-        client_id: process.env.AUTH0_CLIENT_ID,
-        client_secret: process.env.AUTH0_CLIENT_SECRET,
-        connection: "Username-Password-Authentication",
-        scope: "openid profile email",
+  const response = await axios.post(
+    `${process.env.AUTH0_DOMAIN}/oauth/token`,
+    {
+      grant_type: "password",
+      username: payload.username,
+      password: payload.password,
+      audience: process.env.AUTH0_AUDIENCE,
+      client_id: process.env.AUTH0_CLIENT_ID,
+      client_secret: process.env.AUTH0_CLIENT_SECRET,
+      connection: "Username-Password-Authentication",
+      scope: "openid profile email",
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
       },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    const token = response.data.access_token;
-
-    verifyToken(token);
-    const user = await fetchUserProfile(token);
-
-    const existingUser = await prisma.user.findUnique({
-      where: { email: user.email },
-    });
-
-    if (!existingUser) {
-      throw new ApiError(404, "User not found");
     }
+  );
+  const token = response.data.access_token;
 
-    const accessToken = jwtHelpers.generateToken(
-      {
-        id: existingUser.id,
-        email: existingUser.email,
-        role: existingUser.role,
-        fcmToken: existingUser?.fcmToken,
-        subscription: existingUser.subcription,
-      },
-      config.jwt.jwt_secret as string,
-      config.jwt.expires_in as string
-    );
+  verifyToken(token);
+  const user = await fetchUserProfile(token);
 
-    const updatedUser = await prisma.user.update({
-      where: { email: user.email },
-      data: {
-        password: bcrypt.hashSync(payload.password, 10),
-        fcmToken: payload.fcmToken ? payload.fcmToken : existingUser?.fcmToken,
-        accessToken: accessToken,
-      },
-    });
+  const existingUser = await prisma.user.findUnique({
+    where: { email: user.email },
+    include: { subscription: true },
+  });
 
-    const { password, ...userInfo } = updatedUser;
-
-    return {
-      accessToken,
-      userInfo,
-    };
-  } catch (error: any) {
-    console.error(
-      "❌ Login Failed:",
-      error.response ? error.response.data : error.message
-    );
-    throw new ApiError(401, "Invalid credentials");
+  if (!existingUser) {
+    throw new ApiError(404, "User not found");
   }
+
+  if (existingUser.subscription.length === 0) {
+    throw new ApiError(401, "need subscripion to min a plan");
+  }
+
+  const accessToken = jwtHelpers.generateToken(
+    {
+      id: existingUser.id,
+      email: existingUser.email,
+      role: existingUser.role,
+      fcmToken: existingUser?.fcmToken,
+      subscription: existingUser.subcription,
+    },
+    config.jwt.jwt_secret as string,
+    config.jwt.expires_in as string
+  );
+
+  const updatedUser = await prisma.user.update({
+    where: { email: user.email },
+    data: {
+      password: bcrypt.hashSync(payload.password, 10),
+      fcmToken: payload.fcmToken ? payload.fcmToken : existingUser?.fcmToken,
+      accessToken: accessToken,
+    },
+  });
+
+  const { password, ...userInfo } = updatedUser;
+
+  return {
+    accessToken,
+    userInfo,
+  };
 };
 
 const adminLoginAuth = async (payload: {
