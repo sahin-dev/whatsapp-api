@@ -197,9 +197,9 @@ const loginAuthProvider = async (payload: {
     throw new ApiError(404, "User not found");
   }
 
-  if (existingUser.subscription.length === 0) {
-    throw new ApiError(401, "need subscripion to min a plan");
-  }
+  // if (existingUser.subscription.length === 0) {
+  //   throw new ApiError(401, "need subscripion to min a plan");
+  // }
 
   const accessToken = jwtHelpers.generateToken(
     {
