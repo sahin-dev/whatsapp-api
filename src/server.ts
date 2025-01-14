@@ -32,6 +32,7 @@ async function main() {
           messageIds,
           isPinned,
           message: updateText,
+          isStreaming = false,
         } = parsedMessage;
 
         if (type === "subscribe") {
@@ -92,140 +93,112 @@ async function main() {
             }
           });
         } else if (type === "deleteMessage" && messageId) {
-          try {
-            await messageService.deleteSingleMessageFromDB(messageId);
-            const messages = await messageService.getMessagesFromDB(channelId);
-            const pinnedMessage = await messageService.pinnedMessageInDB(
-              channelId
-            );
+          await messageService.deleteSingleMessageFromDB(messageId);
+          const messages = await messageService.getMessagesFromDB(channelId);
+          const pinnedMessage = await messageService.pinnedMessageInDB(
+            channelId
+          );
 
-            const pastMessages = {
-              type: "pastMessages",
-              message: messages,
-              pinnedMessage: pinnedMessage,
-            };
-            channelClients
-              .get(subscribedChannel as string)
-              ?.forEach((client) => {
-                if (client.readyState === WebSocket.OPEN) {
-                  client.send(JSON.stringify(pastMessages));
-                }
-              });
-          } catch (error: any) {
-            ws.send(
-              JSON.stringify({
-                error: `Failed to delete message: ${error.message}`,
-              })
-            );
-          }
+          const pastMessages = {
+            type: "pastMessages",
+            isStreaming: isStreaming,
+            pinnedMessage: pinnedMessage,
+            message: messages,
+          };
+          channelClients.get(subscribedChannel as string)?.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify(pastMessages));
+            }
+          });
         } else if (type === "multipleDeleteMessages" && messageIds) {
-          try {
-            await messageService.deleteMultipleMessagesFromDB(messageIds);
-            const messages = await messageService.getMessagesFromDB(channelId);
-            const pinnedMessage = await messageService.pinnedMessageInDB(
-              channelId
-            );
+          await messageService.deleteMultipleMessagesFromDB(messageIds);
+          const messages = await messageService.getMessagesFromDB(channelId);
+          const pinnedMessage = await messageService.pinnedMessageInDB(
+            channelId
+          );
 
-            const pastMessages = {
-              type: "pastMessages",
-              message: messages,
-              pinnedMessage: pinnedMessage,
-            };
-            channelClients
-              .get(subscribedChannel as string)
-              ?.forEach((client) => {
-                if (client.readyState === WebSocket.OPEN) {
-                  client.send(JSON.stringify(pastMessages));
-                }
-              });
-          } catch (error: any) {
-            ws.send(
-              JSON.stringify({
-                error: `Failed to delete message: ${error.message}`,
-              })
-            );
-          }
+          const pastMessages = {
+            type: "pastMessages",
+            isStreaming: isStreaming,
+            pinnedMessage: pinnedMessage,
+            message: messages,
+          };
+          channelClients.get(subscribedChannel as string)?.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify(pastMessages));
+            }
+          });
         } else if (type === "pinMessage" && messageId) {
-          try {
-            await messageService.pinUnpinMessage(messageId, isPinned);
-            const messages = await messageService.getMessagesFromDB(channelId);
-            const pinnedMessage = await messageService.pinnedMessageInDB(
-              channelId
-            );
+          await messageService.pinUnpinMessage(messageId, isPinned);
+          const messages = await messageService.getMessagesFromDB(channelId);
+          const pinnedMessage = await messageService.pinnedMessageInDB(
+            channelId
+          );
 
-            const pastMessages = {
-              type: "pastMessages",
-              message: messages,
-              pinnedMessage: pinnedMessage,
-            };
-            channelClients
-              .get(subscribedChannel as string)
-              ?.forEach((client) => {
-                if (client.readyState === WebSocket.OPEN) {
-                  client.send(JSON.stringify(pastMessages));
-                }
-              });
-          } catch (error: any) {
-            ws.send(
-              JSON.stringify({
-                error: `Failed to delete message: ${error.message}`,
-              })
-            );
-          }
+          const pastMessages = {
+            type: "pastMessages",
+            isStreaming: isStreaming,
+            pinnedMessage: pinnedMessage,
+            message: messages,
+          };
+          channelClients.get(subscribedChannel as string)?.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify(pastMessages));
+            }
+          });
         } else if (type === "clearMessagesFromChannel" && channelId) {
-          try {
-            await messageService.deleteAllMessagesFromChannel(messageId);
-            const messages = await messageService.getMessagesFromDB(channelId);
-            const pinnedMessage = await messageService.pinnedMessageInDB(
-              channelId
-            );
+          await messageService.deleteAllMessagesFromChannel(messageId);
+          const messages = await messageService.getMessagesFromDB(channelId);
+          const pinnedMessage = await messageService.pinnedMessageInDB(
+            channelId
+          );
 
-            const pastMessages = {
-              type: "pastMessages",
-              message: messages,
-              pinnedMessage: pinnedMessage,
-            };
-            channelClients
-              .get(subscribedChannel as string)
-              ?.forEach((client) => {
-                if (client.readyState === WebSocket.OPEN) {
-                  client.send(JSON.stringify(pastMessages));
-                }
-              });
-          } catch (error: any) {
-            ws.send(
-              JSON.stringify({
-                error: `Failed to delete message: ${error.message}`,
-              })
-            );
-          }
+          const pastMessages = {
+            type: "pastMessages",
+            isStreaming: isStreaming,
+            pinnedMessage: pinnedMessage,
+            message: messages,
+          };
+          channelClients.get(subscribedChannel as string)?.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify(pastMessages));
+            }
+          });
         } else if (type === "editMessage" && messageId) {
-          try {
-            await messageService.updateSingleMessageInDB(messageId, updateText);
-            const messages = await messageService.getMessagesFromDB(channelId);
-            const pinnedMessage = await messageService.pinnedMessageInDB(
-              channelId
-            );
+          await messageService.updateSingleMessageInDB(messageId, updateText);
+          const messages = await messageService.getMessagesFromDB(channelId);
+          const pinnedMessage = await messageService.pinnedMessageInDB(
+            channelId
+          );
 
-            const pastMessages = {
-              type: "pastMessages",
-              message: messages,
-              pinnedMessage: pinnedMessage,
-            };
-            channelClients
-              .get(subscribedChannel as string)
-              ?.forEach((client) => {
-                if (client.readyState === WebSocket.OPEN) {
-                  client.send(JSON.stringify(pastMessages));
-                }
-              });
-          } catch (error: any) {
-            ws.send(
-              JSON.stringify({
-                error: `Failed to delete message: ${error.message}`,
-              })
-            );
-          }
+          const pastMessages = {
+            type: "pastMessages",
+            isStreaming: isStreaming,
+            pinnedMessage: pinnedMessage,
+            message: messages,
+          };
+          channelClients.get(subscribedChannel as string)?.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify(pastMessages));
+            }
+          });
+        } else if (type === "streaming" && channelId) {
+          const messages = await messageService.getMessagesFromDB(channelId);
+          const pinnedMessage = await messageService.pinnedMessageInDB(
+            channelId
+          );
+
+          const pastMessages = {
+            type: "pastMessages",
+            isStreaming: isStreaming,
+            pinnedMessage: pinnedMessage,
+            message: messages,
+          };
+          channelClients.get(subscribedChannel as string)?.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify(pastMessages));
+            }
+          });
         }
       } catch (err: any) {
         console.error("Error processing WebSocket message:", err.message);
