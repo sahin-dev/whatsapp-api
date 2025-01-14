@@ -70,8 +70,9 @@ async function main() {
           ws.send(
             JSON.stringify({
               type: "pastMessages",
-              message: pastMessages,
+              isStreaming: isStreaming,
               pinnedMessage: pinnedMessage,
+              message: pastMessages,
             })
           );
         } else if (
