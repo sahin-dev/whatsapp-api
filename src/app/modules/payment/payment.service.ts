@@ -174,16 +174,33 @@ const validateAndAssignRole = async (userEmail: string) => {
       const roleId = PRICE_ID_ROLE_MAPPING[priceId];
       if (roleId) {
         await assignUserRole(userFromAuth.user_id, roleId);
-        await updateAuth0UserMetadata(userFromAuth.user_id, {
-          stripe_customer_id: customerId,
-          priceId: priceId,
-          subscriptionId: activeSubscription.id,
-        });
 
-        //for testing
-        await updateAuth0UserMetadata(userFromAuth.user_id, [
-          user.subscription,
-        ]);
+        // await updateAuth0UserMetadata(userFromAuth.user_id, {
+        //   stripe_customer_id: customerId,
+        //   priceId: priceId,
+        //   subscriptionId: activeSubscription.id,
+        // });
+
+        // //for testing
+        // // await updateAuth0UserMetadata(userFromAuth.user_id, [
+        // //   user.subscription,
+        // // ]);
+
+        const currentMetadata = await getUserFromAuth0(userFromAuth.user_id);
+
+        const updatedSubscriptions = [
+          ...(currentMetadata.subscriptions || []), // Maintain existing subscriptions
+          {
+            stripe_customer_id: customerId,
+            priceId: priceId,
+            subscriptionId: activeSubscription.id,
+            assignedAt: new Date().toISOString(),
+          },
+        ];
+
+        await updateAuth0UserMetadata(userFromAuth.user_id, {
+          subscriptions: updatedSubscriptions,
+        });
         console.log(
           `✅ Role ${roleId} assigned, Group: ${ROLE_GROUP_MAPPING[roleId]}`
         );
