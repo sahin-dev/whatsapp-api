@@ -219,22 +219,22 @@ const validateAndAssignRole = async (userEmail: string) => {
     const customerId = user.customerId;
     if (!customerId) throw new ApiError(400, "Customer ID missing for user");
 
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      status: "active",
-    });
+    // const subscriptions = await stripe.subscriptions.list({
+    //   customer: customerId,
+    //   status: "active",
+    // });
 
-    const subscriptionData = subscriptions.data.map((sub) => {
-      const priceId = sub.items.data[0]?.price.id;
-      const roleId = PRICE_ID_ROLE_MAPPING[priceId];
-      return {
-        subscriptionId: sub.id,
-        priceId,
-        status: sub.status.toUpperCase(),
-        role: roleId,
-        group: ROLE_GROUP_MAPPING[roleId],
-      };
-    });
+    // const subscriptionData = subscriptions.data.map((sub) => {
+    //   const priceId = sub.items.data[0]?.price.id;
+    //   const roleId = PRICE_ID_ROLE_MAPPING[priceId];
+    //   return {
+    //     subscriptionId: sub.id,
+    //     priceId,
+    //     status: sub.status.toUpperCase(),
+    //     role: roleId,
+    //     group: ROLE_GROUP_MAPPING[roleId],
+    //   };
+    // });
 
     // const appMetadata = {
     //   stripe_customer_id: customerId,
