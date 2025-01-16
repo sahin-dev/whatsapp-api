@@ -503,13 +503,13 @@ const subscriptionCreateHelperFunc = async (
     roleId: roleId,
   };
 
-  // const subscription = {
-  //   subscriptionId: activeSubscription.id,
-  //   priceId: priceId,
-  //   status: "ACTIVE",
-  //   role: roleId,
-  //   group: ROLE_GROUP_MAPPING[roleId],
-  // };
+  const subscription = {
+    subscriptionId: activeSubscription.id,
+    priceId: priceId,
+    status: "ACTIVE",
+    role: roleId,
+    group: ROLE_GROUP_MAPPING[roleId],
+  };
 
   const user: any = await prisma.user.findUnique({
     where: { email: userEmail },
@@ -520,28 +520,28 @@ const subscriptionCreateHelperFunc = async (
       data: data,
     });
     console.log(createdUser);
-    // await prisma.subscription.create({
-    //   data: {
-    //     ...subscription,
-    //     userId: createdUser.id,
-    //   },
-    // });
+    await prisma.subscription.create({
+      data: {
+        ...subscription,
+        userId: createdUser.id,
+      },
+    });
   }
 
-  // const newSubscription = {
-  //   subscriptionId: activeSubscription.id,
-  //   priceId: priceId,
-  //   status: "ACTIVE",
-  //   role: roleId,
-  //   group: ROLE_GROUP_MAPPING[roleId],
-  // };
+  const newSubscription = {
+    subscriptionId: activeSubscription.id,
+    priceId: priceId,
+    status: "ACTIVE",
+    role: roleId,
+    group: ROLE_GROUP_MAPPING[roleId],
+  };
 
-  // await prisma.subscription.create({
-  //   data: {
-  //     ...newSubscription,
-  //     userId: user.id,
-  //   },
-  // });
+  await prisma.subscription.create({
+    data: {
+      ...newSubscription,
+      userId: user.id,
+    },
+  });
 };
 
 //using for webhook
