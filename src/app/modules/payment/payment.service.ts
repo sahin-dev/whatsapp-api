@@ -236,30 +236,35 @@ const validateAndAssignRole = async (userEmail: string) => {
       };
     });
 
+    // const appMetadata = {
+    //   stripe_customer_id: customerId,
+    //   subscriptions: subscriptionData,
+    // };
+
     const appMetadata = {
       stripe_customer_id: customerId,
-      subscriptions: subscriptionData,
+      subscriptions: user.subscription,
     };
 
     // Update Auth0 with all active subscriptions
     await updateAuth0UserMetadata(userFromAuth.user_id, appMetadata);
     console.log(`✅ Updated Auth0 metadata for user ${userEmail}`);
 
-    // // Store subscriptions in Prisma
+    // Store subscriptions in Prisma
     // await prisma.subscription.deleteMany({
     //   where: { userId: user.id }, // Clear old subscriptions
     // });
 
-    await prisma.subscription.createMany({
-      data: subscriptionData.map((sub) => ({
-        subscriptionId: sub.subscriptionId,
-        priceId: sub.priceId,
-        status: sub.status,
-        role: sub.role,
-        group: sub.group,
-        userId: user.id,
-      })),
-    });
+    // await prisma.subscription.createMany({
+    //   data: subscriptionData.map((sub) => ({
+    //     subscriptionId: sub.subscriptionId,
+    //     priceId: sub.priceId,
+    //     status: sub.status,
+    //     role: sub.role,
+    //     group: sub.group,
+    //     userId: user.id,
+    //   })),
+    // });
 
     // Assign roles to the user based on subscriptions
     const roles = subscriptionData.map((sub) => sub.role).filter(Boolean);
