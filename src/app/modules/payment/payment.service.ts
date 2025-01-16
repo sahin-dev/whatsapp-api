@@ -267,7 +267,7 @@ const validateAndAssignRole = async (userEmail: string) => {
     // });
 
     // Assign roles to the user based on subscriptions
-    const roles = subscriptionData.map((sub) => sub.role).filter(Boolean);
+    const roles = user.subscription.map((sub) => sub.role).filter(Boolean);
     for (const roleId of roles) {
       await assignUserRole(userFromAuth.user_id, roleId);
     }
