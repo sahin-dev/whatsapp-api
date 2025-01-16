@@ -245,10 +245,10 @@ const validateAndAssignRole = async (userEmail: string) => {
     await updateAuth0UserMetadata(userFromAuth.user_id, appMetadata);
     console.log(`✅ Updated Auth0 metadata for user ${userEmail}`);
 
-    // Store subscriptions in Prisma
-    await prisma.subscription.deleteMany({
-      where: { userId: user.id }, // Clear old subscriptions
-    });
+    // // Store subscriptions in Prisma
+    // await prisma.subscription.deleteMany({
+    //   where: { userId: user.id }, // Clear old subscriptions
+    // });
 
     await prisma.subscription.createMany({
       data: subscriptionData.map((sub) => ({
