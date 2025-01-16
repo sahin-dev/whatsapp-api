@@ -270,7 +270,7 @@ const validateAndAssignRole = async (userEmail: string) => {
     const roles = user.subscription.map((sub) => sub.role).filter(Boolean);
     for (const roleId of roles) {
       await assignUserRole(userFromAuth.user_id, roleId);
-      await removeUserRole(userFromAuth.user_id, roleId); // for testing
+      // await removeUserRole(userFromAuth.user_id, roleId); // for testing
     }
   } catch (error: any) {
     console.error(
