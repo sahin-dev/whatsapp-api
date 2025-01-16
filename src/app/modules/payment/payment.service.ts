@@ -209,42 +209,69 @@ const removeUserRole = async (userId: string, roleId: string) => {
 const validateAndAssignRole = async (userEmail: string) => {
   try {
     const userFromAuth = await getUserFromAuth0(userEmail);
-    const prismaUser = await prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { email: userEmail },
       include: { subscription: true },
     });
 
-    if (!prismaUser || !prismaUser.customerId) {
-      throw new ApiError(404, "User not found or customer ID missing");
-    }
+    if (!user) throw new ApiError(404, "User not found by email");
+
+    const customerId = user.customerId;
+    if (!customerId) throw new ApiError(400, "Customer ID missing for user");
 
     const subscriptions = await stripe.subscriptions.list({
-      customer: prismaUser.customerId,
+      customer: customerId,
       status: "active",
     });
 
     const subscriptionData = subscriptions.data.map((sub) => {
       const priceId = sub.items.data[0]?.price.id;
       const roleId = PRICE_ID_ROLE_MAPPING[priceId];
-      const group = ROLE_GROUP_MAPPING[roleId];
       return {
-        priceId,
-        roleId,
-        group,
         subscriptionId: sub.id,
-        status: sub.status,
+        priceId,
+        status: sub.status.toUpperCase(),
+        role: roleId,
+        group: ROLE_GROUP_MAPPING[roleId],
       };
     });
 
     const appMetadata = {
-      stripe_customer_id: prismaUser.customerId,
+      stripe_customer_id: customerId,
       subscriptions: subscriptionData,
     };
 
+    // Update Auth0 with all active subscriptions
     await updateAuth0UserMetadata(userFromAuth.user_id, appMetadata);
     console.log(`✅ Updated Auth0 metadata for user ${userEmail}`);
+
+    // Store subscriptions in Prisma
+    await prisma.subscription.deleteMany({
+      where: { userId: user.id }, // Clear old subscriptions
+    });
+
+    await prisma.subscription.createMany({
+      data: subscriptionData.map((sub) => ({
+        subscriptionId: sub.subscriptionId,
+        priceId: sub.priceId,
+        status: sub.status,
+        role: sub.role,
+        group: sub.group,
+        userId: user.id,
+      })),
+    });
+
+    // Assign roles to the user based on subscriptions
+    const roles = subscriptionData.map((sub) => sub.role).filter(Boolean);
+    for (const roleId of roles) {
+      await assignUserRole(userFromAuth.user_id, roleId);
+    }
   } catch (error: any) {
-    console.error("❌ Error in validateAndAssignSubscriptions:", error.message);
+    console.error(
+      "❌ Error in validating and assigning subscriptions:",
+      error.message
+    );
+    throw error;
   }
 };
 
