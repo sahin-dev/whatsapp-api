@@ -181,9 +181,9 @@ const validateAndAssignRole = async (userEmail: string) => {
         });
 
         //for testing
-        // await updateAuth0UserMetadata(userFromAuth.user_id, [
-        //   user.subscription,
-        // ]);
+        await updateAuth0UserMetadata(userFromAuth.user_id, [
+          user.subscription,
+        ]);
         console.log(
           `✅ Role ${roleId} assigned, Group: ${ROLE_GROUP_MAPPING[roleId]}`
         );
