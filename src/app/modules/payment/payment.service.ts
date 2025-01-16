@@ -127,81 +127,134 @@ const removeUserRole = async (userId: string, roleId: string) => {
   );
 };
 
+// const validateAndAssignRole = async (userEmail: string) => {
+//   try {
+//     const userFromAuth = await getUserFromAuth0(userEmail);
+//     const user = await prisma.user.findUnique({
+//       where: { email: userEmail },
+//       include: {
+//         subscription: true,
+//       },
+//     });
+
+//     if (!user) {
+//       throw new ApiError(404, "User not found by email address");
+//     }
+
+//     const customerId = user.customerId;
+//     const priceId = user.priceId;
+
+//     if (!customerId || !priceId) {
+//       await updateAuth0UserMetadata(userFromAuth.user_id, {
+//         priceId: null,
+//         group: null,
+//       });
+//       console.log("Removed invalid priceId from user metadata");
+//       return { valid: false };
+//     }
+
+//     const subscriptions = await stripe.subscriptions.list({
+//       customer: customerId,
+//       status: "active",
+//     });
+
+//     const activeSubscription = subscriptions.data.find(
+//       (subscription) => subscription.status === "active"
+//     );
+
+//     if (!activeSubscription) {
+//       throw new ApiError(404, "No active subscription found for the customer");
+//     }
+
+//     const validSubscription = subscriptions.data.find((sub) =>
+//       sub.items.data.some((item) => item.price.id === priceId)
+//     );
+
+//     if (validSubscription) {
+//       const roleId = PRICE_ID_ROLE_MAPPING[priceId];
+//       if (roleId) {
+//         await assignUserRole(userFromAuth.user_id, roleId);
+//         await updateAuth0UserMetadata(userFromAuth.user_id, {
+//           stripe_customer_id: customerId,
+//           priceId: priceId,
+//           subscriptionId: activeSubscription.id,
+//         });
+
+//         //for testing
+//         // await updateAuth0UserMetadata(userFromAuth.user_id, [
+//         //   user.subscription,
+//         // ]);
+//         console.log(
+//           `✅ Role ${roleId} assigned, Group: ${ROLE_GROUP_MAPPING[roleId]}`
+//         );
+//         return { valid: true, group: ROLE_GROUP_MAPPING[roleId] };
+//       }
+//     } else {
+//       await updateAuth0UserMetadata(userFromAuth.user_id, {
+//         stripe_customer_id: null,
+//         priceId: null,
+//         subscriptionId: null,
+//       });
+//       await removeUserRole(userFromAuth.user_id, "rol_sXYkL5QJc63EvHJI");
+//       await removeUserRole(userFromAuth.user_id, "rol_kFz6E1TzYWKHnoNb");
+//       console.log("❌ Subscription invalid, roles removed, group cleared");
+//       return { valid: false };
+//     }
+//   } catch (error: any) {
+//     console.error("❌ Subscription validation failed:", error.message);
+//     throw error;
+//   }
+// };
+
 const validateAndAssignRole = async (userEmail: string) => {
   try {
     const userFromAuth = await getUserFromAuth0(userEmail);
     const user = await prisma.user.findUnique({
       where: { email: userEmail },
-      include: {
-        subscription: true,
-      },
+      include: { subscription: true },
     });
 
-    if (!user) {
-      throw new ApiError(404, "User not found by email address");
-    }
+    if (!user) throw new ApiError(404, "User not found by email");
 
     const customerId = user.customerId;
-    const priceId = user.priceId;
-
-    if (!customerId || !priceId) {
-      await updateAuth0UserMetadata(userFromAuth.user_id, {
-        priceId: null,
-        group: null,
-      });
-      console.log("Removed invalid priceId from user metadata");
-      return { valid: false };
-    }
+    if (!customerId) throw new ApiError(400, "Customer ID missing for user");
 
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
     });
 
-    const activeSubscription = subscriptions.data.find(
-      (subscription) => subscription.status === "active"
-    );
-
-    if (!activeSubscription) {
-      throw new ApiError(404, "No active subscription found for the customer");
-    }
-
-    const validSubscription = subscriptions.data.find((sub) =>
-      sub.items.data.some((item) => item.price.id === priceId)
-    );
-
-    if (validSubscription) {
+    const subscriptionData = subscriptions.data.map((sub) => {
+      const priceId = sub.items.data[0]?.price.id;
       const roleId = PRICE_ID_ROLE_MAPPING[priceId];
-      if (roleId) {
-        await assignUserRole(userFromAuth.user_id, roleId);
-        await updateAuth0UserMetadata(userFromAuth.user_id, {
-          stripe_customer_id: customerId,
-          priceId: priceId,
-          subscriptionId: activeSubscription.id,
-        });
+      return {
+        subscriptionId: sub.id,
+        priceId,
+        status: sub.status.toUpperCase(),
+        role: roleId,
+        group: ROLE_GROUP_MAPPING[roleId],
+      };
+    });
 
-        //for testing
-        // await updateAuth0UserMetadata(userFromAuth.user_id, [
-        //   user.subscription,
-        // ]);
-        console.log(
-          `✅ Role ${roleId} assigned, Group: ${ROLE_GROUP_MAPPING[roleId]}`
-        );
-        return { valid: true, group: ROLE_GROUP_MAPPING[roleId] };
-      }
-    } else {
-      await updateAuth0UserMetadata(userFromAuth.user_id, {
-        stripe_customer_id: null,
-        priceId: null,
-        subscriptionId: null,
-      });
-      await removeUserRole(userFromAuth.user_id, "rol_sXYkL5QJc63EvHJI");
-      await removeUserRole(userFromAuth.user_id, "rol_kFz6E1TzYWKHnoNb");
-      console.log("❌ Subscription invalid, roles removed, group cleared");
-      return { valid: false };
+    const appMetadata = {
+      stripe_customer_id: customerId,
+      subscriptions: subscriptionData,
+    };
+
+    // Update Auth0 with all active subscriptions
+    await updateAuth0UserMetadata(userFromAuth.user_id, appMetadata);
+    console.log(`✅ Updated Auth0 metadata for user ${userEmail}`);
+
+    // Assign roles to the user based on subscriptions
+    const roles = subscriptionData.map((sub) => sub.role).filter(Boolean);
+    for (const roleId of roles) {
+      await assignUserRole(userFromAuth.user_id, roleId);
     }
   } catch (error: any) {
-    console.error("❌ Subscription validation failed:", error.message);
+    console.error(
+      "❌ Error in validating and assigning subscriptions:",
+      error.message
+    );
     throw error;
   }
 };
