@@ -219,28 +219,6 @@ const validateAndAssignRole = async (userEmail: string) => {
     const customerId = user.customerId;
     if (!customerId) throw new ApiError(400, "Customer ID missing for user");
 
-    // const subscriptions = await stripe.subscriptions.list({
-    //   customer: customerId,
-    //   status: "active",
-    // });
-
-    // const subscriptionData = subscriptions.data.map((sub) => {
-    //   const priceId = sub.items.data[0]?.price.id;
-    //   const roleId = PRICE_ID_ROLE_MAPPING[priceId];
-    //   return {
-    //     subscriptionId: sub.id,
-    //     priceId,
-    //     status: sub.status.toUpperCase(),
-    //     role: roleId,
-    //     group: ROLE_GROUP_MAPPING[roleId],
-    //   };
-    // });
-
-    // const appMetadata = {
-    //   stripe_customer_id: customerId,
-    //   subscriptions: subscriptionData,
-    // };
-
     const appMetadata = {
       stripe_customer_id: customerId,
       subscriptions: user.subscription,
@@ -249,22 +227,6 @@ const validateAndAssignRole = async (userEmail: string) => {
     // Update Auth0 with all active subscriptions
     await updateAuth0UserMetadata(userFromAuth.user_id, appMetadata);
     console.log(`✅ Updated Auth0 metadata for user ${userEmail}`);
-
-    // Store subscriptions in Prisma
-    // await prisma.subscription.deleteMany({
-    //   where: { userId: user.id }, // Clear old subscriptions
-    // });
-
-    // await prisma.subscription.createMany({
-    //   data: subscriptionData.map((sub) => ({
-    //     subscriptionId: sub.subscriptionId,
-    //     priceId: sub.priceId,
-    //     status: sub.status,
-    //     role: sub.role,
-    //     group: sub.group,
-    //     userId: user.id,
-    //   })),
-    // });
 
     // Assign roles to the user based on subscriptions
     const roles = user.subscription.map((sub) => sub.role).filter(Boolean);
