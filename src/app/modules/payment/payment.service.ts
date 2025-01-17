@@ -213,12 +213,14 @@ const validateAndAssignRole = async (userEmail: string) => {
       where: { email: userEmail },
       include: { subscription: true },
     });
-    console.log(user);
 
     if (!user) throw new ApiError(404, "User not found by email");
 
-    const customerId = user.customerId;
-    if (!customerId) throw new ApiError(400, "Customer ID missing for user");
+    const customerId = user?.customerId;
+    console.log(customerId);
+    if (!customerId) {
+      throw new ApiError(400, "Customer ID missing for user");
+    }
 
     const appMetadata = {
       stripe_customer_id: customerId,
