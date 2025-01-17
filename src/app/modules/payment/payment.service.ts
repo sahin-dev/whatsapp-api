@@ -309,42 +309,42 @@ const handleSubscriptionInAuth = async (userEmail: string) => {
     groupName = "360 Elite Crypto Trading Alerts";
   }
 
-  if (role && groupName) {
-    console.log("working in role and groupName");
-    // Assign Role to User
-    await axios.post(
-      `https://${auth0Domain}/api/v2/users/${userId}/roles`,
-      {
-        roles: [role],
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${managementToken}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+  // if (role && groupName) {
+  //   console.log("working in role and groupName");
+  //   // Assign Role to User
+  //   await axios.post(
+  //     `https://${auth0Domain}/api/v2/users/${userId}/roles`,
+  //     {
+  //       roles: [role],
+  //     },
+  //     {
+  //       headers: {
+  //         Authorization: `Bearer ${managementToken}`,
+  //         "Content-Type": "application/json",
+  //       },
+  //     }
+  //   );
 
-    // Assign User to Group
-    // const result = await axios.post(
-    //   `https://${auth0Domain}/api/v2/users/${userId}/groups`,
-    //   {
-    //     groups: [groupName],
-    //   },
-    //   {
-    //     headers: {
-    //       Authorization: `Bearer ${managementToken}`,
-    //       "Content-Type": "application/json",
-    //     },
-    //   }
-    // );
+  //   // Assign User to Group
+  //   // const result = await axios.post(
+  //   //   `https://${auth0Domain}/api/v2/users/${userId}/groups`,
+  //   //   {
+  //   //     groups: [groupName],
+  //   //   },
+  //   //   {
+  //   //     headers: {
+  //   //       Authorization: `Bearer ${managementToken}`,
+  //   //       "Content-Type": "application/json",
+  //   //     },
+  //   //   }
+  //   // );
 
-    return {
-      stripeCustomerId: user.customerId,
-      priceId: user.priceId,
-      subscriptionId: user.subscriptionId,
-    };
-  }
+  //   return {
+  //     stripeCustomerId: user.customerId,
+  //     priceId: user.priceId,
+  //     subscriptionId: user.subscriptionId,
+  //   };
+  // }
   return {
     stripeCustomerId: user.customerId,
     priceId: user.priceId,
