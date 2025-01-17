@@ -213,6 +213,7 @@ const validateAndAssignRole = async (userEmail: string) => {
       where: { email: userEmail },
       include: { subscription: true },
     });
+    console.log(user);
 
     if (!user) throw new ApiError(404, "User not found by email");
 
