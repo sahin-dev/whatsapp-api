@@ -3,6 +3,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import app from "./app";
 import config from "./config";
 import { messageService } from "./app/modules/message/message.service";
+import prisma from "./shared/prisma";
 
 let wss: WebSocketServer;
 const channelClients = new Map<string, Set<WebSocket>>();
@@ -32,8 +33,12 @@ async function main() {
           messageIds,
           isPinned,
           message: updateText,
-          isStreaming = false,
+          isStreaming,
         } = parsedMessage;
+
+        const streamingResult = await prisma.chanel.findUnique({
+          where: { id: channelId },
+        });
 
         if (type === "subscribe") {
           if (!channelId) {
@@ -70,7 +75,7 @@ async function main() {
           ws.send(
             JSON.stringify({
               type: "pastMessages",
-              isStreaming: isStreaming,
+              isStreaming: streamingResult?.isStreaming,
               pinnedMessage: pinnedMessage,
               message: pastMessages,
             })
@@ -102,7 +107,7 @@ async function main() {
 
           const pastMessages = {
             type: "pastMessages",
-            isStreaming: isStreaming,
+            isStreaming: streamingResult?.isStreaming,
             pinnedMessage: pinnedMessage,
             message: messages,
           };
@@ -120,7 +125,7 @@ async function main() {
 
           const pastMessages = {
             type: "pastMessages",
-            isStreaming: isStreaming,
+            isStreaming: streamingResult?.isStreaming,
             pinnedMessage: pinnedMessage,
             message: messages,
           };
@@ -138,7 +143,7 @@ async function main() {
 
           const pastMessages = {
             type: "pastMessages",
-            isStreaming: isStreaming,
+            isStreaming: streamingResult?.isStreaming,
             pinnedMessage: pinnedMessage,
             message: messages,
           };
@@ -156,7 +161,7 @@ async function main() {
 
           const pastMessages = {
             type: "pastMessages",
-            isStreaming: isStreaming,
+            isStreaming: streamingResult?.isStreaming,
             pinnedMessage: pinnedMessage,
             message: messages,
           };
@@ -174,7 +179,7 @@ async function main() {
 
           const pastMessages = {
             type: "pastMessages",
-            isStreaming: isStreaming,
+            isStreaming: streamingResult?.isStreaming,
             pinnedMessage: pinnedMessage,
             message: messages,
           };
@@ -189,9 +194,16 @@ async function main() {
             channelId
           );
 
+          const updateResult = await prisma.chanel.update({
+            where: { id: channelId },
+            data: {
+              isStreaming: isStreaming,
+            },
+          });
+
           const pastMessages = {
             type: "pastMessages",
-            isStreaming: isStreaming,
+            isStreaming: updateResult?.isStreaming,
             pinnedMessage: pinnedMessage,
             message: messages,
           };
