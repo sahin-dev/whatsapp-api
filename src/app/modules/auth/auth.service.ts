@@ -234,35 +234,43 @@ const adminLoginAuth = async (payload: {
   username: string;
   password: string;
 }) => {
-  const response = await axios.post(
-    `${process.env.AUTH0_DOMAIN}/oauth/token`,
-    {
-      grant_type: "password",
-      username: payload.username,
-      password: payload.password,
-      audience: process.env.AUTH0_AUDIENCE,
-      client_id: process.env.AUTH0_CLIENT_ID,
-      client_secret: process.env.AUTH0_CLIENT_SECRET,
-      connection: "Username-Password-Authentication",
-      scope: "openid profile email",
-    },
-    {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
-  );
-  const token = response.data.access_token;
+  // const response = await axios.post(
+  //   `${process.env.AUTH0_DOMAIN}/oauth/token`,
+  //   {
+  //     grant_type: "password",
+  //     username: payload.username,
+  //     password: payload.password,
+  //     audience: process.env.AUTH0_AUDIENCE,
+  //     client_id: process.env.AUTH0_CLIENT_ID,
+  //     client_secret: process.env.AUTH0_CLIENT_SECRET,
+  //     connection: "Username-Password-Authentication",
+  //     scope: "openid profile email",
+  //   },
+  //   {
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //     },
+  //   }
+  // );
+  // const token = response.data.access_token;
 
-  verifyToken(token);
-  const user = await fetchUserProfile(token);
+  // verifyToken(token);
+  // const user = await fetchUserProfile(token);
 
-  const existingUser = await prisma.user.findUnique({
-    where: { email: user.email },
+  const existingUser = await prisma.user.findFirst({
+    where: { username: payload.username },
   });
 
   if (!existingUser) {
     throw new ApiError(404, "Admin user not found");
+  }
+
+  const isPasswordValid = await bcrypt.compare(
+    payload.password,
+    existingUser.password as string
+  );
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid credentials");
   }
 
   if (existingUser?.role !== "ADMIN" && existingUser?.role !== "SUPER_ADMIN") {
@@ -282,9 +290,8 @@ const adminLoginAuth = async (payload: {
   );
 
   const updatedUser = await prisma.user.update({
-    where: { email: user.email },
+    where: { email: existingUser.email },
     data: {
-      password: bcrypt.hashSync(payload.password, 10),
       accessToken: authToken,
     },
   });
