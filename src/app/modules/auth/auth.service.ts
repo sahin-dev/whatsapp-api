@@ -165,6 +165,44 @@ const loginAuthProvider = async (payload: {
   password: string;
   fcmToken?: string;
 }) => {
+  const existingUser = await prisma.user.findFirst({
+    where: { username: payload.username },
+    include: { subscription: true },
+  });
+
+  if (!existingUser) {
+    throw new ApiError(404, "User not found");
+  }
+
+  if (existingUser.role !== "USER") {
+    const accessToken = jwtHelpers.generateToken(
+      {
+        id: existingUser.id,
+        email: existingUser.email,
+        role: existingUser.role,
+        fcmToken: existingUser?.fcmToken,
+        subscription: existingUser.subcription,
+      },
+      config.jwt.jwt_secret as string,
+      config.jwt.expires_in as string
+    );
+
+    const updatedUser = await prisma.user.update({
+      where: { email: existingUser.email },
+      data: {
+        fcmToken: payload.fcmToken ? payload.fcmToken : existingUser?.fcmToken,
+        accessToken: accessToken,
+      },
+    });
+
+    const { password, ...userInfo } = updatedUser;
+
+    return {
+      accessToken,
+      userInfo,
+    };
+  }
+
   const response = await axios.post(
     `${process.env.AUTH0_DOMAIN}/oauth/token`,
     {
@@ -188,18 +226,9 @@ const loginAuthProvider = async (payload: {
   verifyToken(token);
   const user = await fetchUserProfile(token);
 
-  const existingUser = await prisma.user.findUnique({
-    where: { email: user.email },
-    include: { subscription: true },
-  });
-
-  if (!existingUser) {
-    throw new ApiError(404, "User not found");
+  if (existingUser.subscription.length === 0) {
+    throw new ApiError(401, "need subscripion to min a plan");
   }
-
-  // if (existingUser.subscription.length === 0) {
-  //   throw new ApiError(401, "need subscripion to min a plan");
-  // }
 
   const accessToken = jwtHelpers.generateToken(
     {
