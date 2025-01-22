@@ -70,9 +70,17 @@ const getMessagesFromDB = async (channelId: string) => {
 };
 
 const searchMessageFromDB = async (channelId: string, search: string) => {
-  if(search === undefined){
+  if (search === undefined) {
     return [];
   }
+
+  const existingChannel = await prisma.chanel.findUnique({
+    where: { id: channelId },
+  });
+  if (!existingChannel) {
+    throw new ApiError(404, "Channel not found");
+  }
+
   const messages = await prisma.message.findMany({
     where: {
       channelId: channelId,
