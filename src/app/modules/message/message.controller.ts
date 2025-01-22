@@ -136,6 +136,22 @@ const pinnedMessage = catchAsync(async (req, res) => {
   });
 });
 
+const searchMessages = catchAsync(async (req, res) => {
+  const { search } = req.query;
+  const { channelId } = req.params;
+  const results = await messageService.searchMessageFromDB(
+    channelId,
+    search as string
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Search messages retrived successfully",
+    data: results,
+  });
+});
+
 export const messageController = {
   createMessage,
   getSingleMessage,
@@ -145,4 +161,5 @@ export const messageController = {
   deleteMultipleMessages,
   generateAccessToken,
   pinnedMessage,
+  searchMessages,
 };

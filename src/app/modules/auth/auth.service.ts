@@ -9,8 +9,6 @@ import { ObjectId } from "mongodb";
 import path from "path";
 import axios from "axios";
 import jwt from "jsonwebtoken";
-import { UserRole } from "@prisma/client";
-import e from "express";
 
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 

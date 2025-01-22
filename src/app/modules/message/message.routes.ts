@@ -43,6 +43,15 @@ router.post(
   messageController.generateAccessToken
 );
 
-router.get("/pinned-message/:channelId", auth(), messageController.pinnedMessage);
+router.get(
+  "/pinned-message/:channelId",
+  auth(),
+  messageController.pinnedMessage
+);
+router.get(
+  "/search/messages/:channelId",
+  auth(),
+  messageController.searchMessages
+);
 
 export const messageRoute = router;

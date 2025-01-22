@@ -69,6 +69,35 @@ const getMessagesFromDB = async (channelId: string) => {
   return message;
 };
 
+const searchMessageFromDB = async (channelId: string, search: string) => {
+  if(search === undefined){
+    return [];
+  }
+  const messages = await prisma.message.findMany({
+    where: {
+      channelId: channelId,
+      message: {
+        contains: search,
+        mode: "insensitive",
+      },
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          avatar: true,
+          email: true,
+          role: true,
+          status: true,
+        },
+      },
+    },
+  });
+
+  return messages;
+};
+
 //using for socket
 const deleteSingleMessageFromDB = async (messageId: string) => {
   const message = await prisma.message.findUnique({
@@ -206,4 +235,5 @@ export const messageService = {
   pinUnpinMessage,
   generateAccessTokenInAgora,
   pinnedMessageInDB,
+  searchMessageFromDB,
 };
