@@ -124,6 +124,14 @@ const generateAccessToken = catchAsync(async (req, res) => {
   });
 });
 
+const startRecording = catchAsync(async (req, res) => {
+  const { channelId } = req.params;
+  const uid = req.body.uid;
+  const result = await messageService.startRecordingInAgora(channelId, uid);
+
+  sendResponse(res, {statusCode: 200, success: true, message: "Recording Start", data: result})
+});
+
 const pinnedMessage = catchAsync(async (req, res) => {
   const { channelId } = req.params;
   const result = await messageService.pinnedMessageInDB(channelId);
@@ -162,4 +170,5 @@ export const messageController = {
   generateAccessToken,
   pinnedMessage,
   searchMessages,
+  startRecording,
 };

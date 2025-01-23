@@ -2,6 +2,10 @@ import prisma from "../../../shared/prisma";
 import config from "../../../config";
 import ApiError from "../../errors/ApiErrors";
 import { RtcTokenBuilder, RtcRole } from "agora-access-token";
+import axios from "axios";
+
+const appID = config.agora.app_id as string;
+const appCertificate = config.agora.app_certificate as string;
 
 //using for socket in controllers
 const createMessageInDB = async (req: any) => {
@@ -211,8 +215,6 @@ const generateAccessTokenInAgora = async (payload: {
   roomId: string;
   uid: number;
 }) => {
-  const appID = config.agora.app_id as string;
-  const appCertificate = config.agora.app_certificate as string;
   const channelName = payload.roomId;
   const uid = payload.uid;
   const expiredTimeInSeconds = 3600; // 1 hour
@@ -232,6 +234,100 @@ const generateAccessTokenInAgora = async (payload: {
   return token;
 };
 
+const getResourceId = async (roomId: string, uid: number) => {
+  const url = `https://api.agora.io/v1/apps/${appID}/cloud_recording/acquire`;
+  const payload = {
+    cname: roomId,
+    uid: uid.toString(),
+    clientRequest: {},
+  };
+
+  try {
+    const response = await axios.post(url, payload, {
+      headers: {
+        Authorization: `Basic ${Buffer.from(
+          `${appID}:${appCertificate}`
+        ).toString("base64")}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    console.log("Response:", response.data);
+    return response.data.resourceId;
+  } catch (error: any) {
+    console.error(
+      "Error fetching Resource ID:",
+      error.response?.data || error.message
+    );
+    throw new Error("Failed to fetch Resource ID");
+  }
+};
+
+// const generateToken = (roomId: string, uid: number) => {
+//   const expirationTimeInSeconds = 3600; // 1 hour
+
+//   const currentTimestamp = Math.floor(Date.now() / 1000);
+//   const privilegeExpiredTs = currentTimestamp + expirationTimeInSeconds;
+
+//   const token = RtcTokenBuilder.buildTokenWithUid(
+//     appID,
+//     appCertificate,
+//     roomId,
+//     uid,
+//     RtcRole.PUBLISHER,
+//     privilegeExpiredTs
+//   );
+
+//   return token;
+// };
+
+const startRecordingInAgora = async (roomId: string, uid: number) => {
+  const resourceId = await getResourceId(roomId, uid);
+  console.log(resourceId);
+  // const token = generateToken(roomId, uid);
+  const url = `https://api.agora.io/v1/apps/${appID}/cloud_recording/resourceid/${resourceId}/mode/mix/start`;
+
+  const payload = {
+    cname: roomId,
+    uid: uid.toString(),
+    clientRequest: {
+      recordingConfig: {
+        maxIdleTime: 30,
+        streamTypes: 2,
+        channelType: 1,
+        videoStreamType: 1,
+        transcodingConfig: {
+          height: 1080,
+          width: 1920,
+          bitrate: 2260,
+          fps: 15,
+          mixedVideoLayout: 1,
+          backgroundColor: "#000000",
+        },
+      },
+    },
+  };
+
+  try {
+    const response = await axios.post(url, payload, {
+      headers: {
+        Authorization: `Basic ${Buffer.from(
+          `${appID}:${appCertificate}`
+        ).toString("base64")}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      "Error starting recording:",
+      error.response?.data || error.message
+    );
+    throw new Error("Failed to start recording");
+  }
+};
+
 export const messageService = {
   createMessageInDB,
   getMessagesFromDB,
@@ -244,4 +340,5 @@ export const messageService = {
   generateAccessTokenInAgora,
   pinnedMessageInDB,
   searchMessageFromDB,
+  startRecordingInAgora,
 };

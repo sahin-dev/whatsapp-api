@@ -42,6 +42,11 @@ router.post(
   auth(),
   messageController.generateAccessToken
 );
+router.post(
+  "/start/recording/:channelId",
+  auth(),
+  messageController.startRecording
+);
 
 router.get(
   "/pinned-message/:channelId",

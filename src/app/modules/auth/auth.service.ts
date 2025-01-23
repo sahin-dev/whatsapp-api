@@ -9,6 +9,8 @@ import { ObjectId } from "mongodb";
 import path from "path";
 import axios from "axios";
 import jwt from "jsonwebtoken";
+import { Request } from "express";
+import { User } from "@prisma/client";
 
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
@@ -331,10 +333,35 @@ const adminLoginAuth = async (payload: {
   };
 };
 
+const updateProfileImageInDB = async (req: any) => {
+  const userId = req.user.id;
+  const file = req.file;
+
+  if (!ObjectId.isValid(userId)) {
+    throw new ApiError(400, "Invalid user ID format");
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw new ApiError(404, "User not found for edit user");
+  }
+
+  // Update user's avatar with the new filename
+  const updatedImage = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      avatar: `${config.backend_base_url}/uploads/${file.filename}`,
+    },
+  });
+  console.log(updatedImage.avatar);
+  return;
+};
+
 export const authService = {
   loginUserIntoDB,
   getProfileFromDB,
   updateProfileIntoDB,
   loginAuthProvider,
   adminLoginAuth,
+  updateProfileImageInDB,
 };

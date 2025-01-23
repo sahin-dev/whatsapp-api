@@ -69,10 +69,20 @@ const adminLogin = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const updateProfileImage = catchAsync(async (req: Request, res: Response) => {
+  await authService.updateProfileImageInDB(req);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Profile image updated successfully",
+  });
+});
+
 export const authController = {
   loginUser,
   getProfile,
   updateProfile,
   loginWithAuth,
   adminLogin,
+  updateProfileImage,
 };
