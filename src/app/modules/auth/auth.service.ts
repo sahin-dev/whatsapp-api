@@ -353,8 +353,7 @@ const updateProfileImageInDB = async (req: any) => {
       avatar: `${config.backend_base_url}/uploads/${file.filename}`,
     },
   });
-  console.log(updatedImage.avatar);
-  return;
+  return updatedImage.avatar;
 };
 
 export const authService = {
