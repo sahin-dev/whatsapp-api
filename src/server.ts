@@ -19,6 +19,12 @@ async function main() {
   // Handle WebSocket connections
   wss.on("connection", (ws) => {
     console.log("New WebSocket connection established!");
+    // Ping the client every 30 seconds
+    const interval = setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.ping();
+      }
+    }, 30000);
 
     let subscribedChannel: string | null = null; // Track the client's subscribed channel
 
@@ -198,6 +204,7 @@ async function main() {
           channelClients.delete(subscribedChannel);
       }
       console.log("WebSocket client disconnected!");
+      clearInterval(interval);
     });
   });
 }
