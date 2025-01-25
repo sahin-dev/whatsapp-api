@@ -39,6 +39,8 @@ async function main() {
         const streamingResult = await prisma.chanel.findUnique({
           where: { id: channelId },
         });
+        const pinnedMessage = await messageService.pinnedMessageInDB(channelId);
+        const messages = await messageService.getMessagesFromDB(channelId);
 
         if (type === "subscribe") {
           if (!channelId) {
@@ -64,20 +66,12 @@ async function main() {
           channelClients.get(channelId)?.add(ws);
           subscribedChannel = channelId;
 
-          // Fetch past messages for the channel and send to the client
-          const pastMessages = await messageService.getMessagesFromDB(
-            channelId
-          );
-          const pinnedMessage = await messageService.pinnedMessageInDB(
-            channelId
-          );
-
           ws.send(
             JSON.stringify({
               type: "pastMessages",
               isStreaming: streamingResult?.isStreaming,
               pinnedMessage: pinnedMessage,
-              message: pastMessages,
+              message: messages,
             })
           );
         } else if (
@@ -100,10 +94,6 @@ async function main() {
           });
         } else if (type === "deleteMessage" && messageId) {
           await messageService.deleteSingleMessageFromDB(messageId);
-          const messages = await messageService.getMessagesFromDB(channelId);
-          const pinnedMessage = await messageService.pinnedMessageInDB(
-            channelId
-          );
 
           const pastMessages = {
             type: "pastMessages",
@@ -119,9 +109,6 @@ async function main() {
         } else if (type === "multipleDeleteMessages" && messageIds) {
           await messageService.deleteMultipleMessagesFromDB(messageIds);
           const messages = await messageService.getMessagesFromDB(channelId);
-          const pinnedMessage = await messageService.pinnedMessageInDB(
-            channelId
-          );
 
           const pastMessages = {
             type: "pastMessages",
@@ -136,10 +123,6 @@ async function main() {
           });
         } else if (type === "pinMessage" && messageId) {
           await messageService.pinUnpinMessage(messageId, isPinned);
-          const messages = await messageService.getMessagesFromDB(channelId);
-          const pinnedMessage = await messageService.pinnedMessageInDB(
-            channelId
-          );
 
           const pastMessages = {
             type: "pastMessages",
@@ -154,10 +137,6 @@ async function main() {
           });
         } else if (type === "clearMessagesFromChannel" && channelId) {
           await messageService.deleteAllMessagesFromChannel(messageId);
-          const messages = await messageService.getMessagesFromDB(channelId);
-          const pinnedMessage = await messageService.pinnedMessageInDB(
-            channelId
-          );
 
           const pastMessages = {
             type: "pastMessages",
@@ -173,9 +152,6 @@ async function main() {
         } else if (type === "editMessage" && messageId) {
           await messageService.updateSingleMessageInDB(messageId, updateText);
           const messages = await messageService.getMessagesFromDB(channelId);
-          const pinnedMessage = await messageService.pinnedMessageInDB(
-            channelId
-          );
 
           const pastMessages = {
             type: "pastMessages",
@@ -189,11 +165,6 @@ async function main() {
             }
           });
         } else if (type === "streaming" && channelId) {
-          const messages = await messageService.getMessagesFromDB(channelId);
-          const pinnedMessage = await messageService.pinnedMessageInDB(
-            channelId
-          );
-
           const updateResult = await prisma.chanel.update({
             where: { id: channelId },
             data: {

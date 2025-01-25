@@ -202,11 +202,11 @@ const pinnedMessageInDB = async (channelId: string) => {
     orderBy: { updatedAt: "desc" },
   });
 
-  if (pinnedMessages.length === 0) {
-    return null;
-  }
+  // if (pinnedMessages.length === 0) {
+  //   return null;
+  // }
 
-  return pinnedMessages[0];
+  return pinnedMessages;
 };
 
 // generate agora access token
@@ -221,6 +221,8 @@ const generateAccessTokenInAgora = async (payload: {
   const currentTime = Math.floor(Date.now() / 1000);
   const privilegeExpireTime = currentTime + expiredTimeInSeconds;
   const role = payload.role;
+  // console.log(role)
+  // console.log(role === "publisher" ? RtcRole.PUBLISHER : RtcRole.SUBSCRIBER);
 
   const token = RtcTokenBuilder.buildTokenWithUid(
     appID,
