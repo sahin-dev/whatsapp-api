@@ -54,7 +54,7 @@ app.get("/profile", requiresAuth(), (req, res) => {
   res.send(JSON.stringify(req.oidc.user));
 });
 
-app.post("/start-recording", async (req, res) => {
+app.post("/api/v1/start-recording", async (req, res) => {
   const { channel, uid } = req.body;
 
   // Step 1: Acquire Resource ID
