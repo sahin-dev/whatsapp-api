@@ -82,6 +82,7 @@ app.post("/api/v1/start-recording", async (req, res, next) => {
         }
       );
       resourceId = acquireResponse.data.resourceId;
+      console.log("Recording started - Resource ID:", resourceId);
     } catch (acquireError) {
       return res.status(500).json({
         error: "Failed to acquire resource ID",
@@ -93,29 +94,25 @@ app.post("/api/v1/start-recording", async (req, res, next) => {
       const startResponse = await axios.post(
         `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/mode/mix/start`,
         {
-          cname: channel,
           uid: uid.toString(),
+          cname: channel,
           clientRequest: {
             recordingConfig: {
               maxIdleTime: 30,
               streamTypes: 2,
               channelType: 0,
               videoStreamType: 0,
-              transcodingConfig: {
-                width: 1280,
-                height: 720,
-                fps: 30,
-                bitrate: 1000,
-                mixedVideoLayout: 1,
-              },
+              subscribeVideoUids: ["123", "456"],
+              subscribeAudioUids: ["123", "456"],
+              subscribeUidGroup: 0,
             },
             storageConfig: {
-              vendor: 2, // 1 = AWS S3, 2 = Google Cloud, 3 = AliCloud OSS
-              region: 3, // Use Agora's region code (e.g., 2 for Europe)
-              bucket: "dancefluencer",
               accessKey: "DO00JF7Q4QFL6JT626LQ",
-              secretKey: "+8jgp74O4nG3wtgidZUWw4IARjkC1SghG39zGK65FTk",
-              fileNamePrefix: ["recordings"],
+              region: 3,
+              bucket: "dancefluencer",
+              secretKey: "8jgp74O4nG3wtgidZUWw4IARjkC1SghG39zGK65FTk",
+              vendor: 2,
+              fileNamePrefix: ["directory1", "directory2"],
             },
           },
         },
@@ -123,6 +120,15 @@ app.post("/api/v1/start-recording", async (req, res, next) => {
           headers: { Authorization: AUTH_HEADER },
         }
       );
+
+      // storageConfig: {
+      //         vendor: 1, // 1 = AWS S3, 2 = Google Cloud, 3 = AliCloud OSS
+      //         region: 3, // Use Agora's region code (e.g., 2 for Europe)
+      //         bucket: "dancefluencer",
+      //         accessKey: "DO00JF7Q4QFL6JT626LQ",
+      //         secretKey: "+8jgp74O4nG3wtgidZUWw4IARjkC1SghG39zGK65FTk",
+      //         fileNamePrefix: ["recordings"],
+      //       },
 
       return res.json({
         message: "Recording started successfully",
