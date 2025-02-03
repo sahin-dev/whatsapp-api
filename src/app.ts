@@ -141,7 +141,6 @@ app.post("/api/v1/start-recording", async (req, res) => {
 
 app.post("/api/v1/check-recording-status", async (req, res) => {
   const { resourceId, sid } = req.body;
-  console.log(req.body)
 
   // Step 1: Check Recording Status
   const statusRes = await fetch(
