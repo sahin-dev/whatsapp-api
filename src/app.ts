@@ -55,10 +55,10 @@ app.get("/profile", requiresAuth(), (req, res) => {
 });
 
 app.post("/api/v1/start-recording", async (req, res) => {
-  console.log(req.body)
+  console.log(req.body);
   try {
     const { channel, uid } = req.body;
-    console.log(channel)
+    console.log(channel);
 
     if (!channel || !uid) {
       return res.status(400).json({ error: "Missing channel or uid" });
@@ -93,7 +93,7 @@ app.post("/api/v1/start-recording", async (req, res) => {
     }
 
     const resourceId = acquireData.resourceId;
-    console.log(resourceId)
+    console.log(resourceId);
 
     // Step 2: Start Recording
     const startRes = await fetch(
@@ -125,7 +125,7 @@ app.post("/api/v1/start-recording", async (req, res) => {
             },
             storageConfig: {
               vendor: 1, // 1 = AWS S3, 2 = Google Cloud, 3 = AliCloud OSS
-              region: 2, // Use Agora's region code (e.g., 2 for Europe)
+              region: "fra1",
               bucket: "dancefluencer",
               accessKey: "DO00JF7Q4QFL6JT626LQ",
               secretKey: "+8jgp74O4nG3wtgidZUWw4IARjkC1SghG39zGK65FTk",
@@ -144,6 +144,44 @@ app.post("/api/v1/start-recording", async (req, res) => {
     }
 
     res.json(startData);
+  } catch (error: any) {
+    console.error("Error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/v1/stop-recording", async (req, res) => {
+  try {
+    const { resourceId, sid, channel, uid } = req.body;
+
+    if (!resourceId || !sid || !channel || !uid) {
+      return res.status(400).json({ error: "Missing required parameters" });
+    }
+
+    console.log("Stopping Recording for:", { channel, uid, resourceId, sid });
+
+    const stopRes = await fetch(
+      `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/sid/${sid}/mode/mix/stop`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Basic ${Buffer.from(
+            `${CUSTOMER_ID}:${CUSTOMER_SECRET}`
+          ).toString("base64")}`,
+        },
+        body: JSON.stringify({
+          cname: channel,
+          uid: uid.toString(),
+          clientRequest: {},
+        }),
+      }
+    );
+
+    const stopData = await stopRes.json();
+    console.log("Stop Recording Response:", stopData);
+
+    res.json(stopData);
   } catch (error: any) {
     console.error("Error:", error);
     res.status(500).json({ error: error.message });
