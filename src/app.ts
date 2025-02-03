@@ -118,8 +118,8 @@ app.post("/api/v1/start-recording", async (req, res) => {
               },
             },
             storageConfig: {
-              vendor: 1, // 1 = AWS S3, 2 = Google Cloud, 3 = AliCloud OSS
-              region: 2, // Use Agora's region code (e.g., 2 for Europe)
+              vendor: 2, // 1 = AWS S3, 2 = Google Cloud, 3 = AliCloud OSS
+              region: 3, // Use Agora's region code (e.g., 2 for Europe)
               bucket: "dancefluencer",
               accessKey: "DO00JF7Q4QFL6JT626LQ",
               secretKey: "+8jgp74O4nG3wtgidZUWw4IARjkC1SghG39zGK65FTk",
@@ -132,15 +132,37 @@ app.post("/api/v1/start-recording", async (req, res) => {
 
     const startData = await startRes.json();
 
-    if (!startData.sid) {
-      throw new Error("Failed to start recording");
-    }
-
     res.json(startData);
   } catch (error: any) {
     console.error("Error:", error);
     res.status(500).json({ error: error.message });
   }
+});
+
+app.post("/api/v1/check-recording-status", async (req, res) => {
+  const { resourceId, sid } = req.body;
+  console.log(req.body)
+
+  // Step 1: Check Recording Status
+  const statusRes = await fetch(
+    `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/status`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Basic ${Buffer.from(
+          `${CUSTOMER_ID}:${CUSTOMER_SECRET}`
+        ).toString("base64")}`,
+      },
+      body: JSON.stringify({
+        resourceId,
+        sid,
+      }),
+    }
+  );
+
+  const statusData = await statusRes.json();
+  res.json(statusData);
 });
 
 app.post("/api/v1/stop-recording", async (req, res) => {
