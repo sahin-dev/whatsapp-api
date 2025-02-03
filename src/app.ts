@@ -55,74 +55,99 @@ app.get("/profile", requiresAuth(), (req, res) => {
 });
 
 app.post("/api/v1/start-recording", async (req, res) => {
-  const { channel, uid } = req.body;
+  console.log(req.body)
+  try {
+    const { channel, uid } = req.body;
+    console.log(channel)
 
-  // Step 1: Acquire Resource ID
-  const acquireRes = await fetch(
-    `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/acquire`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Basic ${Buffer.from(
-          `${CUSTOMER_ID}:${CUSTOMER_SECRET}`
-        ).toString("base64")}`,
-      },
-      body: JSON.stringify({
-        cname: channel,
-        uid: uid.toString(),
-        clientRequest: {},
-      }),
+    if (!channel || !uid) {
+      return res.status(400).json({ error: "Missing channel or uid" });
     }
-  );
-  const acquireData = await acquireRes.json();
-  const resourceId = acquireData.resourceId;
 
-  // Step 2: Start Recording
-  const startRes = await fetch(
-    `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/start`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Basic ${Buffer.from(
-          `${CUSTOMER_ID}:${CUSTOMER_SECRET}`
-        ).toString("base64")}`,
-      },
-      body: JSON.stringify({
-        resourceId,
-        mode: "mix",
-        cname: channel,
-        uid: uid.toString(),
-        clientRequest: {
-          recordingConfig: {
-            maxIdleTime: 30,
-            streamTypes: 2,
-            channelType: 0,
-            videoStreamType: 0,
-            transcodingConfig: {
-              width: 1280,
-              height: 720,
-              fps: 30,
-              bitrate: 1000,
-              mixedVideoLayout: 1,
+    console.log("Starting Recording for:", { channel, uid });
+
+    // Step 1: Acquire Resource ID
+    const acquireRes = await fetch(
+      `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/acquire`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Basic ${Buffer.from(
+            `${CUSTOMER_ID}:${CUSTOMER_SECRET}`
+          ).toString("base64")}`,
+        },
+        body: JSON.stringify({
+          cname: channel,
+          uid: uid.toString(),
+          clientRequest: {},
+        }),
+      }
+    );
+
+    const acquireData = await acquireRes.json();
+    console.log("Acquire Response:", acquireData);
+
+    if (!acquireData.resourceId) {
+      throw new Error("Failed to acquire resource ID");
+    }
+
+    const resourceId = acquireData.resourceId;
+    console.log(resourceId)
+
+    // Step 2: Start Recording
+    const startRes = await fetch(
+      `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/mode/mix/start`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Basic ${Buffer.from(
+            `${CUSTOMER_ID}:${CUSTOMER_SECRET}`
+          ).toString("base64")}`,
+        },
+        body: JSON.stringify({
+          cname: channel,
+          uid: uid.toString(),
+          clientRequest: {
+            recordingConfig: {
+              maxIdleTime: 30,
+              streamTypes: 2,
+              channelType: 0,
+              videoStreamType: 0,
+              transcodingConfig: {
+                width: 1280,
+                height: 720,
+                fps: 30,
+                bitrate: 1000,
+                mixedVideoLayout: 1,
+              },
+            },
+            storageConfig: {
+              vendor: 1, // 1 = AWS S3, 2 = Google Cloud, 3 = AliCloud OSS
+              region: 2, // Use Agora's region code (e.g., 2 for Europe)
+              bucket: "dancefluencer",
+              accessKey: "DO00JF7Q4QFL6JT626LQ",
+              secretKey: "+8jgp74O4nG3wtgidZUWw4IARjkC1SghG39zGK65FTk",
+              fileNamePrefix: ["recordings"],
             },
           },
-          storageConfig: {
-            vendor: 1, // 1 = AWS S3, 2 = Google Cloud, 3 = AliCloud OSS
-            region: "fra1",
-            bucket: "dancefluencer",
-            accessKey: "DO00JF7Q4QFL6JT626LQ",
-            secretKey: "+8jgp74O4nG3wtgidZUWw4IARjkC1SghG39zGK65FTk",
-            fileNamePrefix: ["recordings"],
-          },
-        },
-      }),
-    }
-  );
+        }),
+      }
+    );
 
-  const startData = await startRes.json();
-  res.json(startData);
+    const startData = await startRes.json();
+    console.log("Start Recording Response:", startData);
+
+    if (!startData.sid) {
+      throw new Error("Failed to start recording");
+    }
+
+    res.json(startData);
+  } catch (error: any) {
+    console.error("Error:", error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Router setup
