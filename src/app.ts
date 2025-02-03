@@ -9,6 +9,7 @@ import { auth, requiresAuth } from "express-openid-connect";
 import { authZeroConfig } from "./config/autZero";
 import { paymentControllers } from "./app/modules/payment/payment.controller";
 import config from "./config";
+import axios from "axios";
 
 const app: Application = express();
 const prisma = new PrismaClient();
@@ -54,7 +55,11 @@ app.get("/profile", requiresAuth(), (req, res) => {
   res.send(JSON.stringify(req.oidc.user));
 });
 
-app.post("/api/v1/start-recording", async (req, res) => {
+const AUTH_HEADER = `Basic ${Buffer.from(
+  `${CUSTOMER_ID}:${CUSTOMER_SECRET}`
+).toString("base64")}`;
+
+app.post("/api/v1/start-recording", async (req, res, next) => {
   try {
     const { channel, uid } = req.body;
 
@@ -62,45 +67,32 @@ app.post("/api/v1/start-recording", async (req, res) => {
       return res.status(400).json({ error: "Missing channel or uid" });
     }
 
-    // Step 1: Acquire Resource ID
-    const acquireRes = await fetch(
-      `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/acquire`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Basic ${Buffer.from(
-            `${CUSTOMER_ID}:${CUSTOMER_SECRET}`
-          ).toString("base64")}`,
-        },
-        body: JSON.stringify({
+    // 1️⃣ **Acquire Resource ID**
+    let resourceId;
+    try {
+      const acquireResponse = await axios.post(
+        `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/acquire`,
+        {
           cname: channel,
           uid: uid.toString(),
           clientRequest: {},
-        }),
-      }
-    );
-
-    const acquireData = await acquireRes.json();
-
-    if (!acquireData.resourceId) {
-      throw new Error("Failed to acquire resource ID");
+        },
+        {
+          headers: { Authorization: AUTH_HEADER },
+        }
+      );
+      resourceId = acquireResponse.data.resourceId;
+    } catch (acquireError) {
+      return res.status(500).json({
+        error: "Failed to acquire resource ID",
+      });
     }
 
-    const resourceId = acquireData.resourceId;
-
-    // Step 2: Start Recording
-    const startRes = await fetch(
-      `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/mode/mix/start`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Basic ${Buffer.from(
-            `${CUSTOMER_ID}:${CUSTOMER_SECRET}`
-          ).toString("base64")}`,
-        },
-        body: JSON.stringify({
+    // 2️⃣ **Start Recording**
+    try {
+      const startResponse = await axios.post(
+        `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/mode/mix/start`,
+        {
           cname: channel,
           uid: uid.toString(),
           clientRequest: {
@@ -126,16 +118,26 @@ app.post("/api/v1/start-recording", async (req, res) => {
               fileNamePrefix: ["recordings"],
             },
           },
-        }),
-      }
-    );
+        },
+        {
+          headers: { Authorization: AUTH_HEADER },
+        }
+      );
 
-    const startData = await startRes.json();
-
-    res.json(startData);
-  } catch (error: any) {
-    console.error("Error:", error);
-    res.status(500).json({ error: error.message });
+      return res.json({
+        message: "Recording started successfully",
+        resourceId,
+        sid: startResponse.data.sid,
+        details: startResponse.data,
+      });
+    } catch (startError) {
+      return res.status(500).json({
+        error: "Failed to start recording",
+      });
+    }
+  } catch (error) {
+    console.error("Error in start-recording:", error);
+    next(error);
   }
 });
 
@@ -164,38 +166,36 @@ app.post("/api/v1/check-recording-status", async (req, res) => {
   res.json(statusData);
 });
 
-app.post("/api/v1/stop-recording", async (req, res) => {
+// 🎯 **Stop Recording API**
+app.post("/api/v1/stop-recording", async (req, res, next) => {
   try {
-    const { resourceId, sid, channel, uid } = req.body;
+    const { channel, uid, resourceId, sid } = req.body;
 
-    if (!resourceId || !sid || !channel || !uid) {
-      return res.status(400).json({ error: "Missing required parameters" });
+    if (!channel || !uid || !resourceId || !sid) {
+      return res
+        .status(400)
+        .json({ error: "Missing channel, uid, resourceId, or sid" });
     }
 
-    const stopRes = await fetch(
+    const stopResponse = await axios.post(
       `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/sid/${sid}/mode/mix/stop`,
       {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Basic ${Buffer.from(
-            `${CUSTOMER_ID}:${CUSTOMER_SECRET}`
-          ).toString("base64")}`,
-        },
-        body: JSON.stringify({
-          cname: channel,
-          uid: uid.toString(),
-          clientRequest: {},
-        }),
+        cname: channel,
+        uid: uid.toString(),
+        clientRequest: {},
+      },
+      {
+        headers: { Authorization: AUTH_HEADER },
       }
     );
 
-    const stopData = await stopRes.json();
-
-    res.json(stopData);
-  } catch (error: any) {
-    console.error("Error:", error);
-    res.status(500).json({ error: error.message });
+    return res.json({
+      message: "Recording stopped successfully",
+      details: stopResponse.data,
+    });
+  } catch (error) {
+    console.error("Error in stop-recording:", error);
+    next(error);
   }
 });
 
