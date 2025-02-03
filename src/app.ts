@@ -55,16 +55,12 @@ app.get("/profile", requiresAuth(), (req, res) => {
 });
 
 app.post("/api/v1/start-recording", async (req, res) => {
-  console.log(req.body);
   try {
     const { channel, uid } = req.body;
-    console.log(channel);
 
     if (!channel || !uid) {
       return res.status(400).json({ error: "Missing channel or uid" });
     }
-
-    console.log("Starting Recording for:", { channel, uid });
 
     // Step 1: Acquire Resource ID
     const acquireRes = await fetch(
@@ -86,14 +82,12 @@ app.post("/api/v1/start-recording", async (req, res) => {
     );
 
     const acquireData = await acquireRes.json();
-    console.log("Acquire Response:", acquireData);
 
     if (!acquireData.resourceId) {
       throw new Error("Failed to acquire resource ID");
     }
 
     const resourceId = acquireData.resourceId;
-    console.log(resourceId);
 
     // Step 2: Start Recording
     const startRes = await fetch(
@@ -125,7 +119,7 @@ app.post("/api/v1/start-recording", async (req, res) => {
             },
             storageConfig: {
               vendor: 1, // 1 = AWS S3, 2 = Google Cloud, 3 = AliCloud OSS
-              region: "fra1",
+              region: 2, // Use Agora's region code (e.g., 2 for Europe)
               bucket: "dancefluencer",
               accessKey: "DO00JF7Q4QFL6JT626LQ",
               secretKey: "+8jgp74O4nG3wtgidZUWw4IARjkC1SghG39zGK65FTk",
@@ -137,7 +131,6 @@ app.post("/api/v1/start-recording", async (req, res) => {
     );
 
     const startData = await startRes.json();
-    console.log("Start Recording Response:", startData);
 
     if (!startData.sid) {
       throw new Error("Failed to start recording");
@@ -158,8 +151,6 @@ app.post("/api/v1/stop-recording", async (req, res) => {
       return res.status(400).json({ error: "Missing required parameters" });
     }
 
-    console.log("Stopping Recording for:", { channel, uid, resourceId, sid });
-
     const stopRes = await fetch(
       `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/sid/${sid}/mode/mix/stop`,
       {
@@ -179,7 +170,6 @@ app.post("/api/v1/stop-recording", async (req, res) => {
     );
 
     const stopData = await stopRes.json();
-    console.log("Stop Recording Response:", stopData);
 
     res.json(stopData);
   } catch (error: any) {
