@@ -16,8 +16,8 @@ const prisma = new PrismaClient();
 
 const APP_ID = config.agora.app_id;
 // const APP_CERTIFICATE = config.agora.app_certificate;
-const CUSTOMER_ID = "79d7925d2fa94b2e8625b9943d41a118";
-const CUSTOMER_SECRET = "6ebfb0a5859f40daa25f75b361cc209b";
+const CUSTOMER_ID = "fabfd743db384b048df89b750f27b317";
+const CUSTOMER_SECRET = "eb6003c3216e46d1a1b237bfe84005aa";
 // const REGION = "CN"; // Change if needed
 
 // Middleware setup
@@ -108,10 +108,10 @@ app.post("/api/v1/start-recording", async (req, res, next) => {
             },
             storageConfig: {
               accessKey: "DO00JF7Q4QFL6JT626LQ",
-              region: 3,
+              region: 4,
               bucket: "dancefluencer",
               secretKey: "8jgp74O4nG3wtgidZUWw4IARjkC1SghG39zGK65FTk",
-              vendor: 2,
+              vendor: 1,
               fileNamePrefix: ["directory1", "directory2"],
             },
           },
