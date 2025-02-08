@@ -114,6 +114,12 @@ const generateAccessToken = (0, catchAsync_1.default)((req, res) => __awaiter(vo
         data: accessToken,
     });
 }));
+const startRecording = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { channelId } = req.params;
+    const uid = req.body.uid;
+    const result = yield message_service_1.messageService.startRecordingInAgora(channelId, uid);
+    (0, sendResponse_1.default)(res, { statusCode: 200, success: true, message: "Recording Start", data: result });
+}));
 const pinnedMessage = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { channelId } = req.params;
     const result = yield message_service_1.messageService.pinnedMessageInDB(channelId);
@@ -122,6 +128,17 @@ const pinnedMessage = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
         success: true,
         message: "Retrive pinned message successfully",
         data: result,
+    });
+}));
+const searchMessages = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { search } = req.query;
+    const { channelId } = req.params;
+    const results = yield message_service_1.messageService.searchMessageFromDB(channelId, search);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Search messages retrived successfully",
+        data: results,
     });
 }));
 exports.messageController = {
@@ -133,4 +150,6 @@ exports.messageController = {
     deleteMultipleMessages,
     generateAccessToken,
     pinnedMessage,
+    searchMessages,
+    startRecording,
 };

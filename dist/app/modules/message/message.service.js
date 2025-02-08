@@ -17,6 +17,9 @@ const prisma_1 = __importDefault(require("../../../shared/prisma"));
 const config_1 = __importDefault(require("../../../config"));
 const ApiErrors_1 = __importDefault(require("../../errors/ApiErrors"));
 const agora_access_token_1 = require("agora-access-token");
+const axios_1 = __importDefault(require("axios"));
+const appID = config_1.default.agora.app_id;
+const appCertificate = config_1.default.agora.app_certificate;
 //using for socket in controllers
 const createMessageInDB = (req) => __awaiter(void 0, void 0, void 0, function* () {
     const files = req.files;
@@ -70,6 +73,39 @@ const getMessagesFromDB = (channelId) => __awaiter(void 0, void 0, void 0, funct
         },
     });
     return message;
+});
+const searchMessageFromDB = (channelId, search) => __awaiter(void 0, void 0, void 0, function* () {
+    if (search === undefined) {
+        return [];
+    }
+    const existingChannel = yield prisma_1.default.chanel.findUnique({
+        where: { id: channelId },
+    });
+    if (!existingChannel) {
+        throw new ApiErrors_1.default(404, "Channel not found");
+    }
+    const messages = yield prisma_1.default.message.findMany({
+        where: {
+            channelId: channelId,
+            message: {
+                contains: search,
+                mode: "insensitive",
+            },
+        },
+        include: {
+            user: {
+                select: {
+                    id: true,
+                    username: true,
+                    avatar: true,
+                    email: true,
+                    role: true,
+                    status: true,
+                },
+            },
+        },
+    });
+    return messages;
 });
 //using for socket
 const deleteSingleMessageFromDB = (messageId) => __awaiter(void 0, void 0, void 0, function* () {
@@ -151,23 +187,100 @@ const pinnedMessageInDB = (channelId) => __awaiter(void 0, void 0, void 0, funct
         where: { isPinned: true, channelId: channelId },
         orderBy: { updatedAt: "desc" },
     });
-    if (pinnedMessages.length === 0) {
-        return null;
-    }
-    return pinnedMessages[0];
+    // if (pinnedMessages.length === 0) {
+    //   return null;
+    // }
+    return pinnedMessages;
 });
 // generate agora access token
 const generateAccessTokenInAgora = (payload) => __awaiter(void 0, void 0, void 0, function* () {
-    const appID = config_1.default.agora.app_id;
-    const appCertificate = config_1.default.agora.app_certificate;
     const channelName = payload.roomId;
     const uid = payload.uid;
     const expiredTimeInSeconds = 3600; // 1 hour
     const currentTime = Math.floor(Date.now() / 1000);
     const privilegeExpireTime = currentTime + expiredTimeInSeconds;
     const role = payload.role;
+    // console.log(role)
+    // console.log(role === "publisher" ? RtcRole.PUBLISHER : RtcRole.SUBSCRIBER);
     const token = agora_access_token_1.RtcTokenBuilder.buildTokenWithUid(appID, appCertificate, channelName, uid, role === "publisher" ? agora_access_token_1.RtcRole.PUBLISHER : agora_access_token_1.RtcRole.SUBSCRIBER, privilegeExpireTime);
     return token;
+});
+const getResourceId = (roomId, uid) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const url = `https://api.agora.io/v1/apps/${appID}/cloud_recording/acquire`;
+    const payload = {
+        cname: roomId,
+        uid: uid.toString(),
+        clientRequest: {},
+    };
+    try {
+        const response = yield axios_1.default.post(url, payload, {
+            headers: {
+                Authorization: `Basic ${Buffer.from(`${appID}:${appCertificate}`).toString("base64")}`,
+                "Content-Type": "application/json",
+            },
+        });
+        console.log("Response:", response.data);
+        return response.data.resourceId;
+    }
+    catch (error) {
+        console.error("Error fetching Resource ID:", ((_a = error.response) === null || _a === void 0 ? void 0 : _a.data) || error.message);
+        throw new Error("Failed to fetch Resource ID");
+    }
+});
+// const generateToken = (roomId: string, uid: number) => {
+//   const expirationTimeInSeconds = 3600; // 1 hour
+//   const currentTimestamp = Math.floor(Date.now() / 1000);
+//   const privilegeExpiredTs = currentTimestamp + expirationTimeInSeconds;
+//   const token = RtcTokenBuilder.buildTokenWithUid(
+//     appID,
+//     appCertificate,
+//     roomId,
+//     uid,
+//     RtcRole.PUBLISHER,
+//     privilegeExpiredTs
+//   );
+//   return token;
+// };
+const startRecordingInAgora = (roomId, uid) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const resourceId = yield getResourceId(roomId, uid);
+    console.log(resourceId);
+    // const token = generateToken(roomId, uid);
+    const url = `https://api.agora.io/v1/apps/${appID}/cloud_recording/resourceid/${resourceId}/mode/mix/start`;
+    const payload = {
+        cname: roomId,
+        uid: uid.toString(),
+        clientRequest: {
+            recordingConfig: {
+                maxIdleTime: 30,
+                streamTypes: 2,
+                channelType: 1,
+                videoStreamType: 1,
+                transcodingConfig: {
+                    height: 1080,
+                    width: 1920,
+                    bitrate: 2260,
+                    fps: 15,
+                    mixedVideoLayout: 1,
+                    backgroundColor: "#000000",
+                },
+            },
+        },
+    };
+    try {
+        const response = yield axios_1.default.post(url, payload, {
+            headers: {
+                Authorization: `Basic ${Buffer.from(`${appID}:${appCertificate}`).toString("base64")}`,
+                "Content-Type": "application/json",
+            },
+        });
+        return response.data;
+    }
+    catch (error) {
+        console.error("Error starting recording:", ((_a = error.response) === null || _a === void 0 ? void 0 : _a.data) || error.message);
+        throw new Error("Failed to start recording");
+    }
 });
 exports.messageService = {
     createMessageInDB,
@@ -180,4 +293,6 @@ exports.messageService = {
     pinUnpinMessage,
     generateAccessTokenInAgora,
     pinnedMessageInDB,
+    searchMessageFromDB,
+    startRecordingInAgora,
 };

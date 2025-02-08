@@ -73,10 +73,20 @@ const adminLogin = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, voi
         data: result,
     });
 }));
+const updateProfileImage = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const avatar = yield auth_service_1.authService.updateProfileImageInDB(req);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Profile image updated successfully",
+        data: avatar,
+    });
+}));
 exports.authController = {
     loginUser,
     getProfile,
     updateProfile,
     loginWithAuth,
     adminLogin,
+    updateProfileImage,
 };

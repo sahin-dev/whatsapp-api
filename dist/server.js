@@ -17,6 +17,7 @@ const ws_1 = require("ws");
 const app_1 = __importDefault(require("./app"));
 const config_1 = __importDefault(require("./config"));
 const message_service_1 = require("./app/modules/message/message.service");
+const prisma_1 = __importDefault(require("./shared/prisma"));
 let wss;
 const channelClients = new Map();
 exports.channelClients = channelClients;
@@ -30,13 +31,24 @@ function main() {
         // Handle WebSocket connections
         wss.on("connection", (ws) => {
             console.log("New WebSocket connection established!");
+            // Ping the client every 30 seconds
+            const interval = setInterval(() => {
+                if (ws.readyState === ws_1.WebSocket.OPEN) {
+                    ws.ping();
+                }
+            }, 30000);
             let subscribedChannel = null; // Track the client's subscribed channel
             // Listen for subscription messages
             ws.on("message", (message) => __awaiter(this, void 0, void 0, function* () {
                 var _a, _b, _c, _d, _e, _f, _g, _h;
                 try {
                     const parsedMessage = JSON.parse(message.toString());
-                    const { type, channelId, messageId, messageIds, isPinned, message: updateText, isStreaming = false, } = parsedMessage;
+                    const { type, channelId, messageId, messageIds, isPinned, message: updateText, isStreaming, } = parsedMessage;
+                    const streamingResult = yield prisma_1.default.chanel.findUnique({
+                        where: { id: channelId },
+                    });
+                    const pinnedMessage = yield message_service_1.messageService.pinnedMessageInDB(channelId);
+                    const messages = yield message_service_1.messageService.getMessagesFromDB(channelId);
                     if (type === "subscribe") {
                         if (!channelId) {
                             ws.send(JSON.stringify({ error: "ChannelId is required to subscribe" }));
@@ -56,14 +68,11 @@ function main() {
                         }
                         (_a = channelClients.get(channelId)) === null || _a === void 0 ? void 0 : _a.add(ws);
                         subscribedChannel = channelId;
-                        // Fetch past messages for the channel and send to the client
-                        const pastMessages = yield message_service_1.messageService.getMessagesFromDB(channelId);
-                        const pinnedMessage = yield message_service_1.messageService.pinnedMessageInDB(channelId);
                         ws.send(JSON.stringify({
                             type: "pastMessages",
-                            isStreaming: isStreaming,
+                            isStreaming: streamingResult === null || streamingResult === void 0 ? void 0 : streamingResult.isStreaming,
                             pinnedMessage: pinnedMessage,
-                            message: pastMessages,
+                            message: messages,
                         }));
                     }
                     else if (type === "message" && // Check if the type is "message"
@@ -85,11 +94,9 @@ function main() {
                     }
                     else if (type === "deleteMessage" && messageId) {
                         yield message_service_1.messageService.deleteSingleMessageFromDB(messageId);
-                        const messages = yield message_service_1.messageService.getMessagesFromDB(channelId);
-                        const pinnedMessage = yield message_service_1.messageService.pinnedMessageInDB(channelId);
                         const pastMessages = {
                             type: "pastMessages",
-                            isStreaming: isStreaming,
+                            isStreaming: streamingResult === null || streamingResult === void 0 ? void 0 : streamingResult.isStreaming,
                             pinnedMessage: pinnedMessage,
                             message: messages,
                         };
@@ -102,10 +109,9 @@ function main() {
                     else if (type === "multipleDeleteMessages" && messageIds) {
                         yield message_service_1.messageService.deleteMultipleMessagesFromDB(messageIds);
                         const messages = yield message_service_1.messageService.getMessagesFromDB(channelId);
-                        const pinnedMessage = yield message_service_1.messageService.pinnedMessageInDB(channelId);
                         const pastMessages = {
                             type: "pastMessages",
-                            isStreaming: isStreaming,
+                            isStreaming: streamingResult === null || streamingResult === void 0 ? void 0 : streamingResult.isStreaming,
                             pinnedMessage: pinnedMessage,
                             message: messages,
                         };
@@ -117,11 +123,9 @@ function main() {
                     }
                     else if (type === "pinMessage" && messageId) {
                         yield message_service_1.messageService.pinUnpinMessage(messageId, isPinned);
-                        const messages = yield message_service_1.messageService.getMessagesFromDB(channelId);
-                        const pinnedMessage = yield message_service_1.messageService.pinnedMessageInDB(channelId);
                         const pastMessages = {
                             type: "pastMessages",
-                            isStreaming: isStreaming,
+                            isStreaming: streamingResult === null || streamingResult === void 0 ? void 0 : streamingResult.isStreaming,
                             pinnedMessage: pinnedMessage,
                             message: messages,
                         };
@@ -133,11 +137,9 @@ function main() {
                     }
                     else if (type === "clearMessagesFromChannel" && channelId) {
                         yield message_service_1.messageService.deleteAllMessagesFromChannel(messageId);
-                        const messages = yield message_service_1.messageService.getMessagesFromDB(channelId);
-                        const pinnedMessage = yield message_service_1.messageService.pinnedMessageInDB(channelId);
                         const pastMessages = {
                             type: "pastMessages",
-                            isStreaming: isStreaming,
+                            isStreaming: streamingResult === null || streamingResult === void 0 ? void 0 : streamingResult.isStreaming,
                             pinnedMessage: pinnedMessage,
                             message: messages,
                         };
@@ -150,10 +152,9 @@ function main() {
                     else if (type === "editMessage" && messageId) {
                         yield message_service_1.messageService.updateSingleMessageInDB(messageId, updateText);
                         const messages = yield message_service_1.messageService.getMessagesFromDB(channelId);
-                        const pinnedMessage = yield message_service_1.messageService.pinnedMessageInDB(channelId);
                         const pastMessages = {
                             type: "pastMessages",
-                            isStreaming: isStreaming,
+                            isStreaming: streamingResult === null || streamingResult === void 0 ? void 0 : streamingResult.isStreaming,
                             pinnedMessage: pinnedMessage,
                             message: messages,
                         };
@@ -164,11 +165,15 @@ function main() {
                         });
                     }
                     else if (type === "streaming" && channelId) {
-                        const messages = yield message_service_1.messageService.getMessagesFromDB(channelId);
-                        const pinnedMessage = yield message_service_1.messageService.pinnedMessageInDB(channelId);
+                        const updateResult = yield prisma_1.default.chanel.update({
+                            where: { id: channelId },
+                            data: {
+                                isStreaming: isStreaming,
+                            },
+                        });
                         const pastMessages = {
                             type: "pastMessages",
-                            isStreaming: isStreaming,
+                            isStreaming: updateResult === null || updateResult === void 0 ? void 0 : updateResult.isStreaming,
                             pinnedMessage: pinnedMessage,
                             message: messages,
                         };
@@ -192,6 +197,7 @@ function main() {
                         channelClients.delete(subscribedChannel);
                 }
                 console.log("WebSocket client disconnected!");
+                clearInterval(interval);
             });
         });
     });

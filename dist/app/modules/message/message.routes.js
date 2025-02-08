@@ -18,5 +18,7 @@ router.delete("/delete/messages/:channelId", (0, auth_1.default)(client_1.UserRo
 router.patch("/update/message/:messageId", (0, auth_1.default)(client_1.UserRole.ADMIN, client_1.UserRole.SUPER_ADMIN), message_controller_1.messageController.updateMessage);
 router.delete("/delete/multiple-messages", (0, auth_1.default)(client_1.UserRole.ADMIN, client_1.UserRole.SUPER_ADMIN), message_controller_1.messageController.deleteMultipleMessages);
 router.post("/generate-access-token", (0, auth_1.default)(), message_controller_1.messageController.generateAccessToken);
+router.post("/start/recording/:channelId", (0, auth_1.default)(), message_controller_1.messageController.startRecording);
 router.get("/pinned-message/:channelId", (0, auth_1.default)(), message_controller_1.messageController.pinnedMessage);
+router.get("/search/messages/:channelId", (0, auth_1.default)(), message_controller_1.messageController.searchMessages);
 exports.messageRoute = router;

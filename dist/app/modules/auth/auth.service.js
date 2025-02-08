@@ -142,6 +142,34 @@ const fetchUserProfile = (token) => __awaiter(void 0, void 0, void 0, function* 
     return response.data;
 });
 const loginAuthProvider = (payload) => __awaiter(void 0, void 0, void 0, function* () {
+    const existingUser = yield prisma_1.default.user.findFirst({
+        where: { username: payload.username },
+        include: { subscription: true },
+    });
+    if (!existingUser) {
+        throw new ApiErrors_1.default(404, "User not found");
+    }
+    if (existingUser.role !== "USER") {
+        const accessToken = jwtHelpers_1.jwtHelpers.generateToken({
+            id: existingUser.id,
+            email: existingUser.email,
+            role: existingUser.role,
+            fcmToken: existingUser === null || existingUser === void 0 ? void 0 : existingUser.fcmToken,
+            subscription: existingUser.subcription,
+        }, config_1.default.jwt.jwt_secret, config_1.default.jwt.expires_in);
+        const updatedUser = yield prisma_1.default.user.update({
+            where: { email: existingUser.email },
+            data: {
+                fcmToken: payload.fcmToken ? payload.fcmToken : existingUser === null || existingUser === void 0 ? void 0 : existingUser.fcmToken,
+                accessToken: accessToken,
+            },
+        });
+        const { password } = updatedUser, userInfo = __rest(updatedUser, ["password"]);
+        return {
+            accessToken,
+            userInfo,
+        };
+    }
     const response = yield axios_1.default.post(`${process.env.AUTH0_DOMAIN}/oauth/token`, {
         grant_type: "password",
         username: payload.username,
@@ -159,16 +187,9 @@ const loginAuthProvider = (payload) => __awaiter(void 0, void 0, void 0, functio
     const token = response.data.access_token;
     verifyToken(token);
     const user = yield fetchUserProfile(token);
-    const existingUser = yield prisma_1.default.user.findUnique({
-        where: { email: user.email },
-        include: { subscription: true },
-    });
-    if (!existingUser) {
-        throw new ApiErrors_1.default(404, "User not found");
+    if (existingUser.subscription.length === 0) {
+        throw new ApiErrors_1.default(401, "need subscripion to min a plan");
     }
-    // if (existingUser.subscription.length === 0) {
-    //   throw new ApiError(401, "need subscripion to min a plan");
-    // }
     const accessToken = jwtHelpers_1.jwtHelpers.generateToken({
         id: existingUser.id,
         email: existingUser.email,
@@ -191,28 +212,36 @@ const loginAuthProvider = (payload) => __awaiter(void 0, void 0, void 0, functio
     };
 });
 const adminLoginAuth = (payload) => __awaiter(void 0, void 0, void 0, function* () {
-    const response = yield axios_1.default.post(`${process.env.AUTH0_DOMAIN}/oauth/token`, {
-        grant_type: "password",
-        username: payload.username,
-        password: payload.password,
-        audience: process.env.AUTH0_AUDIENCE,
-        client_id: process.env.AUTH0_CLIENT_ID,
-        client_secret: process.env.AUTH0_CLIENT_SECRET,
-        connection: "Username-Password-Authentication",
-        scope: "openid profile email",
-    }, {
-        headers: {
-            "Content-Type": "application/json",
-        },
-    });
-    const token = response.data.access_token;
-    verifyToken(token);
-    const user = yield fetchUserProfile(token);
-    const existingUser = yield prisma_1.default.user.findUnique({
-        where: { email: user.email },
+    // const response = await axios.post(
+    //   `${process.env.AUTH0_DOMAIN}/oauth/token`,
+    //   {
+    //     grant_type: "password",
+    //     username: payload.username,
+    //     password: payload.password,
+    //     audience: process.env.AUTH0_AUDIENCE,
+    //     client_id: process.env.AUTH0_CLIENT_ID,
+    //     client_secret: process.env.AUTH0_CLIENT_SECRET,
+    //     connection: "Username-Password-Authentication",
+    //     scope: "openid profile email",
+    //   },
+    //   {
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //   }
+    // );
+    // const token = response.data.access_token;
+    // verifyToken(token);
+    // const user = await fetchUserProfile(token);
+    const existingUser = yield prisma_1.default.user.findFirst({
+        where: { username: payload.username },
     });
     if (!existingUser) {
         throw new ApiErrors_1.default(404, "Admin user not found");
+    }
+    const isPasswordValid = yield bcryptjs_1.default.compare(payload.password, existingUser.password);
+    if (!isPasswordValid) {
+        throw new ApiErrors_1.default(401, "Invalid credentials");
     }
     if ((existingUser === null || existingUser === void 0 ? void 0 : existingUser.role) !== "ADMIN" && (existingUser === null || existingUser === void 0 ? void 0 : existingUser.role) !== "SUPER_ADMIN") {
         throw new ApiErrors_1.default(401, "You are not allowed to access this");
@@ -225,9 +254,8 @@ const adminLoginAuth = (payload) => __awaiter(void 0, void 0, void 0, function* 
         subscription: existingUser.subcription,
     }, config_1.default.jwt.jwt_secret, config_1.default.jwt.expires_in);
     const updatedUser = yield prisma_1.default.user.update({
-        where: { email: user.email },
+        where: { email: existingUser.email },
         data: {
-            password: bcryptjs_1.default.hashSync(payload.password, 10),
             accessToken: authToken,
         },
     });
@@ -237,10 +265,30 @@ const adminLoginAuth = (payload) => __awaiter(void 0, void 0, void 0, function* 
         userInfo,
     };
 });
+const updateProfileImageInDB = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.user.id;
+    const file = req.file;
+    if (!mongodb_1.ObjectId.isValid(userId)) {
+        throw new ApiErrors_1.default(400, "Invalid user ID format");
+    }
+    const user = yield prisma_1.default.user.findUnique({ where: { id: userId } });
+    if (!user) {
+        throw new ApiErrors_1.default(404, "User not found for edit user");
+    }
+    // Update user's avatar with the new filename
+    const updatedImage = yield prisma_1.default.user.update({
+        where: { id: userId },
+        data: {
+            avatar: `${config_1.default.backend_base_url}/uploads/${file.filename}`,
+        },
+    });
+    return updatedImage.avatar;
+});
 exports.authService = {
     loginUserIntoDB,
     getProfileFromDB,
     updateProfileIntoDB,
     loginAuthProvider,
     adminLoginAuth,
+    updateProfileImageInDB,
 };
