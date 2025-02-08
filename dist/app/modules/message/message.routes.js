@@ -1,0 +1,22 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.messageRoute = void 0;
+const express_1 = __importDefault(require("express"));
+const auth_1 = __importDefault(require("../../middlewares/auth"));
+const message_controller_1 = require("./message.controller");
+const fileUploader_1 = require("../../../helpers/fileUploader");
+const parseBodyData_1 = require("../../middlewares/parseBodyData");
+const client_1 = require("@prisma/client");
+const router = express_1.default.Router();
+router.post("/send-message/:chanelId", fileUploader_1.fileUploader.sendFiles, parseBodyData_1.parseBodyData, (0, auth_1.default)(), message_controller_1.messageController.createMessage);
+router.get("/:messageId", (0, auth_1.default)(), message_controller_1.messageController.getSingleMessage);
+router.delete("/delete-message/:messageId", (0, auth_1.default)(client_1.UserRole.ADMIN, client_1.UserRole.SUPER_ADMIN), message_controller_1.messageController.deleteSingleMessage);
+router.delete("/delete/messages/:channelId", (0, auth_1.default)(client_1.UserRole.ADMIN, client_1.UserRole.SUPER_ADMIN), message_controller_1.messageController.deleteAllMessages);
+router.patch("/update/message/:messageId", (0, auth_1.default)(client_1.UserRole.ADMIN, client_1.UserRole.SUPER_ADMIN), message_controller_1.messageController.updateMessage);
+router.delete("/delete/multiple-messages", (0, auth_1.default)(client_1.UserRole.ADMIN, client_1.UserRole.SUPER_ADMIN), message_controller_1.messageController.deleteMultipleMessages);
+router.post("/generate-access-token", (0, auth_1.default)(), message_controller_1.messageController.generateAccessToken);
+router.get("/pinned-message/:channelId", (0, auth_1.default)(), message_controller_1.messageController.pinnedMessage);
+exports.messageRoute = router;
