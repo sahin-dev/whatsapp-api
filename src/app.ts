@@ -75,7 +75,10 @@ app.post("/api/v1/start-recording", async (req, res, next) => {
         {
           cname: channel,
           uid: uid.toString(),
-          clientRequest: {},
+          clientRequest: {
+            scene: 0,
+            resourceExpiredHour: 24,
+          },
         },
         {
           headers: { Authorization: AUTH_HEADER },
@@ -98,20 +101,24 @@ app.post("/api/v1/start-recording", async (req, res, next) => {
           cname: channel,
           clientRequest: {
             recordingConfig: {
-              maxIdleTime: 30,
+              channelType: 1,
               streamTypes: 2,
-              channelType: 0,
+              streamMode: "default",
               videoStreamType: 0,
-              subscribeVideoUids: ["123", "456"],
+              maxIdleTime: 30,
               subscribeAudioUids: ["123", "456"],
+              subscribeVideoUids: ["123", "456"],
               subscribeUidGroup: 0,
             },
+            recordingFileConfig: {
+              avFileType: ["hls"],
+            },
             storageConfig: {
-              accessKey: "DO00JF7Q4QFL6JT626LQ",
-              region: 1,
+              vendor: 2,
+              region: 5,
               bucket: "dancefluencer",
+              accessKey: "DO00JF7Q4QFL6JT626LQ",
               secretKey: "8jgp74O4nG3wtgidZUWw4IARjkC1SghG39zGK65FTk",
-              vendor: 1,
               fileNamePrefix: ["directory1", "directory2"],
             },
           },
@@ -184,7 +191,7 @@ app.post("/api/v1/stop-recording", async (req, res, next) => {
     }
 
     const stopResponse = await axios.post(
-      `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/sid/${sid}/mode/mix/stop`,
+      `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/sid/${sid}/mode/web/stop`,
       {
         cname: channel,
         uid: uid.toString(),
