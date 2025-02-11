@@ -114,8 +114,8 @@ app.post("/api/v1/start-recording", async (req, res, next) => {
               avFileType: ["hls"],
             },
             storageConfig: {
-              vendor: 2,
-              region: 5,
+              vendor: 1,
+              region: 2,
               bucket: "dancefluencer",
               accessKey: "DO00JF7Q4QFL6JT626LQ",
               secretKey: "8jgp74O4nG3wtgidZUWw4IARjkC1SghG39zGK65FTk",
