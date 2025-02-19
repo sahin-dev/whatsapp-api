@@ -120,6 +120,7 @@ app.post("/api/v1/start-recording", async (req, res, next) => {
               accessKey: "AKIAQXUIX57Z4LBKOLUO",
               secretKey: "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",
               fileNamePrefix: ["directory1", "directory2"],
+              ACL: "public-read",
             },
           },
         },
@@ -179,7 +180,6 @@ app.post("/api/v1/check-recording-status", async (req, res) => {
   res.json(statusData);
 });
 
-// 🎯 **Stop Recording API**
 app.post("/api/v1/stop-recording", async (req, res, next) => {
   try {
     const { channel, uid, resourceId, sid } = req.body;
