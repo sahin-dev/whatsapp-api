@@ -111,7 +111,7 @@ app.post("/api/v1/start-recording", async (req, res, next) => {
               subscribeUidGroup: 0,
             },
             recordingFileConfig: {
-              avFileType: ["hls"],
+              avFileType: ["hls", "mp4"],
             },
             storageConfig: {
               vendor: 1,
@@ -181,35 +181,32 @@ app.post("/api/v1/check-recording-status", async (req, res) => {
 });
 
 app.post("/api/v1/stop-recording", async (req, res, next) => {
-  try {
-    const { channel, uid, resourceId, sid } = req.body;
+  const { channel, uid, resourceId, sid } = req.body;
 
-    if (!channel || !uid || !resourceId || !sid) {
-      return res
-        .status(400)
-        .json({ error: "Missing channel, uid, resourceId, or sid" });
-    }
-
-    const stopResponse = await axios.post(
-      `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/sid/${sid}/mode/web/stop`,
-      {
-        cname: channel,
-        uid: uid.toString(),
-        clientRequest: {},
-      },
-      {
-        headers: { Authorization: AUTH_HEADER },
-      }
-    );
-
-    return res.json({
-      message: "Recording stopped successfully",
-      details: stopResponse.data,
-    });
-  } catch (error) {
-    console.error("Error in stop-recording:", error);
-    next(error);
+  if (!channel || !uid || !resourceId || !sid) {
+    return res
+      .status(400)
+      .json({ error: "Missing channel, uid, resourceId, or sid" });
   }
+
+  const stopResponse = await axios.post(
+    `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/sid/${sid}/mode/mix/stop`,
+    {
+      cname: channel,
+      uid: uid.toString(),
+      clientRequest: {},
+    },
+    {
+      headers: { Authorization: AUTH_HEADER },
+    }
+  );
+
+  console.log("Stop Response:", stopResponse.data);
+
+  return res.json({
+    message: "Recording stopped successfully",
+    details: stopResponse.data,
+  });
 });
 
 // Router setup
