@@ -202,25 +202,26 @@ app.post("/api/v1/stop-recording", async (req, res, next) => {
 
   console.log("Stop Response:", stopResponse.data);
 
-  // return res.json({
-  //   message: "Recording stopped successfully",
-  //   details: stopResponse.data,
-  // });
-
-  // 2️⃣ Extract File URL from Agora's Response
-  const fileList = stopResponse.data.serverResponse.fileList;
-  if (!fileList || fileList.length === 0) {
-    return res.status(400).json({ error: "No recorded file found." });
-  }
-
-  const recordedFile = JSON.parse(fileList)[0]; // Parse JSON string to get first file
-  const fileUrl = recordedFile.fileName; // Agora provides the recorded file URL
-
-  // 3️⃣ Return the Actual MP4 URL
   return res.json({
     message: "Recording stopped successfully",
-    fileUrl, // Agora Cloud Recording File URL
+    details: stopResponse.data,
   });
+
+  // 2️⃣ Extract File URL from Agora's Response
+
+  // const fileList = stopResponse.data.serverResponse.fileList;
+  // if (!fileList || fileList.length === 0) {
+  //   return res.status(400).json({ error: "No recorded file found." });
+  // }
+
+  // const recordedFile = JSON.parse(fileList)[0]; // Parse JSON string to get first file
+  // const fileUrl = recordedFile.fileName; // Agora provides the recorded file URL
+
+  // // 3️⃣ Return the Actual MP4 URL
+  // return res.json({
+  //   message: "Recording stopped successfully",
+  //   fileUrl, // Agora Cloud Recording File URL
+  // });
 });
 
 // Router setup
