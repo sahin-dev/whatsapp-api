@@ -118,7 +118,7 @@ app.post("/api/v1/start-recording", async (req, res, next) => {
               bucket: "agoracloud",
               accessKey: "AKIAQXUIX57ZS2O5KE77",
               secretKey: "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",
-              fileNamePrefix: ["recordings"],
+              fileNamePrefix: ["directory1", "directory2"],
               ACL: "public-read",
             },
           },
