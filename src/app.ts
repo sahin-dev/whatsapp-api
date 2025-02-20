@@ -18,7 +18,6 @@ const APP_ID = config.agora.app_id;
 // const APP_CERTIFICATE = config.agora.app_certificate;
 const CUSTOMER_ID = "fabfd743db384b048df89b750f27b317";
 const CUSTOMER_SECRET = "eb6003c3216e46d1a1b237bfe84005aa";
-// const REGION = "CN"; // Change if needed
 
 // Middleware setup
 prisma
@@ -111,7 +110,7 @@ app.post("/api/v1/start-recording", async (req, res, next) => {
               subscribeUidGroup: 0,
             },
             recordingFileConfig: {
-              avFileType: ["hls", "mp4"],
+              avFileType: ["mp4"],
             },
             storageConfig: {
               vendor: 1,
@@ -119,8 +118,7 @@ app.post("/api/v1/start-recording", async (req, res, next) => {
               bucket: "agoracloud",
               accessKey: "AKIAQXUIX57Z4LBKOLUO",
               secretKey: "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",
-              fileNamePrefix: ["directory1", "directory2"],
-              ACL: "public-read",
+              fileNamePrefix: ["recordings"],
             },
           },
         },
