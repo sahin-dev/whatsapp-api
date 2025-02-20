@@ -205,22 +205,20 @@ app.post("/api/v1/stop-recording", async (req, res, next) => {
     const fileName = recordedFile.fileName;
 
     const s3Params = {
-      Bucket: "agoracloud", // Replace with your S3 bucket name
-      Key: fileName, // Path to the file in S3
-      Expires: 3600, // URL expiration time in seconds (1 hour)
+      Bucket: "agoracloud",
+      Key: fileName,
+      Expires: 30 * 24 * 3600,
     };
 
     // Generate the presigned URL
     const presignedUrl = s3.getSignedUrl("getObject", s3Params);
 
-    await prisma.chanel.update({
-      where: {
-        id: channelId,
-      },
+    await prisma.recording.create({
       data: {
-        recordingLink: {
-          push: [presignedUrl],
-        },
+        channelId: channelId,
+        channelName: channel,
+        channelUid: uid.toString(),
+        recordingLink: presignedUrl,
       },
     });
 

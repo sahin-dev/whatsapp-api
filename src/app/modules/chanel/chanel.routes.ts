@@ -54,5 +54,11 @@ router.get(
 );
 
 router.get("/:channelId/files", auth(), chanelControllers.channelFiles);
+router.get("/recordings/:channelId", auth(), chanelControllers.recordingFiles);
+router.get(
+  "/recordings/:channelId/:channelUid",
+  auth(),
+  chanelControllers.singleRecordingFile
+);
 
 export const chanelRoutes = router;

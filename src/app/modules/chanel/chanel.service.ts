@@ -192,6 +192,27 @@ const channelFilesFromDB = async (channelId: string) => {
   return allFiles;
 };
 
+const recordingFilesFromDB = async (channelId: string) => {
+  const result = await prisma.recording.findMany({
+    where: { channelId: channelId },
+    orderBy: { createdAt: "desc" },
+    select: {
+      recordingLink: true,
+      createdAt: true,
+    },
+  });
+
+  return result;
+};
+
+const getRecordinLinkFromDB = async (channelId: string, channelUid: string) => {
+  const recordingLink = await prisma.recording.findFirst({
+    where: { channelId, channelUid },
+  });
+
+  return recordingLink;
+};
+
 export const chanelServices = {
   createChanelInDB,
   getChanelsInDB,
@@ -203,4 +224,6 @@ export const chanelServices = {
   getAccessChannelsFromDB,
   getMembersByChannelId,
   channelFilesFromDB,
+  recordingFilesFromDB,
+  getRecordinLinkFromDB,
 };

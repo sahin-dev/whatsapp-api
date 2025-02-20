@@ -134,6 +134,33 @@ const channelFiles = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const recordingFiles = catchAsync(async (req, res) => {
+  const channelId = req.params.channelId;
+  const files = await chanelServices.recordingFilesFromDB(channelId);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "recording files retrieved successfully",
+    data: files,
+  });
+});
+
+const singleRecordingFile = catchAsync(async (req, res) => {
+  const { channelId, channelUid } = req.params;
+  const recordInfo = await chanelServices.getRecordinLinkFromDB(
+    channelId,
+    channelUid
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "recording file retrieved successfully",
+    data: recordInfo,
+  });
+});
+
 export const chanelControllers = {
   createChanel,
   getAllChanels,
@@ -145,4 +172,6 @@ export const chanelControllers = {
   removeMember,
   getAllMembersInchannel,
   channelFiles,
+  recordingFiles,
+  singleRecordingFile,
 };
