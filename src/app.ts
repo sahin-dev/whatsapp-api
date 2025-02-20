@@ -73,7 +73,7 @@ app.post("/api/v1/start-recording", async (req, res, next) => {
       return res.status(400).json({ error: "Missing channel or uid" });
     }
 
-    // 1️⃣ **Acquire Resource ID**
+    // Acquire Resource ID
     let resourceId;
     try {
       const acquireResponse = await axios.post(
@@ -91,14 +91,12 @@ app.post("/api/v1/start-recording", async (req, res, next) => {
         }
       );
       resourceId = acquireResponse.data.resourceId;
-      console.log("Recording started - Resource ID:", resourceId);
     } catch (acquireError) {
       return res.status(500).json({
         error: "Failed to acquire resource ID",
       });
     }
 
-    // 2️⃣ **Start Recording**
     try {
       const startResponse = await axios.post(
         `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/mode/mix/start`,
@@ -135,15 +133,6 @@ app.post("/api/v1/start-recording", async (req, res, next) => {
         }
       );
 
-      // storageConfig: {
-      //         vendor: 1, // 1 = AWS S3, 2 = Google Cloud, 3 = AliCloud OSS
-      //         region: 3, // Use Agora's region code (e.g., 2 for Europe)
-      //         bucket: "dancefluencer",
-      //         accessKey: "DO00JF7Q4QFL6JT626LQ",
-      //         secretKey: "+8jgp74O4nG3wtgidZUWw4IARjkC1SghG39zGK65FTk",
-      //         fileNamePrefix: ["recordings"],
-      //       },
-
       return res.json({
         message: "Recording started successfully",
         resourceId,
@@ -156,7 +145,6 @@ app.post("/api/v1/start-recording", async (req, res, next) => {
       });
     }
   } catch (error) {
-    console.error("Error in start-recording:", error);
     next(error);
   }
 });
@@ -186,55 +174,8 @@ app.post("/api/v1/check-recording-status", async (req, res) => {
   res.json(statusData);
 });
 
-// app.post("/api/v1/stop-recording", async (req, res, next) => {
-//   const { channel, uid, resourceId, sid } = req.body;
-
-//   if (!channel || !uid || !resourceId || !sid) {
-//     return res
-//       .status(400)
-//       .json({ error: "Missing channel, uid, resourceId, or sid" });
-//   }
-
-//   const stopResponse = await axios.post(
-//     `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/sid/${sid}/mode/mix/stop`,
-//     {
-//       cname: channel,
-//       uid: uid.toString(),
-//       clientRequest: {},
-//     },
-//     {
-//       headers: { Authorization: AUTH_HEADER },
-//     }
-//   );
-
-//   console.log("Stop Response:", stopResponse.data);
-
-//   // return res.json({
-//   //   message: "Recording stopped successfully",
-//   //   details: stopResponse.data,
-//   // });
-
-//   // 2️⃣ Extract File URL from Agora's Response
-
-//   const fileList = stopResponse.data.serverResponse.fileList;
-//   if (!fileList || fileList.length === 0) {
-//     return res.status(400).json({ error: "No recorded file found." });
-//   }
-
-//   const recordedFile = JSON.parse(fileList)[0]; // Parse JSON string to get first file
-//   const fileUrl = recordedFile.fileName; // Agora provides the recorded file URL
-
-//   // 3️⃣ Return the Actual MP4 URL
-//   return res.json({
-//     message: "Recording stopped successfully",
-//     fileUrl, // Agora Cloud Recording File URL
-//   });
-// });
-
-// Router setup
-
 app.post("/api/v1/stop-recording", async (req, res, next) => {
-  const { channel, uid, resourceId, sid } = req.body;
+  const { channel, uid, resourceId, sid, channelId } = req.body;
 
   if (!channel || !uid || !resourceId || !sid) {
     return res
@@ -255,16 +196,13 @@ app.post("/api/v1/stop-recording", async (req, res, next) => {
       }
     );
 
-    console.log("Stop Response:", stopResponse.data);
-
-    // 2️⃣ Extract File URL from Agora's Response
     const fileList = stopResponse.data.serverResponse.fileList;
     if (!fileList || fileList.length === 0) {
       return res.status(400).json({ error: "No recorded file found." });
     }
 
-    const recordedFile = fileList[0]; // Get the first file in the list
-    const fileName = recordedFile.fileName; // Agora provides the recorded file URL
+    const recordedFile = fileList[0];
+    const fileName = recordedFile.fileName;
 
     const s3Params = {
       Bucket: "agoracloud", // Replace with your S3 bucket name
@@ -274,6 +212,17 @@ app.post("/api/v1/stop-recording", async (req, res, next) => {
 
     // Generate the presigned URL
     const presignedUrl = s3.getSignedUrl("getObject", s3Params);
+
+    await prisma.chanel.update({
+      where: {
+        id: channelId,
+      },
+      data: {
+        recordingLink: {
+          push: [presignedUrl],
+        },
+      },
+    });
 
     // 3️⃣ Return the Actual MP4 URL
     return res.json({
