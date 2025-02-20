@@ -10,6 +10,7 @@ import { authZeroConfig } from "./config/autZero";
 import { paymentControllers } from "./app/modules/payment/payment.controller";
 import config from "./config";
 import axios from "axios";
+import AWS from "aws-sdk";
 
 const app: Application = express();
 const prisma = new PrismaClient();
@@ -18,6 +19,12 @@ const APP_ID = config.agora.app_id;
 // const APP_CERTIFICATE = config.agora.app_certificate;
 const CUSTOMER_ID = "fabfd743db384b048df89b750f27b317";
 const CUSTOMER_SECRET = "eb6003c3216e46d1a1b237bfe84005aa";
+
+const s3 = new AWS.S3({
+  accessKeyId: "AKIAQXUIX57ZS2O5KE77", // Use your AWS access key
+  secretAccessKey: "sWx50b1MfDW0G0FUSSLrJSrPuQbO/2CNu1r538L7", // Use your AWS secret key
+  region: "us-east-2", // The region of your S3 bucket
+});
 
 // Middleware setup
 prisma
@@ -257,12 +264,21 @@ app.post("/api/v1/stop-recording", async (req, res, next) => {
     }
 
     const recordedFile = fileList[0]; // Get the first file in the list
-    const fileUrl = recordedFile.fileName; // Agora provides the recorded file URL
+    const fileName = recordedFile.fileName; // Agora provides the recorded file URL
+
+    const s3Params = {
+      Bucket: "agoracloud", // Replace with your S3 bucket name
+      Key: fileName, // Path to the file in S3
+      Expires: 3600, // URL expiration time in seconds (1 hour)
+    };
+
+    // Generate the presigned URL
+    const presignedUrl = s3.getSignedUrl("getObject", s3Params);
 
     // 3️⃣ Return the Actual MP4 URL
     return res.json({
       message: "Recording stopped successfully",
-      fileUrl, // Agora Cloud Recording File URL
+      presignedUrl, // Agora Cloud Recording File URL
     });
   } catch (stopError) {
     console.error("Error stopping recording:", stopError);
