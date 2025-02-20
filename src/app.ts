@@ -179,6 +179,53 @@ app.post("/api/v1/check-recording-status", async (req, res) => {
   res.json(statusData);
 });
 
+// app.post("/api/v1/stop-recording", async (req, res, next) => {
+//   const { channel, uid, resourceId, sid } = req.body;
+
+//   if (!channel || !uid || !resourceId || !sid) {
+//     return res
+//       .status(400)
+//       .json({ error: "Missing channel, uid, resourceId, or sid" });
+//   }
+
+//   const stopResponse = await axios.post(
+//     `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/sid/${sid}/mode/mix/stop`,
+//     {
+//       cname: channel,
+//       uid: uid.toString(),
+//       clientRequest: {},
+//     },
+//     {
+//       headers: { Authorization: AUTH_HEADER },
+//     }
+//   );
+
+//   console.log("Stop Response:", stopResponse.data);
+
+//   // return res.json({
+//   //   message: "Recording stopped successfully",
+//   //   details: stopResponse.data,
+//   // });
+
+//   // 2️⃣ Extract File URL from Agora's Response
+
+//   const fileList = stopResponse.data.serverResponse.fileList;
+//   if (!fileList || fileList.length === 0) {
+//     return res.status(400).json({ error: "No recorded file found." });
+//   }
+
+//   const recordedFile = JSON.parse(fileList)[0]; // Parse JSON string to get first file
+//   const fileUrl = recordedFile.fileName; // Agora provides the recorded file URL
+
+//   // 3️⃣ Return the Actual MP4 URL
+//   return res.json({
+//     message: "Recording stopped successfully",
+//     fileUrl, // Agora Cloud Recording File URL
+//   });
+// });
+
+// Router setup
+
 app.post("/api/v1/stop-recording", async (req, res, next) => {
   const { channel, uid, resourceId, sid } = req.body;
 
@@ -188,43 +235,43 @@ app.post("/api/v1/stop-recording", async (req, res, next) => {
       .json({ error: "Missing channel, uid, resourceId, or sid" });
   }
 
-  const stopResponse = await axios.post(
-    `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/sid/${sid}/mode/mix/stop`,
-    {
-      cname: channel,
-      uid: uid.toString(),
-      clientRequest: {},
-    },
-    {
-      headers: { Authorization: AUTH_HEADER },
+  try {
+    const stopResponse = await axios.post(
+      `https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/sid/${sid}/mode/mix/stop`,
+      {
+        cname: channel,
+        uid: uid.toString(),
+        clientRequest: {},
+      },
+      {
+        headers: { Authorization: AUTH_HEADER },
+      }
+    );
+
+    console.log("Stop Response:", stopResponse.data);
+
+    // 2️⃣ Extract File URL from Agora's Response
+    const fileList = stopResponse.data.serverResponse.fileList;
+    if (!fileList || fileList.length === 0) {
+      return res.status(400).json({ error: "No recorded file found." });
     }
-  );
 
-  console.log("Stop Response:", stopResponse.data);
+    const recordedFile = fileList[0]; // Get the first file in the list
+    const fileUrl = recordedFile.fileName; // Agora provides the recorded file URL
 
-  return res.json({
-    message: "Recording stopped successfully",
-    details: stopResponse.data,
-  });
-
-  // 2️⃣ Extract File URL from Agora's Response
-
-  // const fileList = stopResponse.data.serverResponse.fileList;
-  // if (!fileList || fileList.length === 0) {
-  //   return res.status(400).json({ error: "No recorded file found." });
-  // }
-
-  // const recordedFile = JSON.parse(fileList)[0]; // Parse JSON string to get first file
-  // const fileUrl = recordedFile.fileName; // Agora provides the recorded file URL
-
-  // // 3️⃣ Return the Actual MP4 URL
-  // return res.json({
-  //   message: "Recording stopped successfully",
-  //   fileUrl, // Agora Cloud Recording File URL
-  // });
+    // 3️⃣ Return the Actual MP4 URL
+    return res.json({
+      message: "Recording stopped successfully",
+      fileUrl, // Agora Cloud Recording File URL
+    });
+  } catch (stopError) {
+    console.error("Error stopping recording:", stopError);
+    return res.status(500).json({
+      error: "Failed to stop recording",
+    });
+  }
 });
 
-// Router setup
 app.use("/api/v1", router);
 
 // Global Error Handler
