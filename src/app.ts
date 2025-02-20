@@ -110,7 +110,7 @@ app.post("/api/v1/start-recording", async (req, res, next) => {
               subscribeUidGroup: 0,
             },
             recordingFileConfig: {
-              avFileType: ["mp4"],
+              avFileType: ["hls", "mp4"],
             },
             storageConfig: {
               vendor: 1,
@@ -118,7 +118,7 @@ app.post("/api/v1/start-recording", async (req, res, next) => {
               bucket: "agoracloud",
               accessKey: "AKIAQXUIX57Z4LBKOLUO",
               secretKey: "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",
-              fileNamePrefix: ["recordings"],
+              fileNamePrefix: ["directory1"],
             },
           },
         },
