@@ -208,7 +208,7 @@ app.post("/api/v1/stop-recording", async (req, res, next) => {
     const s3Params = {
       Bucket: "agoracloud",
       Key: fileName,
-      Expires: 30 * 24 * 3600,
+      Expires: 7 * 24 * 3600,
     };
 
     // Generate the presigned URL
