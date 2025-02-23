@@ -176,6 +176,7 @@ app.post("/api/v1/check-recording-status", async (req, res) => {
 
 app.post("/api/v1/stop-recording", async (req, res, next) => {
   const { channel, uid, resourceId, sid, channelId } = req.body;
+  console.log(req.body);
 
   if (!channel || !uid || !resourceId || !sid) {
     return res
