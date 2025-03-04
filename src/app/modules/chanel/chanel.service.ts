@@ -46,7 +46,14 @@ const getChanelsInDB = async () => {
 
 const getAccessChannelsFromDB = async (userId: string, groupId: string) => {
   const chanels = await prisma.chanel.findMany({
-    include: { group: true },
+    include: {
+      group: true,
+      messages: {
+        select: { createdAt: true },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
+    },
     orderBy: { createdAt: "desc" },
     where: {
       groupId: groupId,
