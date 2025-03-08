@@ -92,15 +92,7 @@ const accessGroupInDB = async (userId: string) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   const allGroups = await prisma.group.findMany({
     include: {
-      chanel: {
-        select: {
-          messages: {
-            select: { createdAt: true },
-            orderBy: { createdAt: "desc" },
-            take: 1,
-          },
-        },
-      },
+      chanel: true,
     },
     orderBy: { createdAt: "desc" },
   });
