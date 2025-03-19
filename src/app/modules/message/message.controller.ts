@@ -129,7 +129,24 @@ const startRecording = catchAsync(async (req, res) => {
   const uid = req.body.uid;
   const result = await messageService.startRecordingInAgora(channelId, uid);
 
-  sendResponse(res, {statusCode: 200, success: true, message: "Recording Start", data: result})
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Recording Start",
+    data: result,
+  });
+});
+
+const pinUnpinMessage = catchAsync(async (req, res) => {
+  const { messageId } = req.params;
+  const { isPinned } = req.body;
+  const result = await messageService.pinUnpinMessage(messageId, isPinned);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Pinned message status updated successfully",
+    data: result,
+  });
 });
 
 const pinnedMessage = catchAsync(async (req, res) => {
@@ -171,4 +188,5 @@ export const messageController = {
   pinnedMessage,
   searchMessages,
   startRecording,
+  pinUnpinMessage,
 };

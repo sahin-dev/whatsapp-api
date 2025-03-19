@@ -58,5 +58,10 @@ router.get(
   auth(),
   messageController.searchMessages
 );
+router.post(
+  "/pin-unpinned-message/:messageId",
+  auth(),
+  messageController.pinUnpinMessage
+);
 
 export const messageRoute = router;
