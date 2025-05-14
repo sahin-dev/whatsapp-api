@@ -9,10 +9,13 @@ import { fileUploader } from "../../../helpers/fileUploader";
 const router = express.Router();
 
 //login user
+//tested
 router.post("/login", authController.loginUser);
-
+//tested
 router.get("/profile", auth(), authController.getProfile);
 
+
+//tested
 router.put(
   "/profile",
   validateRequest(authValidation.updateProfileSchema),
@@ -20,13 +23,19 @@ router.put(
   authController.updateProfile
 );
 
-router.post("/login-with-auth", authController.loginWithAuth);
-router.post("/admin-login", authController.adminLogin);
+//tested
+
 router.patch(
   "/update/profile-image",
   fileUploader.updateProfileImage,
-  auth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  auth(),
   authController.updateProfileImage
 );
+
+
+//Not required
+router.post("/login-with-auth", authController.loginWithAuth);
+router.post("/admin-login", authController.adminLogin);
+
 
 export const authRoute = router;

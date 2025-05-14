@@ -53,14 +53,14 @@ const updateUserIntoDB = async (id: string, userData: any) => {
 };
 
 //delete user
-const deleteUserIntoDB = async (userId: string, loggedId: string) => {
+const deleteUserIntoDB = async (userId: string) => {
   if (!ObjectId.isValid(userId)) {
     throw new ApiError(400, "Invalid user ID format");
   }
 
-  if (userId === loggedId) {
-    throw new ApiError(403, "You can't delete your own account!");
-  }
+  // if (userId === loggedId) {
+  //   throw new ApiError(403, "You can't delete your own account!");
+  // }
   const existingUser = await getSingleUserIntoDB(userId);
   if (!existingUser) {
     throw new ApiError(404, "user not found for delete this");

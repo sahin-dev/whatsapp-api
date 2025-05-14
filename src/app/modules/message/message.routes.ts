@@ -15,6 +15,7 @@ router.post(
   messageController.createMessage
 );
 router.get("/:messageId", auth(), messageController.getSingleMessage);
+
 router.delete(
   "/delete-message/:messageId",
   auth(UserRole.ADMIN, UserRole.SUPER_ADMIN),

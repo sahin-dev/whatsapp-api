@@ -9,9 +9,10 @@ generator client {
 
 model User {
   id             String          @id @default(auto()) @map("_id") @db.ObjectId
-  username       String
-  email          String          @unique
+  phone          String          @unique      
+  username       String?
   password       String?
+  email          String?
   avatar         String          @default("https://app.boom360trader.com/uploads/user.png")
   fcmToken       String?
   subcription    Boolean?        @default(false)
@@ -24,6 +25,7 @@ model User {
   status         UserStatus      @default(ACTIVE)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+
   group          Group[]
   chanel         Chanel[]
   message        Message[]

@@ -285,7 +285,7 @@ const getResourceId = async (roomId: string, uid: number) => {
 
 const startRecordingInAgora = async (roomId: string, uid: number) => {
   const resourceId = await getResourceId(roomId, uid);
-  console.log(resourceId);
+  
   // const token = generateToken(roomId, uid);
   const url = `https://api.agora.io/v1/apps/${appID}/cloud_recording/resourceid/${resourceId}/mode/mix/start`;
 

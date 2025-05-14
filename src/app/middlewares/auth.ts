@@ -21,6 +21,7 @@ const auth = (...roles: string[]) => {
         throw new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized!");
       }
 
+
       const session = await prisma.user.findFirst({
         where: { accessToken: token },
       });

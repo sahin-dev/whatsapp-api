@@ -11,32 +11,35 @@ import axios from "axios";
 import jwt from "jsonwebtoken";
 import { Request } from "express";
 import { User } from "@prisma/client";
+import httpStatus from "http-status";
 
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
+
+
+
 const loginUserIntoDB = async (payload: any) => {
+  console.log(payload)
   let accessToken;
   let userInfo;
+
   const user = await prisma.user.findUnique({
     where: {
-      email: payload.email,
+      phone: payload.phone,
     },
   });
 
   if (!user) {
     const createUser = await prisma.user.create({
       data: {
-        ...payload,
-        fcmToken: payload.fcmToken,
-        password: await bcrypt.hash(payload.password, 10),
+        phone:payload.phone
       },
     });
 
     accessToken = jwtHelpers.generateToken(
       {
         id: createUser.id,
-        email: createUser.email,
-        role: createUser.role,
+        phone: createUser.phone,
         fcmToken: createUser.fcmToken,
         subscription: createUser.subcription,
       },
@@ -44,31 +47,25 @@ const loginUserIntoDB = async (payload: any) => {
       config.jwt.expires_in as string
     );
 
-    const { password, status, createdAt, updatedAt, ...others } = createUser;
+    const {status, createdAt, updatedAt, ...others } = createUser;
     userInfo = others;
   } else {
-    const isPasswordValid = await bcrypt.compare(
-      payload.password,
-      user.password as string
-    );
-    if (!isPasswordValid) {
-      throw new ApiError(401, "Invalid credentials");
-    }
+  
 
     accessToken = jwtHelpers.generateToken(
       {
-        id: user.id,
-        email: user.email,
-        role: user.role,
+        id: user?.id,
+        phone: user?.phone,
         fcmToken: payload.fcmToken,
-        subscription: user.subcription,
+        subscription: user?.subcription,
       },
       config.jwt.jwt_secret as string,
       config.jwt.expires_in as string
     );
+
     const updateUserInfo = await prisma.user.update({
       where: {
-        email: payload.email,
+        phone: payload.phone,
       },
       data: {
         fcmToken: payload.fcmToken,
@@ -123,10 +120,18 @@ const updateProfileIntoDB = async (
   if (!user) {
     throw new ApiError(404, "user not found for edit user");
   }
+  //check email uniquesness
+  if (userData.email){
+    const existingUser = await prisma.user.findFirst({where:{email:userData.email}})
+    if (existingUser){
+      throw new ApiError(httpStatus.CONFLICT, "User already exist with this email",userData.email)
+    }
+  }
   const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: {
-      username: userData.username,
+      username: userData.username || user.username,
+      email:userData.email || user.email
     },
   });
 
@@ -134,6 +139,7 @@ const updateProfileIntoDB = async (
 
   return sanitizedUser;
 };
+
 
 const verifyToken = (token: string) => {
   try {
@@ -188,7 +194,7 @@ const loginAuthProvider = async (payload: {
     );
 
     const updatedUser = await prisma.user.update({
-      where: { email: existingUser.email },
+      where: { phone: existingUser.phone },
       data: {
         fcmToken: payload.fcmToken ? payload.fcmToken : existingUser?.fcmToken,
         accessToken: accessToken,
@@ -243,7 +249,7 @@ const loginAuthProvider = async (payload: {
   );
 
   const updatedUser = await prisma.user.update({
-    where: { email: user.email },
+    where: { phone: user.phone },
     data: {
       password: bcrypt.hashSync(payload.password, 10),
       fcmToken: payload.fcmToken ? payload.fcmToken : existingUser?.fcmToken,
@@ -319,7 +325,7 @@ const adminLoginAuth = async (payload: {
   );
 
   const updatedUser = await prisma.user.update({
-    where: { email: existingUser.email },
+    where: { phone: existingUser.phone },
     data: {
       accessToken: authToken,
     },

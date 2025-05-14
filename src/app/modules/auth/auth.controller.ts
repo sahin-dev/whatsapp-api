@@ -5,7 +5,7 @@ import sendResponse from "../../../shared/sendResponse";
 
 //login user
 const loginUser = catchAsync(async (req: Request, res: Response) => {
-  console.log(req.body);
+
   const result = await authService.loginUserIntoDB(req.body);
 
   // res.cookie("accessToken", result.accessToken, {
