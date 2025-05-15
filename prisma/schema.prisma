@@ -27,7 +27,7 @@ model User {
   updatedAt      DateTime        @updatedAt
 
   group          Group[]
-  chanel         Chanel[]
+  chanel         Channel[]
   message        Message[]
   notifications  Notifications[]
   subscription   Subscription[]
@@ -43,17 +43,17 @@ model Group {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   user       User?    @relation(fields: [userId], references: [id])
-  chanel     Chanel[]
+  channel     Channel[]
 
   @@map("groups")
 }
 
-model Chanel {
+model Channel {
   id            String          @id @default(auto()) @map("_id") @db.ObjectId
   userId        String?         @db.ObjectId
   groupId       String?         @db.ObjectId
-  chanelName    String
-  chanelImage   String
+  channelName    String
+  channelImage   String
   description   String
   memberIds     String[]
   chanelType    ChanelType      @default(PRIVATE)
@@ -93,7 +93,7 @@ model Message {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User?    @relation(fields: [senderId], references: [id])
-  channel   Chanel?  @relation(fields: [channelId], references: [id])
+  channel   Channel?  @relation(fields: [channelId], references: [id])
 
   @@map("messages")
 }
@@ -108,7 +108,7 @@ model Notifications {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   user       User?    @relation(fields: [receiverId], references: [id])
-  channel    Chanel?  @relation(fields: [channelId], references: [id])
+  channel    Channel?  @relation(fields: [channelId], references: [id])
 
   @@map("notifications")
 }

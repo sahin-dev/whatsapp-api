@@ -110,7 +110,7 @@ const sendNotifications = async (req: any) => {
 
 const sendChannelNofitications = async (req: Request) => {
   const channelId = req.params.channelId;
-  const channel = await prisma.chanel.findUnique({
+  const channel = await prisma.channel.findUnique({
     where: { id: channelId },
     select: { memberIds: true },
   });
@@ -119,7 +119,7 @@ const sendChannelNofitications = async (req: Request) => {
     throw new ApiError(404, "Channel not found");
   }
 
-  const channelInfo = await prisma.chanel.findUnique({
+  const channelInfo = await prisma.channel.findUnique({
     where: { id: channelId },
   });
 
@@ -133,7 +133,7 @@ const sendChannelNofitications = async (req: Request) => {
 
   const message = {
     notification: {
-      title: `get notification in ${channelInfo?.chanelName}`,
+      title: `get notification in ${channelInfo?.channelName}`,
       body: req.body.body,
     },
     tokens: fcmTokens,
@@ -157,7 +157,7 @@ const sendChannelNofitications = async (req: Request) => {
   const notificationData = successfulUsers.map((user) => ({
     receiverId: user?.id,
     channelId: channelId,
-    title: `get notification in ${channelInfo?.chanelName}`,
+    title: `get notification in ${channelInfo?.channelName}`,
     body: req.body.body,
   }));
 
@@ -187,9 +187,9 @@ const getNotificationsFromDB = async (req: any) => {
     include: {
       channel: {
         select: {
-          chanelImage: true,
+          channelImage: true,
           description: true,
-          chanelName: true,
+          channelName: true,
         },
       },
     },

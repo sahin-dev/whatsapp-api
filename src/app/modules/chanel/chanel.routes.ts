@@ -7,24 +7,34 @@ import { chanelControllers } from "./chanel.controller";
 
 const router = Router();
 
+//tested
 router.post(
   "/create/:groupId",
   fileUploader.uploadChanelImage,
   parseBodyData,
-  auth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  auth(),
   chanelControllers.createChanel
 );
+
+
+//tested
 router.get(
   "/",
-  auth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  auth(),
   chanelControllers.getAllChanels
 );
+
+//tested
 router.get(
   "/access-channels/:groupId",
   auth(),
   chanelControllers.getAccessChannels
 );
+
+//tested
 router.get("/:chanelId", auth(), chanelControllers.getSingleChanel);
+
+
 router.put(
   "/:chanelId",
   fileUploader.uploadChanelImage,

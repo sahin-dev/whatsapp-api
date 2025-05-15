@@ -33,7 +33,7 @@ const createGroupInDB = async (req: any) => {
 
 const getGroupsInDB = async () => {
   const groups = await prisma.group.findMany({
-    include: { chanel: true },
+    include: { channel: true },
     orderBy: { createdAt: "desc" },
   });
   if (groups.length === 0) {
@@ -45,8 +45,9 @@ const getGroupsInDB = async () => {
 const getGroupInDB = async (groupId: string) => {
   const group = await prisma.group.findUnique({
     where: { id: groupId },
-    include: { chanel: true },
+    include: { channel: true },
   });
+  
   if (!group) {
     throw new ApiError(404, "Group not found");
   }
@@ -92,7 +93,7 @@ const accessGroupInDB = async (userId: string) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   const allGroups = await prisma.group.findMany({
     include: {
-      chanel: true,
+      channel: true,
     },
     orderBy: { createdAt: "desc" },
   });

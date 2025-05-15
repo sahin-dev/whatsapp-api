@@ -61,9 +61,9 @@ const deleteGroup = catchAsync(async (req: Request, res: Response) => {
 
 // get access group
 const accessGroups = catchAsync(async (req: any, res: Response) => {
-  console.log(req)
+ 
   const user = req.user as User;
-  console.log(user.id)
+
   const userId = user.id;
   const accessGroups = await groupServices.accessGroupInDB(userId);
   sendResponse(res, {

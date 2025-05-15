@@ -54,6 +54,7 @@ router.get(
   auth(),
   messageController.pinnedMessage
 );
+
 router.get(
   "/search/messages/:channelId",
   auth(),

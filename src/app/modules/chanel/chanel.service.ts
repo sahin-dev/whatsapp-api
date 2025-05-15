@@ -14,18 +14,18 @@ const createChanelInDB = async (req: any) => {
   const imageUrl = file
     ? `${config.backend_base_url}/uploads/${file.originalname}`
     : null;
-  const existingGroup = await prisma.chanel.findFirst({
-    where: { chanelName: payload.chanelName },
+  const existingGroup = await prisma.channel.findFirst({
+    where: { channelName: payload.channelName },
   });
   if (existingGroup) {
     throw new ApiError(409, "chanel with the same name already exists");
   }
-  const newGroup = await prisma.chanel.create({
+  const newGroup = await prisma.channel.create({
     data: {
       ...payload,
       userId,
       groupId,
-      chanelImage: imageUrl ? imageUrl : "",
+      channelImage: imageUrl ? imageUrl : "",
       memberIds: [userId],
     },
   });
@@ -34,7 +34,7 @@ const createChanelInDB = async (req: any) => {
 };
 
 const getChanelsInDB = async () => {
-  const chanels = await prisma.chanel.findMany({
+  const chanels = await prisma.channel.findMany({
     include: { group: true },
     orderBy: { createdAt: "desc" },
   });
@@ -45,7 +45,7 @@ const getChanelsInDB = async () => {
 };
 
 const getAccessChannelsFromDB = async (userId: string, groupId: string) => {
-  const chanels = await prisma.chanel.findMany({
+  const chanels = await prisma.channel.findMany({
     include: {
       group: true,
       messages: {
@@ -69,7 +69,7 @@ const getAccessChannelsFromDB = async (userId: string, groupId: string) => {
 };
 
 const getChanelInDB = async (chanelId: string) => {
-  const group = await prisma.chanel.findUnique({
+  const group = await prisma.channel.findUnique({
     where: { id: chanelId },
     include: { group: true },
   });
@@ -86,36 +86,36 @@ const updateChanelInDB = async (req: Request) => {
   const imageUrl = file
     ? `${config.backend_base_url}/uploads/${file.originalname}`
     : null;
-  const existingChanel = await prisma.chanel.findUnique({
+  const existingChanel = await prisma.channel.findUnique({
     where: { id: chanelId },
   });
   if (!existingChanel) {
     throw new ApiError(404, "chanel not found for update");
   }
-  const updatedChanel = await prisma.chanel.update({
+  const updatedChanel = await prisma.channel.update({
     where: { id: chanelId },
     data: {
       ...payload,
-      chanelImage: imageUrl ? imageUrl : existingChanel.chanelImage,
+      chanelImage: imageUrl ? imageUrl : existingChanel.channelImage,
     },
   });
   return updatedChanel;
 };
 
 const deleteChanelInDB = async (chanelId: string) => {
-  const existingChanel = await prisma.chanel.findUnique({
+  const existingChanel = await prisma.channel.findUnique({
     where: { id: chanelId },
   });
   if (!existingChanel) {
     throw new ApiError(404, "Group not found for delete");
   }
-  await prisma.chanel.delete({ where: { id: chanelId } });
+  await prisma.channel.delete({ where: { id: chanelId } });
 
   return;
 };
 
 const addMemberInChannel = async (channelId: string, userId: string) => {
-  const isExisting = await prisma.chanel.findUnique({
+  const isExisting = await prisma.channel.findUnique({
     where: {
       id: channelId,
       memberIds: {
@@ -127,7 +127,7 @@ const addMemberInChannel = async (channelId: string, userId: string) => {
     throw new ApiError(409, "this user already exists");
   }
 
-  const result = await prisma.chanel.update({
+  const result = await prisma.channel.update({
     where: { id: channelId },
     data: {
       memberIds: {
@@ -141,7 +141,7 @@ const addMemberInChannel = async (channelId: string, userId: string) => {
 
 const getMembersByChannelId = async (channelId: string) => {
   // Find the channel and retrieve its memberIds
-  const channel = await prisma.chanel.findUnique({
+  const channel = await prisma.channel.findUnique({
     where: { id: channelId },
     select: { memberIds: true }, // Only select the member IDs
   });
@@ -161,7 +161,7 @@ const getMembersByChannelId = async (channelId: string) => {
 };
 
 const removeMemberFromChannel = async (channelId: string, userId: string) => {
-  const isExisting = await prisma.chanel.findFirst({
+  const isExisting = await prisma.channel.findFirst({
     where: {
       id: channelId,
       memberIds: {
@@ -173,7 +173,7 @@ const removeMemberFromChannel = async (channelId: string, userId: string) => {
     throw new ApiError(409, "user not existing");
   }
 
-  const result = await prisma.chanel.update({
+  const result = await prisma.channel.update({
     where: { id: channelId },
     data: {
       memberIds: {

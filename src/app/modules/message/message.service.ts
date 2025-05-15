@@ -78,7 +78,7 @@ const searchMessageFromDB = async (channelId: string, search: string) => {
     return [];
   }
 
-  const existingChannel = await prisma.chanel.findUnique({
+  const existingChannel = await prisma.channel.findUnique({
     where: { id: channelId },
   });
   if (!existingChannel) {
@@ -237,6 +237,7 @@ const generateAccessTokenInAgora = async (payload: {
 };
 
 const getResourceId = async (roomId: string, uid: number) => {
+  console.log(roomId)
   const url = `https://api.agora.io/v1/apps/${appID}/cloud_recording/acquire`;
   const payload = {
     cname: roomId,
@@ -245,6 +246,9 @@ const getResourceId = async (roomId: string, uid: number) => {
   };
 
   try {
+
+    console.log(`Basic ${Buffer.from(`${appID}:${appCertificate}`).toString("base64")}`)
+    console.log("Hi")
     const response = await axios.post(url, payload, {
       headers: {
         Authorization: `Basic ${Buffer.from(
@@ -253,7 +257,8 @@ const getResourceId = async (roomId: string, uid: number) => {
         "Content-Type": "application/json",
       },
     });
-
+    
+   
     console.log("Response:", response.data);
     return response.data.resourceId;
   } catch (error: any) {
@@ -261,7 +266,7 @@ const getResourceId = async (roomId: string, uid: number) => {
       "Error fetching Resource ID:",
       error.response?.data || error.message
     );
-    throw new Error("Failed to fetch Resource ID");
+    throw new Error(`Failed to fetch Resource ID: ${error.message}`);
   }
 };
 

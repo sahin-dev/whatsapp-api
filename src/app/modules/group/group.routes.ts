@@ -7,30 +7,40 @@ import { fileUploader } from "../../../helpers/fileUploader";
 
 const router = Router();
 
+//tested
 router.post(
   "/create",
   fileUploader.uploadGroupImage,
-  auth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  auth(),
   parseBodyData,
   groupControllers.createGroup
 );
+
+//tested
 router.get(
   "/",
-  auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
+  auth(),
   groupControllers.getAllGroups
 );
+
+//tested
 router.get("/:groupId", auth(), groupControllers.getSingleGroup);
+
+//tested
 router.put(
   "/:groupId",
   fileUploader.uploadGroupImage,
-  auth(UserRole.SUPER_ADMIN),
+  auth(),
   parseBodyData,
   groupControllers.updateGroup
 );
+
+//tested
 router.delete(
   "/:groupId",
-  auth(UserRole.SUPER_ADMIN),
+  auth(),
   groupControllers.deleteGroup
 );
+//tested
 router.get("/access/groups", auth(), groupControllers.accessGroups);
 export const groupRoutes = router;

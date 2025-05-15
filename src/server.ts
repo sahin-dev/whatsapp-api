@@ -42,7 +42,7 @@ async function main() {
           isStreaming,
         } = parsedMessage;
 
-        const streamingResult = await prisma.chanel.findUnique({
+        const streamingResult = await prisma.channel.findUnique({
           where: { id: channelId },
         });
         const pinnedMessage = await messageService.pinnedMessageInDB(channelId);
@@ -98,6 +98,7 @@ async function main() {
               client.send(JSON.stringify(messagePayload));
             }
           });
+
         } else if (type === "deleteMessage" && messageId) {
           await messageService.deleteSingleMessageFromDB(messageId);
 
@@ -171,7 +172,7 @@ async function main() {
             }
           });
         } else if (type === "streaming" && channelId) {
-          const updateResult = await prisma.chanel.update({
+          const updateResult = await prisma.channel.update({
             where: { id: channelId },
             data: {
               isStreaming: isStreaming,

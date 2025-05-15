@@ -57,7 +57,7 @@ const upload = multer({ storage: storage });
 const uploadprofileImage = upload.single("profileImage");
 const updateProfileImage = upload.single("avatar");
 const uploadGroupImage = upload.single("groupImage");
-const uploadChanelImage = upload.single("chanelImage");
+const uploadChanelImage = upload.single("channelImage");
 
 // Upload multiple images for portfolio
 const sendFiles = upload.fields([

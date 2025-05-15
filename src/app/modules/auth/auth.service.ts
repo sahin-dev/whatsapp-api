@@ -40,8 +40,8 @@ const loginUserIntoDB = async (payload: any) => {
       {
         id: createUser.id,
         phone: createUser.phone,
-        fcmToken: createUser.fcmToken,
-        subscription: createUser.subcription,
+        fcmToken: createUser?.fcmToken,
+        subscription: createUser?.subcription,
       },
       config.jwt.jwt_secret as string,
       config.jwt.expires_in as string
@@ -121,17 +121,17 @@ const updateProfileIntoDB = async (
     throw new ApiError(404, "user not found for edit user");
   }
   //check email uniquesness
-  if (userData.email){
-    const existingUser = await prisma.user.findFirst({where:{email:userData.email}})
+  if (userData.username){
+    const existingUser = await prisma.user.findFirst({where:{email:userData.username}})
     if (existingUser){
-      throw new ApiError(httpStatus.CONFLICT, "User already exist with this email",userData.email)
+      throw new ApiError(httpStatus.CONFLICT, "User already exist with this email",userData.username)
     }
   }
   const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: {
       username: userData.username || user.username,
-      email:userData.email || user.email
+      email:userData.username || user.email
     },
   });
 
