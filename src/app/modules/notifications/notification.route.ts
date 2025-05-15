@@ -22,6 +22,7 @@ router.get(
   auth(),
   notificationController.getSingleNotificationById
 );
+
 router.post(
   "/send-channel-notification/:channelId",
   auth(),

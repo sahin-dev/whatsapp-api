@@ -4,9 +4,10 @@ import { messageService } from "./message.service";
 import sendResponse from "../../../shared/sendResponse";
 import { channelClients } from "../../../server";
 import prisma from "../../../shared/prisma";
+import { User } from "@prisma/client";
 
 const createMessage = catchAsync(async (req: Request, res: Response) => {
-  const { chanelId } = req.params;
+  const { channelId } = req.params;
   await messageService.createMessageInDB(req);
 
   // Send the single message only to clients connected to the specific channel
@@ -14,7 +15,7 @@ const createMessage = catchAsync(async (req: Request, res: Response) => {
 
   //send all the messages only to clients connected to the specific channel
   const results = await prisma.message.findMany({
-    where: { channelId: chanelId },
+    where: { channelId: channelId },
     include: {
       user: {
         select: {
@@ -31,12 +32,12 @@ const createMessage = catchAsync(async (req: Request, res: Response) => {
 
   const messagePayload = {
     type: "message",
-    channelId: chanelId,
+    channelId: channelId,
     message: results,
   };
 
   // Send the message only to clients connected to the specific channel
-  const channelClient = channelClients.get(chanelId) || [];
+  const channelClient = channelClients.get(channelId) || [];
   channelClient.forEach((client: any) => {
     if (client.readyState === 1) {
       client.send(JSON.stringify(messagePayload));
@@ -177,7 +178,46 @@ const searchMessages = catchAsync(async (req, res) => {
   });
 });
 
+//new controller
+
+
+const sendMessage = catchAsync (async (req:any, res:Response)=>{
+  const {groupId} = req.params
+  const user = req.user
+  const {message} = req.body
+  const result = await messageService.sendMessage(req,user.id, groupId, message)
+
+  sendResponse (res, {
+    statusCode:200,
+    success:true,
+    message:"Message send successfully",
+    data:result
+  })
+
+})
+
+const getLastMessage = catchAsync(async (req:any, res:Response)=>{
+  const {channelId} = req.params
+  const user = req.user
+
+  const result = await messageService.getLastMessage(user.id, channelId)
+
+  sendResponse(res, {
+    statusCode:200,
+    success:true,
+    message:"Last message fetched",
+    data:result
+  })
+
+})
+
 export const messageController = {
+  //new
+  sendMessage,
+  getLastMessage,                                 
+
+
+
   createMessage,
   getSingleMessage,
   deleteSingleMessage,

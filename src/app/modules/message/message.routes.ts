@@ -7,13 +7,30 @@ import { UserRole } from "@prisma/client";
 
 const router = express.Router();
 
+//new routes for new requirements
+
+router.post("send/:groupId",fileUploader.sendFiles, auth(), messageController.sendMessage)
+
+
+router.get("/get-last-message/:channelId", auth(), )
+
+
+
+
+
+
+
+//old routes with channel
+
 router.post(
-  "/send-message/:chanelId",
+  "/send-message/:channelId",
   fileUploader.sendFiles,
   parseBodyData,
   auth(),
   messageController.createMessage
 );
+
+
 router.get("/:messageId", auth(), messageController.getSingleMessage);
 
 router.delete(

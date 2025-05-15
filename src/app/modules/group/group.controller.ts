@@ -3,6 +3,7 @@ import catchAsync from "../../../shared/catchAsync";
 import { groupServices } from "./group.service";
 import sendResponse from "../../../shared/sendResponse";
 import { User } from "@prisma/client";
+import httpStatus from "http-status";
 
 // create a new group
 const createGroup = catchAsync(async (req: Request, res: Response) => {
@@ -74,6 +75,21 @@ const accessGroups = catchAsync(async (req: any, res: Response) => {
   });
 });
 
+//new Controllers
+
+const getMyGroups = catchAsync(async (req:any, res:Response)=>{
+  const user = req.user
+
+  const myGroups = await groupServices.getMyGroups(user.id)
+
+  sendResponse(res,{
+    statusCode:httpStatus.OK,
+    success:true,
+    message:"Groups fetched successfully.",
+    data:myGroups
+  })
+})
+
 export const groupControllers = {
   createGroup,
   getAllGroups,
@@ -81,4 +97,7 @@ export const groupControllers = {
   updateGroup,
   deleteGroup,
   accessGroups,
+
+  //new
+  getMyGroups
 };

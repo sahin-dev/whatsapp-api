@@ -20,22 +20,31 @@ const createGroupInDB = async (req: any) => {
   if (existingGroup) {
     throw new ApiError(409, "Group with the same name already exists");
   }
+  
   const newGroup = await prisma.group.create({
     data: {
       ...payload,
       userId: userId,
-      groupImage: imageUrl ? imageUrl : "",
+      groupImage: imageUrl ? imageUrl : ""
     },
   });
+  await prisma.groupUser.create({
+    data:{
+      userId:userId,
+      groupId:newGroup.id
+    }
+  })
 
   return newGroup;
 };
+
 
 const getGroupsInDB = async () => {
   const groups = await prisma.group.findMany({
     include: { channel: true },
     orderBy: { createdAt: "desc" },
   });
+
   if (groups.length === 0) {
     throw new ApiError(404, "Group not found");
   }
@@ -112,6 +121,20 @@ const accessGroupInDB = async (userId: string) => {
   }
 };
 
+
+//new services
+
+const getMyGroups = async (userId:string)=>{
+  const myGroups = await prisma.groupUser.findMany({where:{userId}})
+
+  const groupIds = myGroups.map(group=> group.id)
+
+  if (groupIds.length <= 0){
+    return {message:"No Group"}
+  }
+  return groupIds
+}
+
 export const groupServices = {
   createGroupInDB,
   getGroupsInDB,
@@ -119,4 +142,8 @@ export const groupServices = {
   updateGroupInDB,
   deleteGroupInDB,
   accessGroupInDB,
+
+  //new
+
+  getMyGroups
 };

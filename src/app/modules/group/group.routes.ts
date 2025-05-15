@@ -43,4 +43,13 @@ router.delete(
 );
 //tested
 router.get("/access/groups", auth(), groupControllers.accessGroups);
+
+
+
+//new routes
+
+router.get('/my-groups', auth(), groupControllers.getMyGroups)
+
+
+
 export const groupRoutes = router;

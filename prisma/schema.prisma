@@ -25,16 +25,15 @@ model User {
   status         UserStatus      @default(ACTIVE)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
-
-  group          Group[]
+  groupUsers     GroupUser[]
   chanel         Channel[]
   message        Message[]
+  userMessage    UserMessage[]
   notifications  Notifications[]
   subscription   Subscription[]
 
   @@map("users")
 }
-
 model Group {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   userId     String?  @db.ObjectId
@@ -42,11 +41,43 @@ model Group {
   groupImage String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  user       User?    @relation(fields: [userId], references: [id])
+  message    UserMessage[]
   channel     Channel[]
+  groupUsers  GroupUser[]
 
   @@map("groups")
 }
+
+model GroupUser {
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  groupId String   @db.ObjectId
+  userId  String   @db.ObjectId
+
+  group   Group    @relation(fields: [groupId], references: [id])
+  user    User     @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
+  @@map("group_users")
+}
+
+
+model UserMessage {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  message   String?
+  files     String[]
+  senderId  String?  @db.ObjectId
+  groupId String?  @db.ObjectId
+  replyId   String?  @db.ObjectId
+  isRead    Boolean  @default(false)
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User?    @relation(fields: [senderId], references: [id])
+  group   Group?  @relation(fields: [groupId], references: [id])
+
+  @@map("user_messages")
+}
+
 
 model Channel {
   id            String          @id @default(auto()) @map("_id") @db.ObjectId
@@ -94,6 +125,7 @@ model Message {
   updatedAt DateTime @updatedAt
   user      User?    @relation(fields: [senderId], references: [id])
   channel   Channel?  @relation(fields: [channelId], references: [id])
+
 
   @@map("messages")
 }
@@ -155,4 +187,8 @@ enum UserRole {
 enum ChanelType {
   PUBLIC
   PRIVATE
+}
+enum MessageType {
+  TEXT
+  FILE
 }

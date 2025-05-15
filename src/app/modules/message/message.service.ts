@@ -3,6 +3,7 @@ import config from "../../../config";
 import ApiError from "../../errors/ApiErrors";
 import { RtcTokenBuilder, RtcRole } from "agora-access-token";
 import axios from "axios";
+import httpStatus from "http-status";
 
 const appID = config.agora.app_id as string;
 const appCertificate = config.agora.app_certificate as string;
@@ -49,7 +50,6 @@ const createMessageInDB = async (req: any) => {
 
   return newMessage;
 };
-
 //using for socket
 const getMessagesFromDB = async (channelId: string) => {
   const message = await prisma.message.findMany({
@@ -335,6 +335,46 @@ const startRecordingInAgora = async (roomId: string, uid: number) => {
   }
 };
 
+//new services
+
+
+
+const sendMessage = async (req:any,senderId:string, groupId:string, message:string)=>{
+
+   const files = req.files;
+  const uploadFiles = files?.sendFiles || [];
+
+  if (message === undefined && files === undefined) {
+    throw new ApiError(400, "Message or file is required");
+  }
+
+  const fileUrls = uploadFiles?.map((e: any) => {
+    const result = e
+      ? `${config.backend_base_url}/uploads/${e.filename}`
+      : null;
+    return result;
+  });
+
+  const existingGroup = await prisma.user.findUnique({where:{id:senderId}})
+
+
+  if(!existingGroup){
+    throw new ApiError(httpStatus.NOT_FOUND, "Sender not found")
+  }
+  const userMessage = await prisma.userMessage.create({data:{senderId,groupId,message, files:fileUrls}})
+  return userMessage
+}
+
+
+const getLastMessage = async (userId:string, channelId:string)=>{
+
+  const message = await prisma.message.findFirst({where:{senderId:userId,channelId}, orderBy:[{updatedAt:"asc"}]})
+  if (!message){
+    return {message:"no message"}
+  }
+  return message
+}
+
 export const messageService = {
   createMessageInDB,
   getMessagesFromDB,
@@ -348,4 +388,8 @@ export const messageService = {
   pinnedMessageInDB,
   searchMessageFromDB,
   startRecordingInAgora,
+
+//new
+  sendMessage,
+  getLastMessage
 };
