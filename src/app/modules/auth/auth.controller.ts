@@ -79,6 +79,19 @@ const updateProfileImage = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const logout = catchAsync (async (req:any, res:Response)=>{
+  const user = req.user
+
+  const result = await authService.logoutUser(user.id)
+
+  sendResponse (res, {
+    statusCode:200,
+    success:true,
+    message:"User logged out!",
+    data:result
+  })
+})
+
 export const authController = {
   loginUser,
   getProfile,
@@ -86,4 +99,5 @@ export const authController = {
   loginWithAuth,
   adminLogin,
   updateProfileImage,
+  logout
 };

@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+
+const loginSchema = z.object({
+  phone:z.string({required_error:"Phone is required"}),
+  fcmToken:z.string().optional()
+})
+
 const updateProfileSchema = z.object({
   firstName: z
     .string()
@@ -17,4 +23,5 @@ const updateProfileSchema = z.object({
 
 export const authValidation = {
   updateProfileSchema,
+  loginSchema
 };

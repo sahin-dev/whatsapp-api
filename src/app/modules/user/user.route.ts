@@ -7,26 +7,29 @@ import auth from "../../middlewares/auth";
 
 const router = express.Router();
 
+
 //tested
 router.get("/:id", auth(), UserControllers.getSingleUser);
 //tested
 router.delete("/", auth(), UserControllers.deleteUser);
 
+router.put("/", auth(), validateRequest(userValidation.userUpdateValidationSchema), UserControllers.updateUser)
+
 
 //not required
 
-router.get(
-  "/",
-  auth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
-  UserControllers.getUsers
-);
-// router.get("/:id", auth(), UserControllers.getSingleUser);
-router.put(
-  "/:id",
-  validateRequest(userValidation.userUpdateValidationSchema),
-  auth(UserRole.ADMIN),
-  UserControllers.updateUser
-);
+// router.get(
+//   "/",
+//   auth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+//   UserControllers.getUsers
+// );
+// // router.get("/:id", auth(), UserControllers.getSingleUser);
+// router.put(
+//   "/:id",
+//   validateRequest(userValidation.userUpdateValidationSchema),
+//   auth(UserRole.ADMIN),
+//   UserControllers.updateUser
+// );
 
 
 export const userRoutes = router;

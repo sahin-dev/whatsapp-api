@@ -90,6 +90,53 @@ const getMyGroups = catchAsync(async (req:any, res:Response)=>{
   })
 })
 
+const addMember = catchAsync (async (req:any, res:Response)=>{
+  const user = req.user
+  const groupId = req.params.groupId
+  const memberId = req.params.memberId
+
+  const result = await groupServices.addMember(memberId,groupId, user.id)
+
+  sendResponse (res, {
+    statusCode:200,
+    success:true,
+    message:"Member add to the group",
+    data:result
+  })
+
+})
+
+const getAllGroupMembers = catchAsync (async (req:any, res:Response)=>{
+  const user = req.user
+  const groupId = req.params.groupId
+
+
+  const result = await groupServices.getAllGroupMembers(groupId, user.id)
+
+  sendResponse (res, {
+    statusCode:200,
+    success:true,
+    message:"All group members fetched successfully",
+    data:result
+  })
+
+})
+
+const exitGroup = catchAsync (async (req:any, res:Response)=>{
+  const user = req.user
+  const groupId = req.params.groupId
+
+
+  const result = await groupServices.exitGroup(groupId, user.id)
+
+  sendResponse (res, {
+    statusCode:200,
+    success:true,
+    message:"Member left from the group",
+    data:result
+  })
+
+})
 export const groupControllers = {
   createGroup,
   getAllGroups,
@@ -99,5 +146,8 @@ export const groupControllers = {
   accessGroups,
 
   //new
-  getMyGroups
+  getMyGroups,
+  addMember,
+  getAllGroupMembers,
+  exitGroup
 };

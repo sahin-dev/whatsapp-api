@@ -15,7 +15,7 @@ const getSingleUserIntoDB = async (id: string) => {
     throw new ApiError(404, "user not found!");
   }
 
-  const { password, ...sanitizedUser } = user;
+  const {  ...sanitizedUser } = user;
   return sanitizedUser;
 };
 
@@ -27,7 +27,7 @@ const getUsersIntoDB = async (req: Request) => {
     where: searchFilters,
   });
   const sanitizedUsers = users.map((user) => {
-    const { password, accessToken, ...sanitizedUser } = user;
+    const {  accessToken, ...sanitizedUser } = user;
     return sanitizedUser;
   });
   return sanitizedUsers;
@@ -47,9 +47,8 @@ const updateUserIntoDB = async (id: string, userData: any) => {
     data: userData,
   });
 
-  const { password, ...sanitizedUser } = updatedUser;
 
-  return sanitizedUser;
+  return updatedUser;
 };
 
 //delete user

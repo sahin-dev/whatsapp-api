@@ -10,7 +10,9 @@ const router = express.Router();
 
 //login user
 //tested
-router.post("/login", authController.loginUser);
+router.post("/login", validateRequest(authValidation.loginSchema), authController.loginUser);
+
+
 //tested
 router.get("/profile", auth(), authController.getProfile);
 
@@ -32,6 +34,8 @@ router.patch(
   authController.updateProfileImage
 );
 
+
+router.post('/logout', auth(), authController.logout)
 
 //Not required
 router.post("/login-with-auth", authController.loginWithAuth);

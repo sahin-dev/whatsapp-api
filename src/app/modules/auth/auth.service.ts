@@ -9,17 +9,14 @@ import { ObjectId } from "mongodb";
 import path from "path";
 import axios from "axios";
 import jwt from "jsonwebtoken";
-import { Request } from "express";
-import { User } from "@prisma/client";
+
 import httpStatus from "http-status";
 
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
 
-
-
 const loginUserIntoDB = async (payload: any) => {
-  console.log(payload)
+
   let accessToken;
   let userInfo;
 
@@ -74,7 +71,6 @@ const loginUserIntoDB = async (payload: any) => {
     });
 
     const {
-      password,
       status,
       createdAt,
       updatedAt,
@@ -90,6 +86,18 @@ const loginUserIntoDB = async (payload: any) => {
   };
 };
 
+const logoutUser = async (userId:string)=>{
+  const user = await prisma.user.findUnique({where:{id:userId}})
+
+  if (!user){
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found')
+  }
+
+  await prisma.user.update ({where:{id:userId}, data:{accessToken:null}})
+
+  return {message:"User logged out successfully"}
+}
+
 // get profile for logged in user
 const getProfileFromDB = async (userId: string) => {
   if (!ObjectId.isValid(userId)) {
@@ -97,13 +105,13 @@ const getProfileFromDB = async (userId: string) => {
   }
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    include: { group: true },
+    include: { groupUser: true },
   });
   if (!user) {
     throw new ApiError(404, "user not found!");
   }
 
-  const { password, createdAt, updatedAt, ...sanitizedUser } = user;
+  const { createdAt, updatedAt, ...sanitizedUser } = user;
 
   return sanitizedUser;
 };
@@ -121,21 +129,21 @@ const updateProfileIntoDB = async (
     throw new ApiError(404, "user not found for edit user");
   }
   //check email uniquesness
-  if (userData.username){
-    const existingUser = await prisma.user.findFirst({where:{email:userData.username}})
+  if (userData.email){
+    const existingUser = await prisma.user.findFirst({where:{email:userData.email}})
     if (existingUser){
-      throw new ApiError(httpStatus.CONFLICT, "User already exist with this email",userData.username)
+      throw new ApiError(httpStatus.CONFLICT, "User already exist with this email",userData.email)
     }
   }
   const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: {
-      username: userData.username || user.username,
-      email:userData.username || user.email
+      name: userData.username || user.name,
+      email:userData.email || user.email
     },
   });
 
-  const { password, ...sanitizedUser } = updatedUser;
+  const {  ...sanitizedUser } = updatedUser;
 
   return sanitizedUser;
 };
@@ -172,7 +180,7 @@ const loginAuthProvider = async (payload: {
   fcmToken?: string;
 }) => {
   const existingUser = await prisma.user.findFirst({
-    where: { username: payload.username },
+    where: { name: payload.username },
     include: { subscription: true },
   });
 
@@ -201,7 +209,7 @@ const loginAuthProvider = async (payload: {
       },
     });
 
-    const { password, ...userInfo } = updatedUser;
+    const { ...userInfo } = updatedUser;
 
     return {
       accessToken,
@@ -251,13 +259,12 @@ const loginAuthProvider = async (payload: {
   const updatedUser = await prisma.user.update({
     where: { phone: user.phone },
     data: {
-      password: bcrypt.hashSync(payload.password, 10),
       fcmToken: payload.fcmToken ? payload.fcmToken : existingUser?.fcmToken,
       accessToken: accessToken,
     },
   });
 
-  const { password, ...userInfo } = updatedUser;
+  const {  ...userInfo } = updatedUser;
 
   return {
     accessToken,
@@ -293,7 +300,7 @@ const adminLoginAuth = async (payload: {
   // const user = await fetchUserProfile(token);
 
   const existingUser = await prisma.user.findFirst({
-    where: { username: payload.username },
+    where: { name: payload.username },
   });
 
   if (!existingUser) {
@@ -302,7 +309,7 @@ const adminLoginAuth = async (payload: {
 
   const isPasswordValid = await bcrypt.compare(
     payload.password,
-    existingUser.password as string
+    existingUser.email as string
   );
   if (!isPasswordValid) {
     throw new ApiError(401, "Invalid credentials");
@@ -331,7 +338,7 @@ const adminLoginAuth = async (payload: {
     },
   });
 
-  const { password, accessToken, ...userInfo } = updatedUser;
+  const { accessToken, ...userInfo } = updatedUser;
 
   return {
     accessToken: authToken,
@@ -369,4 +376,5 @@ export const authService = {
   loginAuthProvider,
   adminLoginAuth,
   updateProfileImageInDB,
+  logoutUser
 };

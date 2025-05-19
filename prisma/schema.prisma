@@ -10,8 +10,8 @@ generator client {
 model User {
   id             String          @id @default(auto()) @map("_id") @db.ObjectId
   phone          String          @unique      
-  username       String?
-  password       String?
+  name           String?
+  about           String?
   email          String?
   avatar         String          @default("https://app.boom360trader.com/uploads/user.png")
   fcmToken       String?
@@ -20,12 +20,13 @@ model User {
   customerId     String?
   priceId        String?
   subscriptionId String?
+  profileCompleted  Boolean @default(false)
   role           UserRole        @default(USER)
   roleId         String?
   status         UserStatus      @default(ACTIVE)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
-  groupUsers     GroupUser[]
+  groupUser     GroupUser[]
   chanel         Channel[]
   message        Message[]
   userMessage    UserMessage[]
@@ -34,11 +35,12 @@ model User {
 
   @@map("users")
 }
+
 model Group {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId     String?  @db.ObjectId
-  groupName  String
-  groupImage String
+  adminId     String  @db.ObjectId
+  groupName   String?
+  groupImage  String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   message    UserMessage[]

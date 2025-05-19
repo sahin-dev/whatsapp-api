@@ -1,11 +1,13 @@
 import { Router } from "express";
 import auth from "../../middlewares/auth";
-import { UserRole } from "@prisma/client";
 import { groupControllers } from "./group.controller";
 import { parseBodyData } from "../../middlewares/parseBodyData";
 import { fileUploader } from "../../../helpers/fileUploader";
 
+
 const router = Router();
+
+
 
 //tested
 router.post(
@@ -50,6 +52,10 @@ router.get("/access/groups", auth(), groupControllers.accessGroups);
 
 router.get('/my-groups', auth(), groupControllers.getMyGroups)
 
+
+router.post ("/add/:memberId/:groupId", auth(), groupControllers.addMember)
+router.get("/users/:groupId", auth(), groupControllers.getAllGroupMembers)
+router.post("/exit/:groupId", auth(), groupControllers.exitGroup)
 
 
 export const groupRoutes = router;

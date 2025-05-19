@@ -4,12 +4,13 @@ import app from "./app";
 import config from "./config";
 import { messageService } from "./app/modules/message/message.service";
 import prisma from "./shared/prisma";
+// import io from './socket'
 
 let wss: WebSocketServer;
 const channelClients = new Map<string, Set<WebSocket>>();
-
+let server:Server
 async function main() {
-  const server: Server = app.listen(config.port, () => {
+    server = app.listen(config.port, () => {
     console.log("Server is running on port", config.port);
   });
 
@@ -27,7 +28,7 @@ async function main() {
     }, 30000);
 
     let subscribedChannel: string | null = null; // Track the client's subscribed channel
-
+    
     // Listen for subscription messages
     ws.on("message", async (message) => {
       try {
@@ -212,4 +213,4 @@ async function main() {
 
 main();
 
-export { wss, channelClients };
+export { wss, channelClients,server };

@@ -25,10 +25,12 @@ const getSingleUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
 //update user
-const updateUser = catchAsync(async (req: Request, res: Response) => {
+const updateUser = catchAsync(async (req: any, res: Response) => {
+  const user = req.user
   const updatedUser = await userService.updateUserIntoDB(
-    req.params.id,
+    user.id,
     req.body
   );
   sendResponse(res, {

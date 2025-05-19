@@ -19,17 +19,15 @@ const userRegisterValidationSchema = z.object({
 });
 
 const userUpdateValidationSchema = z.object({
-  firstName: z
+  name: z
     .string()
-    .min(2, "First name must be at least 2 characters long")
+    .min(2, "name must be at least 2 characters long")
     .optional(),
-  lastName: z
+  about: z
     .string()
-    .min(2, "Last name must be at least 2 characters long")
+    .min(2, "about must be at least 2 characters long")
     .optional(),
-  mobile: z.string().min(10, "Mobile Number at least 10 Digit long").optional(),
-  role: z.enum(["ADMIN", "USER"]).optional(),
-  status: z.enum(["ACTIVE", "BLOCKED", "DELETED"]).optional(),
+
 });
 
 export const userValidation = {
