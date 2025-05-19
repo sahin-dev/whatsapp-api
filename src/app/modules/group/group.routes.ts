@@ -57,5 +57,7 @@ router.post ("/add/:memberId/:groupId", auth(), groupControllers.addMember)
 router.get("/users/:groupId", auth(), groupControllers.getAllGroupMembers)
 router.post("/exit/:groupId", auth(), groupControllers.exitGroup)
 
+router.post("toggle-notification/:groupId", auth(), )
+
 
 export const groupRoutes = router;

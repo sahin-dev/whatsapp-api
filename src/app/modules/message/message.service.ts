@@ -60,7 +60,7 @@ const getMessagesFromDB = async (channelId: string) => {
       user: {
         select: {
           id: true,
-          username: true,
+      
           avatar: true,
           email: true,
           role: true,
@@ -97,7 +97,6 @@ const searchMessageFromDB = async (channelId: string, search: string) => {
       user: {
         select: {
           id: true,
-          username: true,
           avatar: true,
           email: true,
           role: true,
@@ -132,7 +131,6 @@ const getSingleMessageFromDB = async (messageId: string) => {
       user: {
         select: {
           id: true,
-          username: true,
           avatar: true,
           email: true,
           role: true,
