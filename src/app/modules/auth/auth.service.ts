@@ -385,14 +385,16 @@ const updateProfileImageInDB = async (req: any) => {
     throw new ApiError(404, "User not found for edit user");
   }
 
+
   // Update user's avatar with the new filename
-  const updatedImage = await prisma.user.update({
+  const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: {
       avatar: `${config.backend_base_url}/uploads/${file.filename}`,
     },
   });
-  return updatedImage.avatar;
+
+  return updatedUser.avatar;
 };
 
 export const authService = {
