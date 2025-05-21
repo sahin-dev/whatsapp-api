@@ -176,7 +176,7 @@ const validateAndAssignRole = (userEmail) => __awaiter(void 0, void 0, void 0, f
     try {
         const userFromAuth = yield getUserFromAuth0(userEmail);
         const user = yield prisma_1.default.user.findUnique({
-            where: { email: userEmail },
+            where: { phone: userEmail },
             include: { subscription: true },
         });
         if (!user)
@@ -234,7 +234,7 @@ const handleSubscriptionInAuth = (userEmail) => __awaiter(void 0, void 0, void 0
     if (!userId) {
         throw new ApiErrors_1.default(404, "User not found by email address");
     }
-    const user = yield prisma_1.default.user.findUnique({ where: { email: userEmail } });
+    const user = yield prisma_1.default.user.findUnique({ where: { phone: userEmail } });
     if (!user) {
         throw new Error("User not found in database");
     }
@@ -363,7 +363,8 @@ const subscriptionCreateHelperFunc = (event) => __awaiter(void 0, void 0, void 0
     const roleId = PRICE_ID_ROLE_MAPPING[priceId];
     const data = {
         email: userEmail,
-        username: userEmail,
+        phone: "016282347",
+        name: userEmail,
         customerId: customerId,
         priceId: priceId,
         subscriptionId: activeSubscription.id,
@@ -377,7 +378,7 @@ const subscriptionCreateHelperFunc = (event) => __awaiter(void 0, void 0, void 0
         role: roleId,
         group: ROLE_GROUP_MAPPING[roleId],
     };
-    const user = yield prisma_1.default.user.findUnique({
+    const user = yield prisma_1.default.user.findFirst({
         where: { email: userEmail },
     });
     if (!user) {

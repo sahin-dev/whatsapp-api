@@ -110,14 +110,14 @@ const sendNotifications = (req) => __awaiter(void 0, void 0, void 0, function* (
 });
 const sendChannelNofitications = (req) => __awaiter(void 0, void 0, void 0, function* () {
     const channelId = req.params.channelId;
-    const channel = yield prisma_1.default.chanel.findUnique({
+    const channel = yield prisma_1.default.channel.findUnique({
         where: { id: channelId },
         select: { memberIds: true },
     });
     if (!channel) {
         throw new ApiErrors_1.default(404, "Channel not found");
     }
-    const channelInfo = yield prisma_1.default.chanel.findUnique({
+    const channelInfo = yield prisma_1.default.channel.findUnique({
         where: { id: channelId },
     });
     const members = yield prisma_1.default.user.findMany({
@@ -128,7 +128,7 @@ const sendChannelNofitications = (req) => __awaiter(void 0, void 0, void 0, func
     const fcmTokens = members.map((user) => user.fcmToken);
     const message = {
         notification: {
-            title: `get notification in ${channelInfo === null || channelInfo === void 0 ? void 0 : channelInfo.chanelName}`,
+            title: `get notification in ${channelInfo === null || channelInfo === void 0 ? void 0 : channelInfo.channelName}`,
             body: req.body.body,
         },
         tokens: fcmTokens,
@@ -147,7 +147,7 @@ const sendChannelNofitications = (req) => __awaiter(void 0, void 0, void 0, func
     const notificationData = successfulUsers.map((user) => ({
         receiverId: user === null || user === void 0 ? void 0 : user.id,
         channelId: channelId,
-        title: `get notification in ${channelInfo === null || channelInfo === void 0 ? void 0 : channelInfo.chanelName}`,
+        title: `get notification in ${channelInfo === null || channelInfo === void 0 ? void 0 : channelInfo.channelName}`,
         body: req.body.body,
     }));
     // Save notifications for successfully notified users
@@ -173,9 +173,9 @@ const getNotificationsFromDB = (req) => __awaiter(void 0, void 0, void 0, functi
         include: {
             channel: {
                 select: {
-                    chanelImage: true,
+                    channelImage: true,
                     description: true,
-                    chanelName: true,
+                    channelName: true,
                 },
             },
         },

@@ -18,6 +18,7 @@ const config_1 = __importDefault(require("../../../config"));
 const ApiErrors_1 = __importDefault(require("../../errors/ApiErrors"));
 const agora_access_token_1 = require("agora-access-token");
 const axios_1 = __importDefault(require("axios"));
+const http_status_1 = __importDefault(require("http-status"));
 const appID = config_1.default.agora.app_id;
 const appCertificate = config_1.default.agora.app_certificate;
 //using for socket in controllers
@@ -42,7 +43,7 @@ const createMessageInDB = (req) => __awaiter(void 0, void 0, void 0, function* (
             user: {
                 select: {
                     id: true,
-                    username: true,
+                    name: true,
                     avatar: true,
                     email: true,
                     role: true,
@@ -63,7 +64,6 @@ const getMessagesFromDB = (channelId) => __awaiter(void 0, void 0, void 0, funct
             user: {
                 select: {
                     id: true,
-                    username: true,
                     avatar: true,
                     email: true,
                     role: true,
@@ -78,7 +78,7 @@ const searchMessageFromDB = (channelId, search) => __awaiter(void 0, void 0, voi
     if (search === undefined) {
         return [];
     }
-    const existingChannel = yield prisma_1.default.chanel.findUnique({
+    const existingChannel = yield prisma_1.default.channel.findUnique({
         where: { id: channelId },
     });
     if (!existingChannel) {
@@ -96,7 +96,6 @@ const searchMessageFromDB = (channelId, search) => __awaiter(void 0, void 0, voi
             user: {
                 select: {
                     id: true,
-                    username: true,
                     avatar: true,
                     email: true,
                     role: true,
@@ -127,7 +126,6 @@ const getSingleMessageFromDB = (messageId) => __awaiter(void 0, void 0, void 0, 
             user: {
                 select: {
                     id: true,
-                    username: true,
                     avatar: true,
                     email: true,
                     role: true,
@@ -207,6 +205,7 @@ const generateAccessTokenInAgora = (payload) => __awaiter(void 0, void 0, void 0
 });
 const getResourceId = (roomId, uid) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
+    console.log(roomId);
     const url = `https://api.agora.io/v1/apps/${appID}/cloud_recording/acquire`;
     const payload = {
         cname: roomId,
@@ -214,6 +213,8 @@ const getResourceId = (roomId, uid) => __awaiter(void 0, void 0, void 0, functio
         clientRequest: {},
     };
     try {
+        console.log(`Basic ${Buffer.from(`${appID}:${appCertificate}`).toString("base64")}`);
+        console.log("Hi");
         const response = yield axios_1.default.post(url, payload, {
             headers: {
                 Authorization: `Basic ${Buffer.from(`${appID}:${appCertificate}`).toString("base64")}`,
@@ -225,7 +226,7 @@ const getResourceId = (roomId, uid) => __awaiter(void 0, void 0, void 0, functio
     }
     catch (error) {
         console.error("Error fetching Resource ID:", ((_a = error.response) === null || _a === void 0 ? void 0 : _a.data) || error.message);
-        throw new Error("Failed to fetch Resource ID");
+        throw new Error(`Failed to fetch Resource ID: ${error.message}`);
     }
 });
 // const generateToken = (roomId: string, uid: number) => {
@@ -245,7 +246,6 @@ const getResourceId = (roomId, uid) => __awaiter(void 0, void 0, void 0, functio
 const startRecordingInAgora = (roomId, uid) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const resourceId = yield getResourceId(roomId, uid);
-    console.log(resourceId);
     // const token = generateToken(roomId, uid);
     const url = `https://api.agora.io/v1/apps/${appID}/cloud_recording/resourceid/${resourceId}/mode/mix/start`;
     const payload = {
@@ -282,6 +282,33 @@ const startRecordingInAgora = (roomId, uid) => __awaiter(void 0, void 0, void 0,
         throw new Error("Failed to start recording");
     }
 });
+//new services
+const sendMessage = (req, senderId, groupId, message) => __awaiter(void 0, void 0, void 0, function* () {
+    const files = req.files;
+    const uploadFiles = (files === null || files === void 0 ? void 0 : files.sendFiles) || [];
+    if (message === undefined && files === undefined) {
+        throw new ApiErrors_1.default(400, "Message or file is required");
+    }
+    const fileUrls = uploadFiles === null || uploadFiles === void 0 ? void 0 : uploadFiles.map((e) => {
+        const result = e
+            ? `${config_1.default.backend_base_url}/uploads/${e.filename}`
+            : null;
+        return result;
+    });
+    const existingGroup = yield prisma_1.default.user.findUnique({ where: { id: senderId } });
+    if (!existingGroup) {
+        throw new ApiErrors_1.default(http_status_1.default.NOT_FOUND, "Sender not found");
+    }
+    const userMessage = yield prisma_1.default.userMessage.create({ data: { senderId, groupId, message, files: fileUrls } });
+    return userMessage;
+});
+const getLastMessage = (userId, channelId) => __awaiter(void 0, void 0, void 0, function* () {
+    const message = yield prisma_1.default.message.findFirst({ where: { senderId: userId, channelId }, orderBy: [{ updatedAt: "asc" }] });
+    if (!message) {
+        return { message: "no message" };
+    }
+    return message;
+});
 exports.messageService = {
     createMessageInDB,
     getMessagesFromDB,
@@ -295,4 +322,7 @@ exports.messageService = {
     pinnedMessageInDB,
     searchMessageFromDB,
     startRecordingInAgora,
+    //new
+    sendMessage,
+    getLastMessage
 };

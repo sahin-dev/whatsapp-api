@@ -17,17 +17,14 @@ const userRegisterValidationSchema = zod_1.z.object({
         .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, "Password must include at least one uppercase letter, one lowercase letter, one number, and one special character"),
 });
 const userUpdateValidationSchema = zod_1.z.object({
-    firstName: zod_1.z
+    name: zod_1.z
         .string()
-        .min(2, "First name must be at least 2 characters long")
+        .min(2, "name must be at least 2 characters long")
         .optional(),
-    lastName: zod_1.z
+    about: zod_1.z
         .string()
-        .min(2, "Last name must be at least 2 characters long")
+        .min(2, "about must be at least 2 characters long")
         .optional(),
-    mobile: zod_1.z.string().min(10, "Mobile Number at least 10 Digit long").optional(),
-    role: zod_1.z.enum(["ADMIN", "USER"]).optional(),
-    status: zod_1.z.enum(["ACTIVE", "BLOCKED", "DELETED"]).optional(),
 });
 exports.userValidation = {
     userRegisterValidationSchema,

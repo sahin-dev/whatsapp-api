@@ -19,18 +19,18 @@ const sendResponse_1 = __importDefault(require("../../../shared/sendResponse"));
 const server_1 = require("../../../server");
 const prisma_1 = __importDefault(require("../../../shared/prisma"));
 const createMessage = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { chanelId } = req.params;
+    const { channelId } = req.params;
     yield message_service_1.messageService.createMessageInDB(req);
     // Send the single message only to clients connected to the specific channel
     // const result = await messageService.createMessageInDB(req);
     //send all the messages only to clients connected to the specific channel
     const results = yield prisma_1.default.message.findMany({
-        where: { channelId: chanelId },
+        where: { channelId: channelId },
         include: {
             user: {
                 select: {
                     id: true,
-                    username: true,
+                    name: true,
                     avatar: true,
                     email: true,
                     role: true,
@@ -41,11 +41,11 @@ const createMessage = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
     });
     const messagePayload = {
         type: "message",
-        channelId: chanelId,
+        channelId: channelId,
         message: results,
     };
     // Send the message only to clients connected to the specific channel
-    const channelClient = server_1.channelClients.get(chanelId) || [];
+    const channelClient = server_1.channelClients.get(channelId) || [];
     channelClient.forEach((client) => {
         if (client.readyState === 1) {
             client.send(JSON.stringify(messagePayload));
@@ -118,7 +118,23 @@ const startRecording = (0, catchAsync_1.default)((req, res) => __awaiter(void 0,
     const { channelId } = req.params;
     const uid = req.body.uid;
     const result = yield message_service_1.messageService.startRecordingInAgora(channelId, uid);
-    (0, sendResponse_1.default)(res, { statusCode: 200, success: true, message: "Recording Start", data: result });
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Recording Start",
+        data: result,
+    });
+}));
+const pinUnpinMessage = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { messageId } = req.params;
+    const { isPinned } = req.body;
+    const result = yield message_service_1.messageService.pinUnpinMessage(messageId, isPinned);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Pinned message status updated successfully",
+        data: result,
+    });
 }));
 const pinnedMessage = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { channelId } = req.params;
@@ -141,7 +157,34 @@ const searchMessages = (0, catchAsync_1.default)((req, res) => __awaiter(void 0,
         data: results,
     });
 }));
+//new controller
+const sendMessage = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { groupId } = req.params;
+    const user = req.user;
+    const { message } = req.body;
+    const result = yield message_service_1.messageService.sendMessage(req, user.id, groupId, message);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Message send successfully",
+        data: result
+    });
+}));
+const getLastMessage = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { channelId } = req.params;
+    const user = req.user;
+    const result = yield message_service_1.messageService.getLastMessage(user.id, channelId);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Last message fetched",
+        data: result
+    });
+}));
 exports.messageController = {
+    //new
+    sendMessage,
+    getLastMessage,
     createMessage,
     getSingleMessage,
     deleteSingleMessage,
@@ -152,4 +195,5 @@ exports.messageController = {
     pinnedMessage,
     searchMessages,
     startRecording,
+    pinUnpinMessage,
 };

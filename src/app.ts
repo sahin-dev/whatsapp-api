@@ -64,6 +64,8 @@ const AUTH_HEADER = `Basic ${Buffer.from(
   `${CUSTOMER_ID}:${CUSTOMER_SECRET}`
 ).toString("base64")}`;
 
+
+//start agora recording
 app.post("/api/v1/start-recording", async (req, res, next) => {
   try {
     const { channel, uid } = req.body;
@@ -147,6 +149,8 @@ app.post("/api/v1/start-recording", async (req, res, next) => {
     next(error);
   }
 });
+
+//check recording status
 
 app.post("/api/v1/check-recording-status", async (req, res) => {
   const { resourceId, sid } = req.body;

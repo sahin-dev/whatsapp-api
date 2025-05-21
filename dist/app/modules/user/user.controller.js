@@ -38,7 +38,8 @@ const getSingleUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
 }));
 //update user
 const updateUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const updatedUser = yield user_services_1.userService.updateUserIntoDB(req.params.id, req.body);
+    const user = req.user;
+    const updatedUser = yield user_services_1.userService.updateUserIntoDB(user.id, req.body);
     (0, sendResponse_1.default)(res, {
         success: true,
         statusCode: 200,
@@ -48,9 +49,9 @@ const updateUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, voi
 }));
 //delete user
 const deleteUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const userId = req.params.id;
-    const loggedId = req.user.id;
-    yield user_services_1.userService.deleteUserIntoDB(userId, loggedId);
+    // const userId = req.params.id;
+    const userId = req.user.id;
+    yield user_services_1.userService.deleteUserIntoDB(userId);
     (0, sendResponse_1.default)(res, {
         success: true,
         statusCode: 200,

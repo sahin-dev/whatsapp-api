@@ -38,7 +38,7 @@ const createMessageInDB = async (req: any) => {
       user: {
         select: {
           id: true,
-          username: true,
+          name: true,
           avatar: true,
           email: true,
           role: true,

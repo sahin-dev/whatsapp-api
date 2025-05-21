@@ -34,57 +34,62 @@ const mongodb_1 = require("mongodb");
 const path_1 = __importDefault(require("path"));
 const axios_1 = __importDefault(require("axios"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const http_status_1 = __importDefault(require("http-status"));
 dotenv_1.default.config({ path: path_1.default.join(process.cwd(), ".env") });
 const loginUserIntoDB = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     let accessToken;
     let userInfo;
     const user = yield prisma_1.default.user.findUnique({
         where: {
-            email: payload.email,
+            phone: payload.phone,
         },
     });
     if (!user) {
         const createUser = yield prisma_1.default.user.create({
-            data: Object.assign(Object.assign({}, payload), { fcmToken: payload.fcmToken, password: yield bcryptjs_1.default.hash(payload.password, 10) }),
+            data: {
+                phone: payload.phone
+            },
         });
         accessToken = jwtHelpers_1.jwtHelpers.generateToken({
             id: createUser.id,
-            email: createUser.email,
-            role: createUser.role,
-            fcmToken: createUser.fcmToken,
-            subscription: createUser.subcription,
+            phone: createUser.phone,
+            fcmToken: createUser === null || createUser === void 0 ? void 0 : createUser.fcmToken,
+            subscription: createUser === null || createUser === void 0 ? void 0 : createUser.subcription,
         }, config_1.default.jwt.jwt_secret, config_1.default.jwt.expires_in);
-        const { password, status, createdAt, updatedAt } = createUser, others = __rest(createUser, ["password", "status", "createdAt", "updatedAt"]);
+        const { status, createdAt, updatedAt } = createUser, others = __rest(createUser, ["status", "createdAt", "updatedAt"]);
         userInfo = others;
     }
     else {
-        const isPasswordValid = yield bcryptjs_1.default.compare(payload.password, user.password);
-        if (!isPasswordValid) {
-            throw new ApiErrors_1.default(401, "Invalid credentials");
-        }
         accessToken = jwtHelpers_1.jwtHelpers.generateToken({
-            id: user.id,
-            email: user.email,
-            role: user.role,
+            id: user === null || user === void 0 ? void 0 : user.id,
+            phone: user === null || user === void 0 ? void 0 : user.phone,
             fcmToken: payload.fcmToken,
-            subscription: user.subcription,
+            subscription: user === null || user === void 0 ? void 0 : user.subcription,
         }, config_1.default.jwt.jwt_secret, config_1.default.jwt.expires_in);
         const updateUserInfo = yield prisma_1.default.user.update({
             where: {
-                email: payload.email,
+                phone: payload.phone,
             },
             data: {
                 fcmToken: payload.fcmToken,
                 accessToken: accessToken,
             },
         });
-        const { password, status, createdAt, updatedAt, accessToken: token } = updateUserInfo, others = __rest(updateUserInfo, ["password", "status", "createdAt", "updatedAt", "accessToken"]);
+        const { status, createdAt, updatedAt, accessToken: token } = updateUserInfo, others = __rest(updateUserInfo, ["status", "createdAt", "updatedAt", "accessToken"]);
         userInfo = others;
     }
     return {
         accessToken,
         userInfo,
     };
+});
+const logoutUser = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = yield prisma_1.default.user.findUnique({ where: { id: userId } });
+    if (!user) {
+        throw new ApiErrors_1.default(http_status_1.default.NOT_FOUND, 'User not found');
+    }
+    yield prisma_1.default.user.update({ where: { id: userId }, data: { accessToken: null } });
+    return { message: "User logged out successfully" };
 });
 // get profile for logged in user
 const getProfileFromDB = (userId) => __awaiter(void 0, void 0, void 0, function* () {
@@ -93,12 +98,12 @@ const getProfileFromDB = (userId) => __awaiter(void 0, void 0, void 0, function*
     }
     const user = yield prisma_1.default.user.findUnique({
         where: { id: userId },
-        include: { group: true },
+        include: { groupUser: true },
     });
     if (!user) {
         throw new ApiErrors_1.default(404, "user not found!");
     }
-    const { password, createdAt, updatedAt } = user, sanitizedUser = __rest(user, ["password", "createdAt", "updatedAt"]);
+    const { createdAt, updatedAt } = user, sanitizedUser = __rest(user, ["createdAt", "updatedAt"]);
     return sanitizedUser;
 });
 // update user profile only logged in user
@@ -110,13 +115,21 @@ const updateProfileIntoDB = (userId, userData) => __awaiter(void 0, void 0, void
     if (!user) {
         throw new ApiErrors_1.default(404, "user not found for edit user");
     }
+    //check email uniquesness
+    if (userData.email) {
+        const existingUser = yield prisma_1.default.user.findFirst({ where: { email: userData.email } });
+        if (existingUser) {
+            throw new ApiErrors_1.default(http_status_1.default.CONFLICT, "User already exist with this email", userData.email);
+        }
+    }
     const updatedUser = yield prisma_1.default.user.update({
         where: { id: userId },
         data: {
-            username: userData.username,
+            name: userData.username || user.name,
+            email: userData.email || user.email
         },
     });
-    const { password } = updatedUser, sanitizedUser = __rest(updatedUser, ["password"]);
+    const sanitizedUser = __rest(updatedUser, []);
     return sanitizedUser;
 });
 const verifyToken = (token) => {
@@ -143,7 +156,7 @@ const fetchUserProfile = (token) => __awaiter(void 0, void 0, void 0, function* 
 });
 const loginAuthProvider = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     const existingUser = yield prisma_1.default.user.findFirst({
-        where: { username: payload.username },
+        where: { name: payload.username },
         include: { subscription: true },
     });
     if (!existingUser) {
@@ -158,13 +171,13 @@ const loginAuthProvider = (payload) => __awaiter(void 0, void 0, void 0, functio
             subscription: existingUser.subcription,
         }, config_1.default.jwt.jwt_secret, config_1.default.jwt.expires_in);
         const updatedUser = yield prisma_1.default.user.update({
-            where: { email: existingUser.email },
+            where: { phone: existingUser.phone },
             data: {
                 fcmToken: payload.fcmToken ? payload.fcmToken : existingUser === null || existingUser === void 0 ? void 0 : existingUser.fcmToken,
                 accessToken: accessToken,
             },
         });
-        const { password } = updatedUser, userInfo = __rest(updatedUser, ["password"]);
+        const userInfo = __rest(updatedUser, []);
         return {
             accessToken,
             userInfo,
@@ -198,14 +211,13 @@ const loginAuthProvider = (payload) => __awaiter(void 0, void 0, void 0, functio
         subscription: existingUser.subcription,
     }, config_1.default.jwt.jwt_secret, config_1.default.jwt.expires_in);
     const updatedUser = yield prisma_1.default.user.update({
-        where: { email: user.email },
+        where: { phone: user.phone },
         data: {
-            password: bcryptjs_1.default.hashSync(payload.password, 10),
             fcmToken: payload.fcmToken ? payload.fcmToken : existingUser === null || existingUser === void 0 ? void 0 : existingUser.fcmToken,
             accessToken: accessToken,
         },
     });
-    const { password } = updatedUser, userInfo = __rest(updatedUser, ["password"]);
+    const userInfo = __rest(updatedUser, []);
     return {
         accessToken,
         userInfo,
@@ -234,12 +246,12 @@ const adminLoginAuth = (payload) => __awaiter(void 0, void 0, void 0, function* 
     // verifyToken(token);
     // const user = await fetchUserProfile(token);
     const existingUser = yield prisma_1.default.user.findFirst({
-        where: { username: payload.username },
+        where: { name: payload.username },
     });
     if (!existingUser) {
         throw new ApiErrors_1.default(404, "Admin user not found");
     }
-    const isPasswordValid = yield bcryptjs_1.default.compare(payload.password, existingUser.password);
+    const isPasswordValid = yield bcryptjs_1.default.compare(payload.password, existingUser.email);
     if (!isPasswordValid) {
         throw new ApiErrors_1.default(401, "Invalid credentials");
     }
@@ -254,12 +266,12 @@ const adminLoginAuth = (payload) => __awaiter(void 0, void 0, void 0, function* 
         subscription: existingUser.subcription,
     }, config_1.default.jwt.jwt_secret, config_1.default.jwt.expires_in);
     const updatedUser = yield prisma_1.default.user.update({
-        where: { email: existingUser.email },
+        where: { phone: existingUser.phone },
         data: {
             accessToken: authToken,
         },
     });
-    const { password, accessToken } = updatedUser, userInfo = __rest(updatedUser, ["password", "accessToken"]);
+    const { accessToken } = updatedUser, userInfo = __rest(updatedUser, ["accessToken"]);
     return {
         accessToken: authToken,
         userInfo,
@@ -291,4 +303,5 @@ exports.authService = {
     loginAuthProvider,
     adminLoginAuth,
     updateProfileImageInDB,
+    logoutUser
 };

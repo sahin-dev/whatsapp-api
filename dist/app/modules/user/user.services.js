@@ -38,7 +38,7 @@ const getSingleUserIntoDB = (id) => __awaiter(void 0, void 0, void 0, function* 
     if (!user) {
         throw new ApiErrors_1.default(404, "user not found!");
     }
-    const { password } = user, sanitizedUser = __rest(user, ["password"]);
+    const sanitizedUser = __rest(user, []);
     return sanitizedUser;
 });
 //get all users
@@ -49,7 +49,7 @@ const getUsersIntoDB = (req) => __awaiter(void 0, void 0, void 0, function* () {
         where: searchFilters,
     });
     const sanitizedUsers = users.map((user) => {
-        const { password, accessToken } = user, sanitizedUser = __rest(user, ["password", "accessToken"]);
+        const { accessToken } = user, sanitizedUser = __rest(user, ["accessToken"]);
         return sanitizedUser;
     });
     return sanitizedUsers;
@@ -67,17 +67,16 @@ const updateUserIntoDB = (id, userData) => __awaiter(void 0, void 0, void 0, fun
         where: { id },
         data: userData,
     });
-    const { password } = updatedUser, sanitizedUser = __rest(updatedUser, ["password"]);
-    return sanitizedUser;
+    return updatedUser;
 });
 //delete user
-const deleteUserIntoDB = (userId, loggedId) => __awaiter(void 0, void 0, void 0, function* () {
+const deleteUserIntoDB = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     if (!mongodb_1.ObjectId.isValid(userId)) {
         throw new ApiErrors_1.default(400, "Invalid user ID format");
     }
-    if (userId === loggedId) {
-        throw new ApiErrors_1.default(403, "You can't delete your own account!");
-    }
+    // if (userId === loggedId) {
+    //   throw new ApiError(403, "You can't delete your own account!");
+    // }
     const existingUser = yield getSingleUserIntoDB(userId);
     if (!existingUser) {
         throw new ApiErrors_1.default(404, "user not found for delete this");

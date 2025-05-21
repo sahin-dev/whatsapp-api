@@ -124,6 +124,26 @@ const channelFiles = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, v
         data: files,
     });
 }));
+const recordingFiles = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const channelId = req.params.channelId;
+    const files = yield chanel_service_1.chanelServices.recordingFilesFromDB(channelId);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "recording files retrieved successfully",
+        data: files,
+    });
+}));
+const singleRecordingFile = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { channelId, channelUid } = req.params;
+    const recordInfo = yield chanel_service_1.chanelServices.getRecordinLinkFromDB(channelId, channelUid);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "recording file retrieved successfully",
+        data: recordInfo,
+    });
+}));
 exports.chanelControllers = {
     createChanel,
     getAllChanels,
@@ -135,4 +155,6 @@ exports.chanelControllers = {
     removeMember,
     getAllMembersInchannel,
     channelFiles,
+    recordingFiles,
+    singleRecordingFile,
 };

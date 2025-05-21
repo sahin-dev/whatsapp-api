@@ -24,13 +24,18 @@ const autZero_1 = require("./config/autZero");
 const payment_controller_1 = require("./app/modules/payment/payment.controller");
 const config_1 = __importDefault(require("./config"));
 const axios_1 = __importDefault(require("axios"));
+const aws_sdk_1 = __importDefault(require("aws-sdk"));
 const app = (0, express_1.default)();
 const prisma = new client_1.PrismaClient();
 const APP_ID = config_1.default.agora.app_id;
 // const APP_CERTIFICATE = config.agora.app_certificate;
 const CUSTOMER_ID = "fabfd743db384b048df89b750f27b317";
 const CUSTOMER_SECRET = "eb6003c3216e46d1a1b237bfe84005aa";
-// const REGION = "CN"; // Change if needed
+const s3 = new aws_sdk_1.default.S3({
+    accessKeyId: "AKIAQXUIX57ZS2O5KE77", // Use your AWS access key
+    secretAccessKey: "sWx50b1MfDW0G0FUSSLrJSrPuQbO/2CNu1r538L7", // Use your AWS secret key
+    region: "us-east-2", // The region of your S3 bucket
+});
 // Middleware setup
 prisma
     .$connect()
@@ -57,13 +62,14 @@ app.get("/profile", (0, express_openid_connect_1.requiresAuth)(), (req, res) => 
     res.send(JSON.stringify(req.oidc.user));
 });
 const AUTH_HEADER = `Basic ${Buffer.from(`${CUSTOMER_ID}:${CUSTOMER_SECRET}`).toString("base64")}`;
+//start agora recording
 app.post("/api/v1/start-recording", (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { channel, uid } = req.body;
         if (!channel || !uid) {
             return res.status(400).json({ error: "Missing channel or uid" });
         }
-        // 1️⃣ **Acquire Resource ID**
+        // Acquire Resource ID
         let resourceId;
         try {
             const acquireResponse = yield axios_1.default.post(`https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/acquire`, {
@@ -77,14 +83,12 @@ app.post("/api/v1/start-recording", (req, res, next) => __awaiter(void 0, void 0
                 headers: { Authorization: AUTH_HEADER },
             });
             resourceId = acquireResponse.data.resourceId;
-            console.log("Recording started - Resource ID:", resourceId);
         }
         catch (acquireError) {
             return res.status(500).json({
                 error: "Failed to acquire resource ID",
             });
         }
-        // 2️⃣ **Start Recording**
         try {
             const startResponse = yield axios_1.default.post(`https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/mode/mix/start`, {
                 uid: uid.toString(),
@@ -101,28 +105,21 @@ app.post("/api/v1/start-recording", (req, res, next) => __awaiter(void 0, void 0
                         subscribeUidGroup: 0,
                     },
                     recordingFileConfig: {
-                        avFileType: ["hls"],
+                        avFileType: ["hls", "mp4"],
                     },
                     storageConfig: {
-                        vendor: 2,
-                        region: 5,
-                        bucket: "dancefluencer",
-                        accessKey: "DO00JF7Q4QFL6JT626LQ",
-                        secretKey: "8jgp74O4nG3wtgidZUWw4IARjkC1SghG39zGK65FTk",
+                        vendor: 1,
+                        region: 1,
+                        bucket: "agoracloud",
+                        accessKey: "AKIAQXUIX57ZS2O5KE77",
+                        secretKey: "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",
                         fileNamePrefix: ["directory1", "directory2"],
+                        ACL: "public-read",
                     },
                 },
             }, {
                 headers: { Authorization: AUTH_HEADER },
             });
-            // storageConfig: {
-            //         vendor: 1, // 1 = AWS S3, 2 = Google Cloud, 3 = AliCloud OSS
-            //         region: 3, // Use Agora's region code (e.g., 2 for Europe)
-            //         bucket: "dancefluencer",
-            //         accessKey: "DO00JF7Q4QFL6JT626LQ",
-            //         secretKey: "+8jgp74O4nG3wtgidZUWw4IARjkC1SghG39zGK65FTk",
-            //         fileNamePrefix: ["recordings"],
-            //       },
             return res.json({
                 message: "Recording started successfully",
                 resourceId,
@@ -137,10 +134,10 @@ app.post("/api/v1/start-recording", (req, res, next) => __awaiter(void 0, void 0
         }
     }
     catch (error) {
-        console.error("Error in start-recording:", error);
         next(error);
     }
 }));
+//check recording status
 app.post("/api/v1/check-recording-status", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { resourceId, sid } = req.body;
     // Step 1: Check Recording Status
@@ -158,33 +155,56 @@ app.post("/api/v1/check-recording-status", (req, res) => __awaiter(void 0, void 
     const statusData = yield statusRes.json();
     res.json(statusData);
 }));
-// 🎯 **Stop Recording API**
 app.post("/api/v1/stop-recording", (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { channel, uid, resourceId, sid, channelId } = req.body;
+    console.log(req.body);
+    if (!channel || !uid || !resourceId || !sid) {
+        return res
+            .status(400)
+            .json({ error: "Missing channel, uid, resourceId, or sid" });
+    }
     try {
-        const { channel, uid, resourceId, sid } = req.body;
-        if (!channel || !uid || !resourceId || !sid) {
-            return res
-                .status(400)
-                .json({ error: "Missing channel, uid, resourceId, or sid" });
-        }
-        const stopResponse = yield axios_1.default.post(`https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/sid/${sid}/mode/web/stop`, {
+        const stopResponse = yield axios_1.default.post(`https://api.agora.io/v1/apps/${APP_ID}/cloud_recording/resourceid/${resourceId}/sid/${sid}/mode/mix/stop`, {
             cname: channel,
             uid: uid.toString(),
             clientRequest: {},
         }, {
             headers: { Authorization: AUTH_HEADER },
         });
+        const fileList = stopResponse.data.serverResponse.fileList;
+        if (!fileList || fileList.length === 0) {
+            return res.status(400).json({ error: "No recorded file found." });
+        }
+        const recordedFile = fileList[0];
+        const fileName = recordedFile.fileName;
+        const s3Params = {
+            Bucket: "agoracloud",
+            Key: fileName,
+            Expires: 7 * 24 * 3600,
+        };
+        // Generate the presigned URL
+        const presignedUrl = s3.getSignedUrl("getObject", s3Params);
+        yield prisma.recording.create({
+            data: {
+                channelId: channelId,
+                channelName: channel,
+                channelUid: uid.toString(),
+                recordingLink: presignedUrl,
+            },
+        });
+        // 3️⃣ Return the Actual MP4 URL
         return res.json({
             message: "Recording stopped successfully",
-            details: stopResponse.data,
+            presignedUrl, // Agora Cloud Recording File URL
         });
     }
-    catch (error) {
-        console.error("Error in stop-recording:", error);
-        next(error);
+    catch (stopError) {
+        console.error("Error stopping recording:", stopError);
+        return res.status(500).json({
+            error: "Failed to stop recording",
+        });
     }
 }));
-// Router setup
 app.use("/api/v1", routes_1.default);
 // Global Error Handler
 app.use(globalErrorHandler_1.default);

@@ -18,7 +18,6 @@ const auth_service_1 = require("./auth.service");
 const sendResponse_1 = __importDefault(require("../../../shared/sendResponse"));
 //login user
 const loginUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(req.body);
     const result = yield auth_service_1.authService.loginUserIntoDB(req.body);
     // res.cookie("accessToken", result.accessToken, {
     //   httpOnly: true,
@@ -82,6 +81,16 @@ const updateProfileImage = (0, catchAsync_1.default)((req, res) => __awaiter(voi
         data: avatar,
     });
 }));
+const logout = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = req.user;
+    const result = yield auth_service_1.authService.logoutUser(user.id);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "User logged out!",
+        data: result
+    });
+}));
 exports.authController = {
     loginUser,
     getProfile,
@@ -89,4 +98,5 @@ exports.authController = {
     loginWithAuth,
     adminLogin,
     updateProfileImage,
+    logout
 };

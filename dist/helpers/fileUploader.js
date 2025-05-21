@@ -54,7 +54,7 @@ const upload = (0, multer_1.default)({ storage: storage });
 const uploadprofileImage = upload.single("profileImage");
 const updateProfileImage = upload.single("avatar");
 const uploadGroupImage = upload.single("groupImage");
-const uploadChanelImage = upload.single("chanelImage");
+const uploadChanelImage = upload.single("channelImage");
 // Upload multiple images for portfolio
 const sendFiles = upload.fields([
     { name: "sendFiles", maxCount: 10 }, // Multiple files for portfolio images

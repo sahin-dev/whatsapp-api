@@ -29,7 +29,7 @@ const moduleRoutes = [
         route: group_routes_1.groupRoutes,
     },
     {
-        path: "/chanel",
+        path: "/channel",
         route: chanel_routes_1.chanelRoutes,
     },
     {

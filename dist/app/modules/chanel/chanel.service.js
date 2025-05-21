@@ -27,20 +27,20 @@ const createChanelInDB = (req) => __awaiter(void 0, void 0, void 0, function* ()
     const imageUrl = file
         ? `${config_1.default.backend_base_url}/uploads/${file.originalname}`
         : null;
-    const existingGroup = yield prisma_1.default.chanel.findFirst({
-        where: { chanelName: payload.chanelName },
+    const existingGroup = yield prisma_1.default.channel.findFirst({
+        where: { channelName: payload.channelName },
     });
     if (existingGroup) {
         throw new ApiErrors_1.default(409, "chanel with the same name already exists");
     }
-    const newGroup = yield prisma_1.default.chanel.create({
+    const newGroup = yield prisma_1.default.channel.create({
         data: Object.assign(Object.assign({}, payload), { userId,
-            groupId, chanelImage: imageUrl ? imageUrl : "", memberIds: [userId] }),
+            groupId, channelImage: imageUrl ? imageUrl : "", memberIds: [userId] }),
     });
     return newGroup;
 });
 const getChanelsInDB = () => __awaiter(void 0, void 0, void 0, function* () {
-    const chanels = yield prisma_1.default.chanel.findMany({
+    const chanels = yield prisma_1.default.channel.findMany({
         include: { group: true },
         orderBy: { createdAt: "desc" },
     });
@@ -50,8 +50,15 @@ const getChanelsInDB = () => __awaiter(void 0, void 0, void 0, function* () {
     return chanels;
 });
 const getAccessChannelsFromDB = (userId, groupId) => __awaiter(void 0, void 0, void 0, function* () {
-    const chanels = yield prisma_1.default.chanel.findMany({
-        include: { group: true },
+    const chanels = yield prisma_1.default.channel.findMany({
+        include: {
+            group: true,
+            messages: {
+                select: { createdAt: true },
+                orderBy: { createdAt: "desc" },
+                take: 1,
+            },
+        },
         orderBy: { createdAt: "desc" },
         where: {
             groupId: groupId,
@@ -66,7 +73,7 @@ const getAccessChannelsFromDB = (userId, groupId) => __awaiter(void 0, void 0, v
     return chanels;
 });
 const getChanelInDB = (chanelId) => __awaiter(void 0, void 0, void 0, function* () {
-    const group = yield prisma_1.default.chanel.findUnique({
+    const group = yield prisma_1.default.channel.findUnique({
         where: { id: chanelId },
         include: { group: true },
     });
@@ -82,30 +89,30 @@ const updateChanelInDB = (req) => __awaiter(void 0, void 0, void 0, function* ()
     const imageUrl = file
         ? `${config_1.default.backend_base_url}/uploads/${file.originalname}`
         : null;
-    const existingChanel = yield prisma_1.default.chanel.findUnique({
+    const existingChanel = yield prisma_1.default.channel.findUnique({
         where: { id: chanelId },
     });
     if (!existingChanel) {
         throw new ApiErrors_1.default(404, "chanel not found for update");
     }
-    const updatedChanel = yield prisma_1.default.chanel.update({
+    const updatedChanel = yield prisma_1.default.channel.update({
         where: { id: chanelId },
-        data: Object.assign(Object.assign({}, payload), { chanelImage: imageUrl ? imageUrl : existingChanel.chanelImage }),
+        data: Object.assign(Object.assign({}, payload), { chanelImage: imageUrl ? imageUrl : existingChanel.channelImage }),
     });
     return updatedChanel;
 });
 const deleteChanelInDB = (chanelId) => __awaiter(void 0, void 0, void 0, function* () {
-    const existingChanel = yield prisma_1.default.chanel.findUnique({
+    const existingChanel = yield prisma_1.default.channel.findUnique({
         where: { id: chanelId },
     });
     if (!existingChanel) {
         throw new ApiErrors_1.default(404, "Group not found for delete");
     }
-    yield prisma_1.default.chanel.delete({ where: { id: chanelId } });
+    yield prisma_1.default.channel.delete({ where: { id: chanelId } });
     return;
 });
 const addMemberInChannel = (channelId, userId) => __awaiter(void 0, void 0, void 0, function* () {
-    const isExisting = yield prisma_1.default.chanel.findUnique({
+    const isExisting = yield prisma_1.default.channel.findUnique({
         where: {
             id: channelId,
             memberIds: {
@@ -116,7 +123,7 @@ const addMemberInChannel = (channelId, userId) => __awaiter(void 0, void 0, void
     if (isExisting) {
         throw new ApiErrors_1.default(409, "this user already exists");
     }
-    const result = yield prisma_1.default.chanel.update({
+    const result = yield prisma_1.default.channel.update({
         where: { id: channelId },
         data: {
             memberIds: {
@@ -128,7 +135,7 @@ const addMemberInChannel = (channelId, userId) => __awaiter(void 0, void 0, void
 });
 const getMembersByChannelId = (channelId) => __awaiter(void 0, void 0, void 0, function* () {
     // Find the channel and retrieve its memberIds
-    const channel = yield prisma_1.default.chanel.findUnique({
+    const channel = yield prisma_1.default.channel.findUnique({
         where: { id: channelId },
         select: { memberIds: true }, // Only select the member IDs
     });
@@ -144,7 +151,7 @@ const getMembersByChannelId = (channelId) => __awaiter(void 0, void 0, void 0, f
     return members;
 });
 const removeMemberFromChannel = (channelId, userId) => __awaiter(void 0, void 0, void 0, function* () {
-    const isExisting = yield prisma_1.default.chanel.findFirst({
+    const isExisting = yield prisma_1.default.channel.findFirst({
         where: {
             id: channelId,
             memberIds: {
@@ -155,7 +162,7 @@ const removeMemberFromChannel = (channelId, userId) => __awaiter(void 0, void 0,
     if (!isExisting) {
         throw new ApiErrors_1.default(409, "user not existing");
     }
-    const result = yield prisma_1.default.chanel.update({
+    const result = yield prisma_1.default.channel.update({
         where: { id: channelId },
         data: {
             memberIds: {
@@ -175,6 +182,23 @@ const channelFilesFromDB = (channelId) => __awaiter(void 0, void 0, void 0, func
     const allFiles = result.flatMap((message) => message.files);
     return allFiles;
 });
+const recordingFilesFromDB = (channelId) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield prisma_1.default.recording.findMany({
+        where: { channelId: channelId },
+        orderBy: { createdAt: "desc" },
+        select: {
+            recordingLink: true,
+            createdAt: true,
+        },
+    });
+    return result;
+});
+const getRecordinLinkFromDB = (channelId, channelUid) => __awaiter(void 0, void 0, void 0, function* () {
+    const recordingLink = yield prisma_1.default.recording.findFirst({
+        where: { channelId, channelUid },
+    });
+    return recordingLink;
+});
 exports.chanelServices = {
     createChanelInDB,
     getChanelsInDB,
@@ -186,4 +210,6 @@ exports.chanelServices = {
     getAccessChannelsFromDB,
     getMembersByChannelId,
     channelFilesFromDB,
+    recordingFilesFromDB,
+    getRecordinLinkFromDB,
 };

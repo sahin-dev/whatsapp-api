@@ -210,7 +210,7 @@ const validateAndAssignRole = async (userEmail: string) => {
   try {
     const userFromAuth = await getUserFromAuth0(userEmail);
     const user = await prisma.user.findUnique({
-      where: { email: userEmail },
+      where: { phone: userEmail },
       include: { subscription: true },
     });
 
@@ -288,7 +288,7 @@ const handleSubscriptionInAuth = async (userEmail: string) => {
     throw new ApiError(404, "User not found by email address");
   }
 
-  const user = await prisma.user.findUnique({ where: { email: userEmail } });
+  const user = await prisma.user.findUnique({ where: { phone: userEmail } });
 
   if (!user) {
     throw new Error("User not found in database");
@@ -461,8 +461,8 @@ const subscriptionCreateHelperFunc = async (
   const roleId = PRICE_ID_ROLE_MAPPING[priceId] as any;
   const data = {
     email: userEmail,
-    
-    username: userEmail,
+    phone:"016282347",
+    name: userEmail,
     customerId: customerId,
     priceId: priceId,
     subscriptionId: activeSubscription.id,
