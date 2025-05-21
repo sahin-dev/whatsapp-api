@@ -1,10 +1,11 @@
 {
   "name": "whatsapp_chat_app",
   "version": "1.0.0",
-  "main": "server.js",
+  "main": "src/server.ts",
   "scripts": {
     "start": "ts-node-dev src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "prod":"node dist/server.js",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "postinstall": "prisma generate"
