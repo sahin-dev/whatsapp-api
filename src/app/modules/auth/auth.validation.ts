@@ -7,17 +7,13 @@ const loginSchema = z.object({
 })
 
 const updateProfileSchema = z.object({
-  firstName: z
+  username: z
     .string()
     .min(2, "First name must be at least 2 characters long")
     .optional(),
-  lastName: z
-    .string()
+  email: z
+    .string().email()
     .min(2, "Last name must be at least 2 characters long")
-    .optional(),
-  mobile: z
-    .string()
-    .min(10, "Mobile must be at least 10 characters long")
     .optional(),
 });
 

@@ -46,6 +46,7 @@ router.delete(
 //tested
 router.get("/access/groups", auth(), groupControllers.accessGroups);
 
+//mute notification
 
 
 //new routes

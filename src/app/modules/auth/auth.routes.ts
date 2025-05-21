@@ -34,7 +34,7 @@ router.patch(
   authController.updateProfileImage
 );
 
-
+//tested
 router.post('/logout', auth(), authController.logout)
 
 //Not required

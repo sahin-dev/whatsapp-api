@@ -1,5 +1,5 @@
 {
-  "name": "web_chat_app",
+  "name": "whatsapp_chat_app",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
