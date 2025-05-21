@@ -41,7 +41,7 @@ app.use(
   express.raw({ type: "application/json" }),
   paymentControllers.handelPaymentWebhook
 );
-app.use(auth(authZeroConfig));
+// app.use(auth(authZeroConfig));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
