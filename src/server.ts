@@ -11,6 +11,7 @@ let wss: WebSocketServer;
 const channelClients = new Map<string, Set<WebSocket>>();
 let server: Server;
 
+const PORT = config.port
 // Helper function: Send JSON safely
 const sendJSON = (ws: WebSocket, data: any) => {
   if (ws.readyState === WebSocket.OPEN) {
@@ -35,7 +36,7 @@ const broadcastPastMessages = async (channelId: string) => {
 };
 
 async function main() {
-  server = app.listen(config.port, () => {
+  server = app.listen(PORT, () => {
     console.log("Server is running on port", config.port);
   });
 
