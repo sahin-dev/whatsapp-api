@@ -4,33 +4,56 @@ import app from "./app";
 import config from "./config";
 import { messageService } from "./app/modules/message/message.service";
 import prisma from "./shared/prisma";
-// import io from './socket'
+import { jwtHelpers } from "./helpers/jwtHelpers";
+import { Secret } from "jsonwebtoken";
 
 let wss: WebSocketServer;
 const channelClients = new Map<string, Set<WebSocket>>();
-let server:Server
+let server: Server;
+
+// Helper function: Send JSON safely
+const sendJSON = (ws: WebSocket, data: any) => {
+  if (ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(data));
+  }
+};
+
+// Helper function: Broadcast past messages
+const broadcastPastMessages = async (channelId: string) => {
+  const isStreaming = (await prisma.channel.findUnique({ where: { id: channelId } }))?.isStreaming;
+  const pinnedMessage = await messageService.pinnedMessageInDB(channelId);
+  const messages = await messageService.getMessagesFromDB(channelId);
+
+  const payload = {
+    type: "pastMessages",
+    isStreaming,
+    pinnedMessage,
+    message: messages,
+  };
+
+  channelClients.get(channelId)?.forEach((client) => sendJSON(client, payload));
+};
+
 async function main() {
-    server = app.listen(config.port, () => {
+  server = app.listen(config.port, () => {
     console.log("Server is running on port", config.port);
   });
 
-  // WebSocket Server setup
   wss = new WebSocketServer({ server });
 
-  // Handle WebSocket connections
   wss.on("connection", (ws) => {
     console.log("New WebSocket connection established!");
-    // Ping the client every 30 seconds
+
+    let subscribedChannel: string | null = null;
+    let user:any | null = null
+
     const interval = setInterval(() => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.ping();
-      }
+      if (ws.readyState === WebSocket.OPEN) ws.ping();
     }, 30000);
 
-    let subscribedChannel: string | null = null; // Track the client's subscribed channel
-    
-    // Listen for subscription messages
     ws.on("message", async (message) => {
+
+      
       try {
         const parsedMessage = JSON.parse(message.toString());
         const {
@@ -41,176 +64,132 @@ async function main() {
           isPinned,
           message: updateText,
           isStreaming,
+          token
         } = parsedMessage;
 
-        const streamingResult = await prisma.channel.findUnique({
-          where: { id: channelId },
-        });
-        const pinnedMessage = await messageService.pinnedMessageInDB(channelId);
-        const messages = await messageService.getMessagesFromDB(channelId);
-
-        if (type === "subscribe") {
-          if (!channelId) {
-            ws.send(
-              JSON.stringify({ error: "ChannelId is required to subscribe" })
-            );
-            return;
+        if (!user){
+          if(type === "authenticate"){
+            if(!token){
+              sendJSON(ws, {error:"Token is required to authenticate"})
+              return
+            }
+            try{
+              let verifiedUser = jwtHelpers.verifyToken(token, config.jwt.jwt_secret as Secret)
+              user = verifiedUser
+            }catch(err:any){
+              sendJSON(ws, {error:"Token is Invalid!"})
+              return
+            }
+          }else{
+            sendJSON(ws,{error:"You need to authenticated to access this service"})
+            return
           }
+        }
 
-          // Manage subscription
-          if (subscribedChannel) {
-            // If already subscribed, remove from the previous channel
-            const previousSet = channelClients.get(subscribedChannel);
-            previousSet?.delete(ws);
-            if (previousSet?.size === 0)
-              channelClients.delete(subscribedChannel);
-          }
+        switch (type) {
 
-          // Add to the new channel
-          if (!channelClients.has(channelId)) {
-            channelClients.set(channelId, new Set());
-          }
-          channelClients.get(channelId)?.add(ws);
-          subscribedChannel = channelId;
-
-          ws.send(
-            JSON.stringify({
-              type: "pastMessages",
-              isStreaming: streamingResult?.isStreaming,
-              pinnedMessage: pinnedMessage,
-              message: messages,
-            })
-          );
-        } else if (
-          type === "message" && // Check if the type is "message"
-          channelId && // Ensure channelId is present
-          subscribedChannel === channelId // Ensure the client is subscribed to the correct channel
-        ) {
-          // Broadcast new messages to all clients in the same channel
-          const messagePayload = {
-            type: "message",
-            channelId,
-            message: parsedMessage.message,
-          };
-
-          // Send to all clients subscribed to the channel
-          channelClients.get(channelId)?.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify(messagePayload));
+          case "subscribe":
+            if (!channelId) {
+              sendJSON(ws, { error: "ChannelId is required to subscribe" });
+              return;
             }
-          });
 
-        } else if (type === "deleteMessage" && messageId) {
-          await messageService.deleteSingleMessageFromDB(messageId);
-
-          const pastMessages = {
-            type: "pastMessages",
-            isStreaming: streamingResult?.isStreaming,
-            pinnedMessage: pinnedMessage,
-            message: messages,
-          };
-          channelClients.get(subscribedChannel as string)?.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify(pastMessages));
+            if (subscribedChannel && channelClients.has(subscribedChannel)) {
+              channelClients.get(subscribedChannel)?.delete(ws);
+              if (channelClients.get(subscribedChannel)?.size === 0) {
+                channelClients.delete(subscribedChannel);
+              }
             }
-          });
-        } else if (type === "multipleDeleteMessages" && messageIds) {
-          await messageService.deleteMultipleMessagesFromDB(messageIds);
-          const messages = await messageService.getMessagesFromDB(channelId);
 
-          const pastMessages = {
-            type: "pastMessages",
-            isStreaming: streamingResult?.isStreaming,
-            pinnedMessage: pinnedMessage,
-            message: messages,
-          };
-          channelClients.get(subscribedChannel as string)?.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify(pastMessages));
+            if (!channelClients.has(channelId)) {
+              channelClients.set(channelId, new Set());
             }
-          });
-        } else if (type === "pinMessage" && messageId) {
-          await messageService.pinUnpinMessage(messageId, isPinned);
+            channelClients.get(channelId)?.add(ws);
+            subscribedChannel = channelId;
 
-          const pastMessages = {
-            type: "pastMessages",
-            isStreaming: streamingResult?.isStreaming,
-            pinnedMessage: pinnedMessage,
-            message: messages,
-          };
-          channelClients.get(subscribedChannel as string)?.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify(pastMessages));
-            }
-          });
-        } else if (type === "clearMessagesFromChannel" && channelId) {
-          await messageService.deleteAllMessagesFromChannel(messageId);
+            await broadcastPastMessages(channelId);
+            break;
 
-          const pastMessages = {
-            type: "pastMessages",
-            isStreaming: streamingResult?.isStreaming,
-            pinnedMessage: pinnedMessage,
-            message: messages,
-          };
-          channelClients.get(subscribedChannel as string)?.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify(pastMessages));
-            }
-          });
-        } else if (type === "editMessage" && messageId) {
-          await messageService.updateSingleMessageInDB(messageId, updateText);
-          const messages = await messageService.getMessagesFromDB(channelId);
+          case "message":
+            if (channelId && subscribedChannel === channelId) {
+              const messagePayload = {
+                type: "message",
+                channelId,
+                message: parsedMessage.message,
+              };
+              await prisma.message.create({data:{channelId, senderId:user.id}})
 
-          const pastMessages = {
-            type: "pastMessages",
-            isStreaming: streamingResult?.isStreaming,
-            pinnedMessage: pinnedMessage,
-            message: messages,
-          };
-          channelClients.get(subscribedChannel as string)?.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify(pastMessages));
+              channelClients.get(channelId)?.forEach((client) =>
+                sendJSON(client, messagePayload)
+              );
             }
-          });
-        } else if (type === "streaming" && channelId) {
-          const updateResult = await prisma.channel.update({
-            where: { id: channelId },
-            data: {
-              isStreaming: isStreaming,
-            },
-          });
+            break;
 
-          const pastMessages = {
-            type: "pastMessages",
-            isStreaming: updateResult?.isStreaming,
-            pinnedMessage: pinnedMessage,
-            message: messages,
-          };
-          channelClients.get(subscribedChannel as string)?.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify(pastMessages));
+          case "deleteMessage":
+            if (messageId && subscribedChannel) {
+              await messageService.deleteSingleMessageFromDB(messageId);
+              await broadcastPastMessages(subscribedChannel);
             }
-          });
+            break;
+
+          case "multipleDeleteMessages":
+            if (messageIds && subscribedChannel) {
+              await messageService.deleteMultipleMessagesFromDB(messageIds);
+              await broadcastPastMessages(subscribedChannel);
+            }
+            break;
+
+          case "pinMessage":
+            if (messageId && typeof isPinned === "boolean" && subscribedChannel) {
+              await messageService.pinUnpinMessage(messageId, isPinned);
+              await broadcastPastMessages(subscribedChannel);
+            }
+            break;
+
+          case "clearMessagesFromChannel":
+            if (channelId) {
+              await messageService.deleteAllMessagesFromChannel(channelId);
+              await broadcastPastMessages(channelId);
+            }
+            break;
+
+          case "editMessage":
+            if (messageId && updateText && channelId) {
+              await messageService.updateSingleMessageInDB(messageId, updateText);
+              await broadcastPastMessages(channelId);
+            }
+            break;
+
+          case "streaming":
+            if (channelId && typeof isStreaming === "boolean") {
+              await prisma.channel.update({
+                where: { id: channelId },
+                data: { isStreaming },
+              });
+              await broadcastPastMessages(channelId);
+            }
+            break;
+
+          default:
+            sendJSON(ws, { error: "Unsupported message type" });
         }
       } catch (err: any) {
-        console.error("Error processing WebSocket message:", err.message);
+        console.error("Error processing WebSocket message:", err.message || err);
       }
     });
 
-    // Handle client disconnections
     ws.on("close", () => {
       if (subscribedChannel) {
-        const clientsInChannel = channelClients.get(subscribedChannel);
-        clientsInChannel?.delete(ws);
-        if (clientsInChannel?.size === 0)
-          channelClients.delete(subscribedChannel);
+        const clients = channelClients.get(subscribedChannel);
+        clients?.delete(ws);
+        if (clients?.size === 0) channelClients.delete(subscribedChannel);
       }
-      console.log("WebSocket client disconnected!");
       clearInterval(interval);
+      console.log("WebSocket client disconnected!");
     });
   });
 }
 
 main();
 
-export { wss, channelClients,server };
+export { wss, channelClients, server };

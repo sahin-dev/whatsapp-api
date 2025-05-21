@@ -149,26 +149,124 @@ const addMember = async (memberId:string, groupId:string, userId:string) => {
   return {message:"User added to the group"}
 }
 
+//get all members of a specific group
+
 const getAllGroupMembers = async (groupId:string,userId:string)=>{
+
   const group = await prisma.group.findUnique({where:{id:groupId}})
-  const groupUsers = await prisma.groupUser.findMany({where:{groupId}})
+  const groupUsers = await prisma.groupUser.findMany({where:{groupId},include:{user:true}})
   const targetMember = groupUsers.find((groupUser)=> groupUser.id === userId)
 
   if (group?.adminId !== userId || !targetMember){
     throw new ApiError (httpStatus.UNAUTHORIZED, "Sorry, you are not allowed to see the members.")
   }
+  let mappedUsers = groupUsers.map(groupUser => {
+    return {name:groupUser.user.name,image:groupUser.user.avatar, phone:groupUser.user.phone, admin:groupUser.isAdmin}
+  })
 
-  return groupUsers
+  return mappedUsers
 }
 
+//exit from the group by the user him/herself
+
 const exitGroup  = async (groupId:string, userId:string)=>{
+
   const groupUser = await prisma.groupUser.findFirst({where:{groupId, userId}})
+
   if (!groupUser){
-    throw new ApiError (httpStatus.NOT_FOUND, "You are already left from this group")
+    throw new ApiError (httpStatus.NOT_FOUND, "You are not member of this group")
   }
+
   await prisma.groupUser.delete({where:{id:groupUser.id}})
 
-  return {message:"Member leave from the group"}
+  return {message:"exited from the group"}
+}
+
+//make  a user admin by a group admin
+
+const makeAdmin = async (adminId:string,groupId:string, userId:string)=>{
+  const groupUser = await prisma.groupUser.findUnique({where:{id:adminId}})
+  if (!groupUser||  !groupUser.isAdmin){
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'You are authoized to make admin')
+  }
+
+  let adminUser = await prisma.groupUser.update({where:{id:userId}, data:{isAdmin:true}})
+  return adminUser
+}
+
+//remove a user by an admin
+
+const removeUserFromGroup = async (adminId:string, groupId:string, userId:string)=>{
+  const groupUser = await prisma.groupUser.findUnique({where:{id:adminId}})
+
+  if (!groupUser || !groupUser.isAdmin){
+    throw new ApiError(httpStatus.UNAUTHORIZED, "You are not authroized to leave user from group")
+  }
+  await prisma.groupUser.delete({where:{id:userId}})
+  return {message:"User removed successfully"}
+}
+
+//toggole notificaiton
+const toggoleNotification = async (groupId:string, userId:string)=>{
+  const groupUser = await prisma.groupUser.findUnique({where:{id:userId}})
+
+  if (!groupUser){
+    throw new ApiError(httpStatus.NOT_FOUND, "Group User not found")
+  }
+  await prisma.groupUser.update({where:{id:userId}, data:{isMuted:!groupUser.isMuted}})
+
+  return {message:"Notificaton toggoled successfully"}
+
+}
+
+///report a group by a user
+
+const reportGroup = async (groupId:string, userId:string)=>{
+
+}
+
+
+//search group user
+
+const searchGroupUser = async (groupId: string, q: string) => {
+  const groupUsers = await prisma.groupUser.findMany({
+    where: { groupId },
+    include: {
+      user: true
+    }
+  });
+  // Filter users by name after fetching
+  return groupUsers.filter(groupUser => 
+    groupUser.user && groupUser.user.name?.toLowerCase().includes(q.toLowerCase())
+  );
+}
+
+//get group bio
+
+const getGroupBio = async (groupId:string)=>{
+  const group = await prisma.group.findUnique({where:{id:groupId}})
+  if (!group){
+    throw new ApiError(httpStatus.NOT_FOUND, "Group not found")
+  }
+  const groupBio = {descripton:group.about,createdAt:group.createdAt}
+
+  return groupBio
+}
+
+//edit group bio
+
+const editGroupBio = async (userId:string, groupId:string, payload:any)=>{
+
+  const groupUser = await prisma.groupUser.findFirst({where:{groupId, userId}})
+
+  if (!groupUser || !groupUser.isAdmin){
+    throw new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized to edit bio")
+  }
+
+  const updatedGroup = await prisma.group.update({where:{id:groupId},data:{about:payload.about}})
+
+  return updateGroupInDB
+
 }
 
 export const groupServices = {

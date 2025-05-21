@@ -35,23 +35,23 @@ router.get("/:messageId", auth(), messageController.getSingleMessage);
 
 router.delete(
   "/delete-message/:messageId",
-  auth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  auth(),
   messageController.deleteSingleMessage
 );
 router.delete(
   "/delete/messages/:channelId",
-  auth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  auth(),
   messageController.deleteAllMessages
 );
 router.patch(
   "/update/message/:messageId",
-  auth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  auth(),
   messageController.updateMessage
 );
 
 router.delete(
   "/delete/multiple-messages",
-  auth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  auth(),
   messageController.deleteMultipleMessages
 );
 
@@ -60,6 +60,7 @@ router.post(
   auth(),
   messageController.generateAccessToken
 );
+
 router.post(
   "/start/recording/:channelId",
   auth(),

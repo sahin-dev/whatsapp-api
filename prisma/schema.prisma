@@ -27,7 +27,7 @@ model User {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   groupUser     GroupUser[]
-  chanel         Channel[]
+  channel         Channel[]
   message        Message[]
   userMessage    UserMessage[]
   notifications  Notifications[]
@@ -35,6 +35,7 @@ model User {
 
   @@map("users")
 }
+
 
 model Group {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -51,14 +52,15 @@ model Group {
   @@map("groups")
 }
 
+
 model GroupUser {
   id      String   @id @default(auto()) @map("_id") @db.ObjectId
   groupId String   @db.ObjectId
   userId  String   @db.ObjectId
-
+  isAdmin Boolean @default(false)
+  isMuted Boolean @default(false)
   group   Group    @relation(fields: [groupId], references: [id])
   user    User     @relation(fields: [userId], references: [id])
-
   @@unique([groupId, userId])
   @@map("group_users")
 }
@@ -68,15 +70,15 @@ model UserMessage {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   message   String?
   files     String[]
-  senderId  String?  @db.ObjectId
-  groupId String?  @db.ObjectId
-  replyId   String?  @db.ObjectId
-  isRead    Boolean  @default(false)
-  isPinned  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User?    @relation(fields: [senderId], references: [id])
-  group   Group?  @relation(fields: [groupId], references: [id])
+  senderId  String    @db.ObjectId
+  groupId   String    @db.ObjectId
+  replyId   String?   @db.ObjectId
+  isRead    Boolean   @default(false)
+  isPinned  Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User?     @relation(fields: [senderId], references: [id])
+  group   Group?      @relation(fields: [groupId], references: [id])
 
   @@map("user_messages")
 }
@@ -86,8 +88,8 @@ model Channel {
   id            String          @id @default(auto()) @map("_id") @db.ObjectId
   userId        String?         @db.ObjectId
   groupId       String?         @db.ObjectId
-  channelName    String
-  channelImage   String
+  channelName    String?
+  channelImage   String?
   description   String
   memberIds     String[]
   chanelType    ChanelType      @default(PRIVATE)
@@ -100,7 +102,7 @@ model Channel {
   messages      Message[]
   notifications Notifications[]
 
-  @@map("chanels")
+  @@map("channels")
 }
 
 model Recording {
