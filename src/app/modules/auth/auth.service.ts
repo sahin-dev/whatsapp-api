@@ -56,19 +56,19 @@ const loginUserIntoDB = async (payload: any) => {
     // const {status, createdAt, updatedAt, ...others } = createUser;
     // userInfo = others;
     const messageBody = `Your login verification code is ${otp}. Your otp will expires in 10 minutes`
-    await sendMessage(messageBody, createUser.phone)
-    return {message:"Otp sent successfully to your phone number"}
+    // await sendMessage(messageBody, createUser.phone)
+    return {message:messageBody}
   }
   if (!payload.otp){
     const otp = generateOtp()
     const otpExpiresIn = new Date(Date.now() + 10 *60*1000)
     const messageBody = `Your login verification code is ${otp}. Your otp will expires in 10 minutes`
     await prisma.user.update({where:{id:user.id}, data:{otp, otpExpiresIn}})
-    await sendMessage(messageBody, user.phone)
-    return {message:"Otp sent successfully to your phone number"}
+    // await sendMessage(messageBody, user.phone)
+    return {message:messageBody}
   }
     
-  
+
   if (user.otp !== payload.otp || (!user.otpExpiresIn  && user.otpExpiresIn! < new Date(Date.now()))){
     throw new ApiError(httpStatus.BAD_REQUEST, "Otp invalid")
   }

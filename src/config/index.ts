@@ -21,6 +21,8 @@ export default {
     app_pass: process.env.APP_PASS,
   },
   twilio:{
+    test_sid:process.env.TWILIO_TEST_SID,
+    test_token:process.env.TWILIO_TEST_TOKEN,
     sid:process.env.TWILIO_SID,
     token:process.env.TWILIO_TOKEN,
     number:process.env.TWILIO_NUMBER
