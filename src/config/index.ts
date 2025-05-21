@@ -5,7 +5,7 @@ dotenv.config({ path: path.join(process.cwd(), ".env") });
 
 export default {
   env: process.env.NODE_ENV,
-  port: process.env.PORT,
+  port: process.env.PORT || 5000,
   backend_base_url: process.env.BACKEND_BASE_URL,
   jwt: {
     jwt_secret: process.env.JWT_SECRET,
@@ -19,6 +19,11 @@ export default {
   emailSender: {
     email: process.env.EMAIL,
     app_pass: process.env.APP_PASS,
+  },
+  twilio:{
+    sid:process.env.TWILIO_SID,
+    token:process.env.TWILIO_TOKEN,
+    number:process.env.TWILIO_NUMBER
   },
   ssl: {
     storeId: process.env.STORE_ID,

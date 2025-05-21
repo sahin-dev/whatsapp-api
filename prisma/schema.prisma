@@ -12,6 +12,8 @@ model User {
   phone          String          @unique      
   name           String?
   about           String?
+  otp             String?
+  otpExpiresIn    DateTime?
   email          String?
   avatar         String          @default("https://app.boom360trader.com/uploads/user.png")
   fcmToken       String?

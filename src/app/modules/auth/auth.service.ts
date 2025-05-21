@@ -11,6 +11,8 @@ import axios from "axios";
 import jwt from "jsonwebtoken";
 
 import httpStatus from "http-status";
+import { generateOtp } from "../../../helpers/generateOtp";
+import { sendMessage } from "../../../helpers/sendMessage";
 
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
@@ -19,6 +21,7 @@ const loginUserIntoDB = async (payload: any) => {
 
   let accessToken;
   let userInfo;
+  
 
   const user = await prisma.user.findUnique({
     where: {
@@ -26,28 +29,51 @@ const loginUserIntoDB = async (payload: any) => {
     },
   });
 
+
+
   if (!user) {
+    const otp = generateOtp()
+    const otpExpiresIn = new Date(Date.now() + 10 *60*1000)
     const createUser = await prisma.user.create({
       data: {
-        phone:payload.phone
+        phone:payload.phone,
+        otp,
+        otpExpiresIn
       },
     });
 
-    accessToken = jwtHelpers.generateToken(
-      {
-        id: createUser.id,
-        phone: createUser.phone,
-        fcmToken: createUser?.fcmToken,
-        subscription: createUser?.subcription,
-      },
-      config.jwt.jwt_secret as string,
-      config.jwt.expires_in as string
-    );
+    // accessToken = jwtHelpers.generateToken(
+    //   {
+    //     id: createUser.id,
+    //     phone: createUser.phone,
+    //     fcmToken: createUser?.fcmToken,
+    //     subscription: createUser?.subcription,
+    //   },
+    //   config.jwt.jwt_secret as string,
+    //   config.jwt.expires_in as string
+    // );
 
-    const {status, createdAt, updatedAt, ...others } = createUser;
-    userInfo = others;
-  } else {
+    // const {status, createdAt, updatedAt, ...others } = createUser;
+    // userInfo = others;
+    const messageBody = `Your login verification code is ${otp}. Your otp will expires in 10 minutes`
+    await sendMessage(messageBody, createUser.phone)
+    return {message:"Otp sent successfully to your phone number"}
+  }
+  if (!payload.otp){
+    const otp = generateOtp()
+    const otpExpiresIn = new Date(Date.now() + 10 *60*1000)
+    const messageBody = `Your login verification code is ${otp}. Your otp will expires in 10 minutes`
+    await prisma.user.update({where:{id:user.id}, data:{otp, otpExpiresIn}})
+    await sendMessage(messageBody, user.phone)
+    return {message:"Otp sent successfully to your phone number"}
+  }
+    
   
+  if (user.otp !== payload.otp || (!user.otpExpiresIn  && user.otpExpiresIn! < new Date(Date.now()))){
+    throw new ApiError(httpStatus.BAD_REQUEST, "Otp invalid")
+  }
+
+  await prisma.user.update({where:{id:user.id}, data:{otp:null, otpExpiresIn:null}})
 
     accessToken = jwtHelpers.generateToken(
       {
@@ -78,7 +104,7 @@ const loginUserIntoDB = async (payload: any) => {
       ...others
     } = updateUserInfo;
     userInfo = others;
-  }
+  
 
   return {
     accessToken,

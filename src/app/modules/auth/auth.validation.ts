@@ -3,7 +3,8 @@ import { z } from "zod";
 
 const loginSchema = z.object({
   phone:z.string({required_error:"Phone is required"}),
-  fcmToken:z.string().optional()
+  fcmToken:z.string().optional(),
+  otp:z.string().optional()
 })
 
 const updateProfileSchema = z.object({
