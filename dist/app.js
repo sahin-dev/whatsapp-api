@@ -20,7 +20,6 @@ const globalErrorHandler_1 = __importDefault(require("./app/middlewares/globalEr
 const client_1 = require("@prisma/client");
 const path_1 = __importDefault(require("path"));
 const express_openid_connect_1 = require("express-openid-connect");
-const autZero_1 = require("./config/autZero");
 const payment_controller_1 = require("./app/modules/payment/payment.controller");
 const config_1 = __importDefault(require("./config"));
 const axios_1 = __importDefault(require("axios"));
@@ -46,7 +45,7 @@ prisma
     console.error("Failed to connect to the database:", error);
 });
 app.use("/webhook", express_1.default.raw({ type: "application/json" }), payment_controller_1.paymentControllers.handelPaymentWebhook);
-app.use((0, express_openid_connect_1.auth)(autZero_1.authZeroConfig));
+// app.use(auth(authZeroConfig));
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
