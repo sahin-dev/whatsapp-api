@@ -73,7 +73,7 @@ const loginUserIntoDB = async (payload: any) => {
     throw new ApiError(httpStatus.BAD_REQUEST, "Otp invalid")
   }
 
-  await prisma.user.update({where:{id:user.id}, data:{otp:null, otpExpiresIn:null}})
+  
 
     accessToken = jwtHelpers.generateToken(
       {
@@ -85,7 +85,7 @@ const loginUserIntoDB = async (payload: any) => {
       config.jwt.jwt_secret as string,
       config.jwt.expires_in as string
     );
-
+ 
     const updateUserInfo = await prisma.user.update({
       where: {
         phone: payload.phone,
@@ -93,6 +93,8 @@ const loginUserIntoDB = async (payload: any) => {
       data: {
         fcmToken: payload.fcmToken,
         accessToken: accessToken,
+        otp:null,
+        otpExpiresIn:null
       },
     });
 

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import { userService } from "./user.services";
+import httpStatus from "http-status";
 
 //get users
 const getUsers = catchAsync(async (req: Request, res: Response) => {
@@ -53,9 +54,23 @@ const deleteUser = catchAsync(async (req: any, res: Response) => {
   });
 });
 
+const blockUser = catchAsync(async (req:any, res:Response) => {
+  const userId = req.user.id
+  const {otherUserId} = req.params
+
+  await userService.blockUser(userId,otherUserId)
+
+  sendResponse(res,{
+    statusCode:httpStatus.OK,
+    success:true,
+    message:"User status changed"
+  })
+})
+
 export const UserControllers = {
   getUsers,
   getSingleUser,
   updateUser,
   deleteUser,
+  blockUser
 };

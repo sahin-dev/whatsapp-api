@@ -5,6 +5,7 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
+ 
 }
 
 model User {
@@ -34,6 +35,8 @@ model User {
   userMessage    UserMessage[]
   notifications  Notifications[]
   subscription   Subscription[]
+  blockedUsers   BlockUser[] @relation(name: "blocker")
+  blockedBy      BlockUser[]  @relation(name: "blocked")
 
   @@map("users")
 }
@@ -83,6 +86,21 @@ model UserMessage {
   group   Group?      @relation(fields: [groupId], references: [id])
 
   @@map("user_messages")
+}
+
+
+model BlockUser {
+  id            String  @id @default(auto())  @map("_id") @db.ObjectId
+  blockerId     String  @db.ObjectId
+  blockedId     String  @db.ObjectId
+
+  blocker       User @relation(name: "blocker", fields: [blockerId], references: [id])
+  blocked       User @relation(name: "blocked", fields: [blockedId], references: [id])
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  @@unique([blockedId, blockerId])
+@@map("blocked_users")
 }
 
 

@@ -12,9 +12,10 @@ const router = express.Router();
 router.get("/:id", auth(), UserControllers.getSingleUser);
 //tested
 router.delete("/", auth(), UserControllers.deleteUser);
-
+//tested
 router.put("/", auth(), validateRequest(userValidation.userUpdateValidationSchema), UserControllers.updateUser)
-
+//tested
+router.post("/toggole-block/:otherUserId", auth(), UserControllers.blockUser)
 
 //not required
 

@@ -1,9 +1,11 @@
-import { PrismaClient, User } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import ApiError from "../../errors/ApiErrors";
 const prisma = new PrismaClient();
 import { ObjectId } from "mongodb";
 import { Request } from "express";
 import { searchFilter } from "../../../shared/searchFilter";
+import httpStatus from "http-status";
+
 
 //get single user
 const getSingleUserIntoDB = async (id: string) => {
@@ -70,9 +72,26 @@ const deleteUserIntoDB = async (userId: string) => {
   return;
 };
 
+const blockUser = async (myId:string, blockingId:string)=>{
+  const user = await prisma.user.findUnique({where:{id:blockingId}})
+  console.log(user)
+  if (!user){
+    throw new ApiError(httpStatus.NOT_FOUND, "user not found")
+  }
+  const blockedUser = await prisma.blockUser.findUnique({where:{blockedId_blockerId:{blockedId:user.id,blockerId:myId}}})
+
+  if (blockedUser){
+    await prisma.blockUser.delete({where:{id:blockedUser.id}})
+    return {message:"User unblocked successfully"}
+  }
+  await prisma.blockUser.create({data:{blockerId:myId, blockedId:user.id}})
+  return {message:"User blocked successfully"}
+}
+
 export const userService = {
   getUsersIntoDB,
   getSingleUserIntoDB,
   updateUserIntoDB,
   deleteUserIntoDB,
+  blockUser
 };

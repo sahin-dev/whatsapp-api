@@ -137,6 +137,91 @@ const exitGroup = catchAsync (async (req:any, res:Response)=>{
   })
 
 })
+
+
+const toggoleNotification = catchAsync(async (req:any, res:Response)=>{
+  const userId = req.user.id
+  const groupId = req.params.groupId
+
+  await groupServices.toggoleNotification(groupId,userId)
+
+  sendResponse(res, {
+    success:true,
+    statusCode:httpStatus.OK,
+    message:"Notification toggoled successfully"
+  })
+})
+
+const makeAdmin = catchAsync(async (req:any, res:Response)=>{
+  const adminId = req.user.id
+  const {groupId, userId} = req.params
+
+  const admin = await groupServices.makeAdmin(adminId,groupId, userId)
+
+  sendResponse(res, {
+    success:true,
+    statusCode:httpStatus.OK,
+    message:"Group admin added successfully",
+    data:admin
+  })
+})
+
+const removeUserFromGroup = catchAsync(async (req:any, res:Response)=>{
+  const adminId = req.user.id
+  const {groupId, userId} = req.params
+
+  const admin = await groupServices.removeUserFromGroup(adminId,groupId, userId)
+
+  sendResponse(res, {
+    success:true,
+    statusCode:httpStatus.OK,
+    message:"user removed from the group successfully",
+    data:admin
+  })
+})
+
+const searchGroupUser = catchAsync(async (req:any,res:Response)=>{
+    const {q} = req.query
+    const {groupId} = req.params
+
+    const result = await groupServices.searchGroupUser(groupId, q)
+
+    sendResponse(res, {
+      success:true,
+      statusCode:httpStatus.OK,
+      message:"Group User fetched successfully",
+      data:result
+    })
+})
+
+const getGroupBio = catchAsync(async (req:any, res:Response)=>{
+    const {groupId} = req.params
+    const result = await groupServices.getGroupBio(groupId)
+
+    sendResponse(res, {
+      success:true,
+      statusCode:httpStatus.OK,
+      message:"Group User fetched successfully",
+      data:result
+    })
+})
+
+
+
+const updateGroupBio = catchAsync(async (req:any, res:Response)=>{
+    const {groupId} = req.params
+    const userId = req.user.id
+    const payload = req.body
+    const result = await groupServices.editGroupBio(userId,groupId, payload)
+
+    sendResponse(res, {
+      success:true,
+      statusCode:httpStatus.OK,
+      message:"Group User fetched successfully",
+      data:result
+    })
+})
+
 export const groupControllers = {
   createGroup,
   getAllGroups,
@@ -149,5 +234,14 @@ export const groupControllers = {
   getMyGroups,
   addMember,
   getAllGroupMembers,
-  exitGroup
+
+  exitGroup,
+  toggoleNotification,
+  makeAdmin,
+  removeUserFromGroup,
+  searchGroupUser,
+  getGroupBio,
+  updateGroupBio
+  
+
 };

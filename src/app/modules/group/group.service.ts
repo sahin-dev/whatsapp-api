@@ -185,24 +185,39 @@ const exitGroup  = async (groupId:string, userId:string)=>{
 //make  a user admin by a group admin
 
 const makeAdmin = async (adminId:string,groupId:string, userId:string)=>{
-  const groupUser = await prisma.groupUser.findUnique({where:{id:adminId}})
+
+  const groupUser = await prisma.groupUser.findUnique({where:{groupId_userId:{groupId,userId:adminId}}})
+
   if (!groupUser||  !groupUser.isAdmin){
     throw new ApiError(httpStatus.UNAUTHORIZED, 'You are authoized to make admin')
   }
 
-  let adminUser = await prisma.groupUser.update({where:{id:userId}, data:{isAdmin:true}})
+  const generalUser = await prisma.groupUser.findUnique({where:{groupId_userId:{groupId,userId}}})
+  if (!generalUser){
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found")
+  }
+
+
+  let adminUser = await prisma.groupUser.update({where:{id:generalUser.id}, data:{isAdmin:true}})
   return adminUser
 }
 
 //remove a user by an admin
 
 const removeUserFromGroup = async (adminId:string, groupId:string, userId:string)=>{
-  const groupUser = await prisma.groupUser.findUnique({where:{id:adminId}})
+  const groupUser = await prisma.groupUser.findUnique({where:{groupId_userId:{groupId,userId:adminId}}})
 
   if (!groupUser || !groupUser.isAdmin){
     throw new ApiError(httpStatus.UNAUTHORIZED, "You are not authroized to leave user from group")
   }
-  await prisma.groupUser.delete({where:{id:userId}})
+
+  const generaluser = await prisma.groupUser.findUnique({where:{groupId_userId:{groupId,userId}}})
+  if(!generaluser || !generaluser.isAdmin){
+    throw new ApiError(httpStatus.BAD_REQUEST, "Could not remove the user")
+  }
+  
+  await prisma.groupUser.delete({where:{id:generaluser.id}})
+
   return {message:"User removed successfully"}
 }
 
@@ -257,7 +272,7 @@ const getGroupBio = async (groupId:string)=>{
 
 const editGroupBio = async (userId:string, groupId:string, payload:any)=>{
 
-  const groupUser = await prisma.groupUser.findFirst({where:{groupId, userId}})
+  const groupUser = await prisma.groupUser.findUnique({where:{groupId_userId:{groupId,userId}}})
 
   if (!groupUser || !groupUser.isAdmin){
     throw new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized to edit bio")
@@ -265,7 +280,7 @@ const editGroupBio = async (userId:string, groupId:string, payload:any)=>{
 
   const updatedGroup = await prisma.group.update({where:{id:groupId},data:{about:payload.about}})
 
-  return updateGroupInDB
+  return updatedGroup
 
 }
 
@@ -282,5 +297,15 @@ export const groupServices = {
   getMyGroups,
   addMember,
   getAllGroupMembers,
-  exitGroup
+  exitGroup,
+  toggoleNotification,
+  makeAdmin,
+  removeUserFromGroup,
+  reportGroup,
+  searchGroupUser,
+  getGroupBio,
+  editGroupBio,
+
+
+
 };
