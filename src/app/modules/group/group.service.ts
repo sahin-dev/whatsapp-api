@@ -17,25 +17,27 @@ const createGroupInDB = async (req: any) => {
     ? `${config.backend_base_url}/uploads/${file.originalname}`
     : null;
 
-  const existingGroup = await prisma.group.findFirst({
-    where: { groupName: payload.groupName },
-  });
+  // const existingGroup = await prisma.group.findFirst({
+  //   where: { groupName: payload.groupName },
+  // });
 
-  if (existingGroup) {
-    throw new ApiError(409, "Group with the same name already exists");
-  }
+  // if (existingGroup) {
+  //   throw new ApiError(409, "Group with the same name already exists");
+  // }
   
   const newGroup = await prisma.group.create({
     data: {
       ...payload,
-      userId: userId,
+      adminId: userId,
       groupImage: imageUrl ? imageUrl : ""
     },
   });
+  
   await prisma.groupUser.create({
     data:{
       userId:userId,
-      groupId:newGroup.id
+      groupId:newGroup.id,
+      isAdmin:true
     }
   })
 
@@ -129,21 +131,41 @@ const accessGroupInDB = async (userId: string) => {
 //new services
 
 const getMyGroups = async (userId:string)=>{
-  const myGroups = await prisma.groupUser.findMany({where:{userId}})
 
-  const groupIds = myGroups.map(group=> group.id)
+  const myGroups = await prisma.groupUser.findMany({where:{userId},include:{group:true,}})
+  
+  const groupData =  myGroups.map(async (myGroup)=> {
+    const message = await prisma.userMessage.findFirst({where:{groupId:myGroup.group.id},orderBy:{createdAt:'desc'}})
+    console.log(message)
+    const totalUnreadMessage = await prisma.userMessage.count({where:{groupId:myGroup.group.id, isRead:false}})
 
-  if (groupIds.length <= 0){
-    return {message:"No Group"}
-  }
-  return groupIds
+    return {
+      id:myGroup.group.id,
+      name:myGroup.group.groupName,
+      image:myGroup.group.groupImage,
+      recentMessage:{
+        message:message?.message,
+        createdAt:message?.createdAt
+      },
+      totalUnreadMessage
+
+    }
+  })
+
+  // const groupMessage = await prisma.userMessage.findMany({where:{id:{in:groupIds}},orderBy:{createdAt:"desc"}, include:{group:true}})
+  
+  return Promise.all(groupData)
 }
 
 const addMember = async (memberId:string, groupId:string, userId:string) => {
-  const group = await prisma.group.findUnique({where:{id:groupId}})
-
-  if (group?.adminId !== userId){
+  const groupUser = await prisma.groupUser.findUnique({where:{groupId_userId:{groupId,userId}}})
+  
+  if (!groupUser?.isAdmin){
     throw new ApiError (httpStatus.UNAUTHORIZED, 'You are not allowed to add member to this group')
+  }
+  const existingGroupUser = await prisma.groupUser.findUnique({where:{groupId_userId:{groupId,userId:memberId}}})
+  if (existingGroupUser){
+    throw new ApiError(httpStatus.CONFLICT, "User already added to the group")
   }
   await prisma.groupUser.create({data:{groupId, userId:memberId}})
   return {message:"User added to the group"}
@@ -154,12 +176,13 @@ const addMember = async (memberId:string, groupId:string, userId:string) => {
 const getAllGroupMembers = async (groupId:string,userId:string)=>{
 
   const group = await prisma.group.findUnique({where:{id:groupId}})
-  const groupUsers = await prisma.groupUser.findMany({where:{groupId},include:{user:true}})
-  const targetMember = groupUsers.find((groupUser)=> groupUser.id === userId)
-
-  if (group?.adminId !== userId || !targetMember){
+  const groupUser = await prisma.groupUser.findUnique({where:{groupId_userId:{groupId,userId}}})
+  if (!groupUser){
     throw new ApiError (httpStatus.UNAUTHORIZED, "Sorry, you are not allowed to see the members.")
   }
+  
+  const groupUsers = await prisma.groupUser.findMany({where:{groupId},include:{user:true}})
+
   let mappedUsers = groupUsers.map(groupUser => {
     return {name:groupUser.user.name,image:groupUser.user.avatar, phone:groupUser.user.phone, admin:groupUser.isAdmin}
   })
@@ -171,15 +194,33 @@ const getAllGroupMembers = async (groupId:string,userId:string)=>{
 
 const exitGroup  = async (groupId:string, userId:string)=>{
 
-  const groupUser = await prisma.groupUser.findFirst({where:{groupId, userId}})
+  const exitedGroupuser = await prisma.groupUser.findFirst({where:{groupId, userId}})
 
-  if (!groupUser){
+  if (!exitedGroupuser){
     throw new ApiError (httpStatus.NOT_FOUND, "You are not member of this group")
   }
+//remove user from the group
+  await prisma.groupUser.delete({where:{id:exitedGroupuser.id}})
 
-  await prisma.groupUser.delete({where:{id:groupUser.id}})
+  //count group admin
+  const countGroupAdmin = await prisma.groupUser.count({where:{groupId,isAdmin:true}})
 
-  return {message:"exited from the group"}
+  //check rest admins of the group
+  if (countGroupAdmin === 0){
+    const restGroupUser = await prisma.groupUser.findFirst({where:{groupId},orderBy:{createdAt:"desc"}})
+
+    if (!restGroupUser){
+      //delete the group is there are no group member remains
+      await prisma.group.delete({where:{id:groupId}})
+
+    }else{
+      //make older member admin
+      await prisma.groupUser.update({where:{id:restGroupUser.id},data:{isAdmin:true}})
+    }
+    
+  }
+
+  return {message:"left from the group"}
 }
 
 //make  a user admin by a group admin
@@ -223,12 +264,12 @@ const removeUserFromGroup = async (adminId:string, groupId:string, userId:string
 
 //toggole notificaiton
 const toggoleNotification = async (groupId:string, userId:string)=>{
-  const groupUser = await prisma.groupUser.findUnique({where:{id:userId}})
+  const groupUser = await prisma.groupUser.findUnique({where:{groupId_userId:{groupId,userId}}})
 
   if (!groupUser){
     throw new ApiError(httpStatus.NOT_FOUND, "Group User not found")
   }
-  await prisma.groupUser.update({where:{id:userId}, data:{isMuted:!groupUser.isMuted}})
+  await prisma.groupUser.update({where:{id:groupUser.id}, data:{isMuted:!groupUser.isMuted}})
 
   return {message:"Notificaton toggoled successfully"}
 
@@ -251,9 +292,19 @@ const searchGroupUser = async (groupId: string, q: string) => {
     }
   });
   // Filter users by name after fetching
-  return groupUsers.filter(groupUser => 
-    groupUser.user && groupUser.user.name?.toLowerCase().includes(q.toLowerCase())
+  const filteredUsers =  groupUsers.filter(groupUser =>groupUser.user && groupUser.user.name?.toLowerCase().includes(q.toLowerCase())
+    
+    
   );
+  
+  return filteredUsers.map(filterUser => {
+    return  {
+      name:filterUser.user.name,
+      phone:filterUser.user.phone,
+      avatar:filterUser.user.avatar,
+      isAdmin:filterUser.isAdmin
+    }
+  })
 }
 
 //get group bio

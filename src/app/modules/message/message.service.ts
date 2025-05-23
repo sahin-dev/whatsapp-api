@@ -14,7 +14,7 @@ const createMessageInDB = async (req: any) => {
   const uploadFiles = files?.sendFiles || [];
   const payload = req.body;
   const senderId = req.user.id;
-  const chanelId = req.params.chanelId;
+  const chanelId = req.params.channelId;
 
   if (payload?.message === undefined && files === undefined) {
     throw new ApiError(400, "Message or file is required");
@@ -26,6 +26,8 @@ const createMessageInDB = async (req: any) => {
       : null;
     return result;
   });
+  console.log(senderId)
+  await prisma.userMessage.create({data:{groupId:chanelId,senderId,message:payload.message}})
 
   const newMessage = await prisma.message.create({
     data: {

@@ -75,6 +75,7 @@ const deleteUserIntoDB = async (userId: string) => {
 const blockUser = async (myId:string, blockingId:string)=>{
   const user = await prisma.user.findUnique({where:{id:blockingId}})
   console.log(user)
+  
   if (!user){
     throw new ApiError(httpStatus.NOT_FOUND, "user not found")
   }

@@ -79,14 +79,14 @@ const accessGroups = catchAsync(async (req: any, res: Response) => {
 
 const getMyGroups = catchAsync(async (req:any, res:Response)=>{
   const user = req.user
-
-  const myGroups = await groupServices.getMyGroups(user.id)
-
+  console.log(user)
+  const myGroupInfo = await groupServices.getMyGroups(user.id)
+  console.log(myGroupInfo)
   sendResponse(res,{
     statusCode:httpStatus.OK,
     success:true,
     message:"Groups fetched successfully.",
-    data:myGroups
+    data:myGroupInfo
   })
 })
 
