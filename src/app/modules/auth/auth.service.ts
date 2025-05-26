@@ -67,9 +67,9 @@ const loginUserIntoDB = async (payload: {countryCode:string, phone:string, otp?:
     try{
       const formattedPhone = `${payload.countryCode} ${payload.phone}`;
       console.log("Formatted Phone:", formattedPhone);
-       await sendMessage(messageBody, formattedPhone)
+      //  await sendMessage(messageBody, formattedPhone)
     } catch(err:any){
-      console.error("Failed to send OTP message:", err.message);
+      console.error("Failed to send OTP message:", err);
       throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to send OTP message")
     }
    
