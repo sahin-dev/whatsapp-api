@@ -21,11 +21,11 @@ export default {
     app_pass: process.env.APP_PASS,
   },
   twilio:{
-    test_sid:process.env.TWILIO_TEST_SID,
-    test_token:process.env.TWILIO_TEST_TOKEN,
+    test_sid:process.env.TWILIO_ACCOUNT_SID,
+    test_token:process.env.TWILIO_AUTH_TOKEN,
     sid:process.env.TWILIO_SID,
     token:process.env.TWILIO_TOKEN,
-    number:process.env.TWILIO_NUMBER
+    number:process.env.TWILIO_PHONE_NUMBER
   },
   ssl: {
     storeId: process.env.STORE_ID,

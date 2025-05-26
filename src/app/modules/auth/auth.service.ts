@@ -17,7 +17,7 @@ import { sendMessage } from "../../../helpers/sendMessage";
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
 
-const loginUserIntoDB = async (payload: any) => {
+const loginUserIntoDB = async (payload: {countryCode:string, phone:string, otp?:string, fcmToken?:string}) => {
 
   let accessToken;
   let userInfo;
@@ -64,7 +64,15 @@ const loginUserIntoDB = async (payload: any) => {
     const otpExpiresIn = new Date(Date.now() + 10 *60*1000)
     const messageBody = `Your login verification code is ${otp}. Your otp will expires in 10 minutes`
     await prisma.user.update({where:{id:user.id}, data:{otp, otpExpiresIn}})
-    // await sendMessage(messageBody, user.phone)
+    try{
+      const formattedPhone = `${payload.countryCode} ${payload.phone}`;
+      console.log("Formatted Phone:", formattedPhone);
+       await sendMessage(messageBody, formattedPhone)
+    } catch(err:any){
+      console.error("Failed to send OTP message:", err.message);
+      throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to send OTP message")
+    }
+   
     return {message:messageBody}
   }
     
