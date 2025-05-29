@@ -67,10 +67,23 @@ const blockUser = catchAsync(async (req:any, res:Response) => {
   })
 })
 
+const searchUser = catchAsync(async (req:any, res:Response)=>{
+  const {phone} = req.params
+  const users = await userService.searchUser(phone)
+
+  sendResponse(res, {
+    statusCode:httpStatus.OK,
+    success:true,
+    message:"User fetched successfully",
+    data:users
+  })
+})
+
 export const UserControllers = {
   getUsers,
   getSingleUser,
   updateUser,
   deleteUser,
-  blockUser
+  blockUser,
+  searchUser
 };

@@ -89,10 +89,18 @@ const blockUser = async (myId:string, blockingId:string)=>{
   return {message:"User blocked successfully"}
 }
 
+const searchUser = async (phone:string)=>{
+  const users = await prisma.user.findMany({where:{phone},select:{id:true, avatar:true,name:true,email:true}})
+
+  return users
+
+}
+
 export const userService = {
   getUsersIntoDB,
   getSingleUserIntoDB,
   updateUserIntoDB,
   deleteUserIntoDB,
-  blockUser
+  blockUser,
+  searchUser
 };
