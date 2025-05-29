@@ -48,6 +48,7 @@ model Group {
   adminId     String  @db.ObjectId
   groupName   String? 
   groupImage  String?
+  isStreaming Boolean   @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   message    UserMessage[]

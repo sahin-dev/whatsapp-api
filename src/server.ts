@@ -20,10 +20,10 @@ const sendJSON = (ws: WebSocket, data: any) => {
 };
 
 // Helper function: Broadcast past messages
-const broadcastPastMessages = async (channelId: string) => {
-  const isStreaming = (await prisma.channel.findUnique({ where: { id: channelId } }))?.isStreaming;
-  const pinnedMessage = await messageService.pinnedMessageInDB(channelId);
-  const messages = await messageService.getMessagesFromDB(channelId);
+const broadcastPastMessages = async (groupId: string) => {
+  const isStreaming = (await prisma.group.findUnique({ where: { id: groupId } }))?.isStreaming;
+  const pinnedMessage = await messageService.pinnedMessageInDB(groupId);
+  const messages = await messageService.getMessagesFromDB(groupId);
 
   const payload = {
     type: "pastMessages",
@@ -32,7 +32,7 @@ const broadcastPastMessages = async (channelId: string) => {
     message: messages,
   };
 
-  channelClients.get(channelId)?.forEach((client) => sendJSON(client, payload));
+  channelClients.get(groupId)?.forEach((client) => sendJSON(client, payload));
 };
 
 async function main() {
@@ -91,7 +91,7 @@ async function main() {
 
           case "subscribe":
             if (!groupId) {
-              sendJSON(ws, { error: "ChannelId is required to subscribe" });
+              sendJSON(ws, { error: "groupId is required to subscribe" });
               return;
             }
 
@@ -118,7 +118,7 @@ async function main() {
                 groupId,
                 message: parsedMessage.message,
               };
-              await prisma.message.create({data:{channelId:groupId, senderId:user.id}})
+              await prisma.userMessage.create({data:{groupId, senderId:user.id}})
 
               channelClients.get(groupId)?.forEach((client) =>
                 sendJSON(client, messagePayload)
@@ -163,7 +163,7 @@ async function main() {
 
           case "streaming":
             if (groupId && typeof isStreaming === "boolean") {
-              await prisma.channel.update({
+              await prisma.group.update({
                 where: { id: groupId },
                 data: { isStreaming },
               });

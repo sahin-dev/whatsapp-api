@@ -53,10 +53,10 @@ const createMessageInDB = async (req: any) => {
   return newMessage;
 };
 //using for socket
-const getMessagesFromDB = async (channelId: string) => {
-  const message = await prisma.message.findMany({
+const getMessagesFromDB = async (groupId: string) => {
+  const message = await prisma.userMessage.findMany({
     where: {
-      channelId: channelId,
+      groupId
     },
     include: {
       user: {
@@ -145,14 +145,14 @@ const getSingleMessageFromDB = async (messageId: string) => {
   return message;
 };
 
-const deleteAllMessagesFromChannel = async (channelId: string) => {
-  const messages = await prisma.message.findMany({
-    where: { channelId: channelId },
+const deleteAllMessagesFromChannel = async (groupId: string) => {
+  const messages = await prisma.userMessage.findMany({
+    where: { groupId },
   });
   if (messages.length === 0) {
     throw new ApiError(404, "No messages found in this channel");
   }
-  await prisma.message.deleteMany({ where: { channelId: channelId } });
+  await prisma.userMessage.deleteMany({ where: { groupId } });
   return;
 };
 
@@ -196,9 +196,9 @@ const pinUnpinMessage = async (messageId: string, isPinned: boolean) => {
   return result;
 };
 
-const pinnedMessageInDB = async (channelId: string) => {
-  const pinnedMessages = await prisma.message.findMany({
-    where: { isPinned: true, channelId: channelId },
+const pinnedMessageInDB = async (groupId: string) => {
+  const pinnedMessages = await prisma.userMessage.findMany({
+    where: { isPinned: true, groupId },
     orderBy: { updatedAt: "desc" },
   });
 
