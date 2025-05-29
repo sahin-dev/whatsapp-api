@@ -59,7 +59,7 @@ async function main() {
         const parsedMessage = JSON.parse(message.toString());
         const {
           type,
-          channelId,
+          groupId,
           messageId,
           messageIds,
           isPinned,
@@ -90,7 +90,7 @@ async function main() {
         switch (type) {
 
           case "subscribe":
-            if (!channelId) {
+            if (!groupId) {
               sendJSON(ws, { error: "ChannelId is required to subscribe" });
               return;
             }
@@ -102,25 +102,25 @@ async function main() {
               }
             }
 
-            if (!channelClients.has(channelId)) {
-              channelClients.set(channelId, new Set());
+            if (!channelClients.has(groupId)) {
+              channelClients.set(groupId, new Set());
             }
-            channelClients.get(channelId)?.add(ws);
-            subscribedChannel = channelId;
+            channelClients.get(groupId)?.add(ws);
+            subscribedChannel = groupId;
 
-            await broadcastPastMessages(channelId);
+            await broadcastPastMessages(groupId);
             break;
 
           case "message":
-            if (channelId && subscribedChannel === channelId) {
+            if (groupId && subscribedChannel === groupId) {
               const messagePayload = {
                 type: "message",
-                channelId,
+                groupId,
                 message: parsedMessage.message,
               };
-              await prisma.message.create({data:{channelId, senderId:user.id}})
+              await prisma.message.create({data:{channelId:groupId, senderId:user.id}})
 
-              channelClients.get(channelId)?.forEach((client) =>
+              channelClients.get(groupId)?.forEach((client) =>
                 sendJSON(client, messagePayload)
               );
             }
@@ -148,26 +148,26 @@ async function main() {
             break;
 
           case "clearMessagesFromChannel":
-            if (channelId) {
-              await messageService.deleteAllMessagesFromChannel(channelId);
-              await broadcastPastMessages(channelId);
+            if (groupId) {
+              await messageService.deleteAllMessagesFromChannel(groupId);
+              await broadcastPastMessages(groupId);
             }
             break;
 
           case "editMessage":
-            if (messageId && updateText && channelId) {
+            if (messageId && updateText && groupId) {
               await messageService.updateSingleMessageInDB(messageId, updateText);
-              await broadcastPastMessages(channelId);
+              await broadcastPastMessages(groupId);
             }
             break;
 
           case "streaming":
-            if (channelId && typeof isStreaming === "boolean") {
+            if (groupId && typeof isStreaming === "boolean") {
               await prisma.channel.update({
-                where: { id: channelId },
+                where: { id: groupId },
                 data: { isStreaming },
               });
-              await broadcastPastMessages(channelId);
+              await broadcastPastMessages(groupId);
             }
             break;
 
