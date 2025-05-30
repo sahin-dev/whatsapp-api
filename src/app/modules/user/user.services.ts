@@ -91,16 +91,19 @@ const blockUser = async (myId:string, blockingId:string)=>{
 }
 
 const searchUser = async (phone:string, userId:string)=>{
-  const users = await prisma.user.findMany({where:{phone},select:{id:true, avatar:true,name:true,email:true}})
+  const user = await prisma.user.findUnique({where:{phone},select:{id:true, avatar:true,name:true,email:true}})
   const contactList = await prisma.contactList.findUnique({where:{ownerId:userId}})
   if (!contactList || !contactList.id) {
     throw new ApiError(404, "Contact list not found for this user");
   }
-  for (const v of users) {
-    await prisma.contacts.create({data:{contactListId:contactList.id, contactId:v.id}})
+  if (!user)  {
+    throw new ApiError(404, "User not found with this phone number");
   }
 
-  return users
+    await prisma.contacts.create({data:{contactListId:contactList.id, contactId:user.id}})
+  
+
+  return user
 
 }
 
