@@ -26,7 +26,7 @@ const loginUserIntoDB = async (payload: {countryCode:string, phone:string, otp?:
   const user = await prisma.user.findUnique({
     where: {
       phone: payload.phone,
-    },
+    },include:{contactList:true}
   });
 
 
@@ -34,6 +34,7 @@ const loginUserIntoDB = async (payload: {countryCode:string, phone:string, otp?:
   if (!user) {
     const otp = generateOtp()
     const otpExpiresIn = new Date(Date.now() + 10 *60*1000)
+   
     const createUser = await prisma.user.create({
       data: {
         phone:payload.phone,
@@ -41,6 +42,8 @@ const loginUserIntoDB = async (payload: {countryCode:string, phone:string, otp?:
         otpExpiresIn
       },
     });
+     await prisma.contactList.create({data:{ownerId:createUser.id}})
+
 
     // accessToken = jwtHelpers.generateToken(
     //   {

@@ -5,6 +5,7 @@ import { ObjectId } from "mongodb";
 import { Request } from "express";
 import { searchFilter } from "../../../shared/searchFilter";
 import httpStatus from "http-status";
+import { get } from "http";
 
 
 //get single user
@@ -26,7 +27,7 @@ const getUsersIntoDB = async (req: Request) => {
   const { search } = req.query as any;
   const searchFilters = search ? searchFilter(search) : {};
   const users = await prisma.user.findMany({
-    where: searchFilters,
+    where: searchFilters
   });
   const sanitizedUsers = users.map((user) => {
     const {  accessToken, ...sanitizedUser } = user;
@@ -74,7 +75,7 @@ const deleteUserIntoDB = async (userId: string) => {
 
 const blockUser = async (myId:string, blockingId:string)=>{
   const user = await prisma.user.findUnique({where:{id:blockingId}})
-  console.log(user)
+ 
   
   if (!user){
     throw new ApiError(httpStatus.NOT_FOUND, "user not found")
@@ -89,11 +90,32 @@ const blockUser = async (myId:string, blockingId:string)=>{
   return {message:"User blocked successfully"}
 }
 
-const searchUser = async (phone:string)=>{
+const searchUser = async (phone:string, userId:string)=>{
   const users = await prisma.user.findMany({where:{phone},select:{id:true, avatar:true,name:true,email:true}})
+  const contactList = await prisma.contactList.findUnique({where:{ownerId:userId}})
+  if (!contactList || !contactList.id) {
+    throw new ApiError(404, "Contact list not found for this user");
+  }
+  for (const v of users) {
+    await prisma.contacts.create({data:{contactListId:contactList.id, contactId:v.id}})
+  }
 
   return users
 
+}
+
+const getContacts = async (userId:string)=>{
+  const contactList = await prisma.contactList.findUnique({where:{ownerId:userId}})
+  if (!contactList || !contactList.id) {
+    throw new ApiError(404, "Contact list not found for this user");
+  }
+  const contacts = await prisma.contacts.findMany({
+    where:{contactListId:contactList.id},
+    select:{contactId:true}
+  })
+  const contactIds = contacts.map(c=>c.contactId)
+  const users = await prisma.user.findMany({where:{id:{in:contactIds}},select:{id:true, avatar:true,name:true,email:true}})
+  return users
 }
 
 export const userService = {
@@ -102,5 +124,6 @@ export const userService = {
   updateUserIntoDB,
   deleteUserIntoDB,
   blockUser,
-  searchUser
+  searchUser,
+  getContacts
 };

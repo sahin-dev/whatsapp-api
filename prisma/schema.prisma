@@ -32,6 +32,8 @@ model User {
   groupUser     GroupUser[]
   channel         Channel[]
   message        Message[]
+  contactList   ContactList?
+  contacts     Contacts[]
   userMessage    UserMessage[]
   notifications  Notifications[]
   subscription   Subscription[]
@@ -105,6 +107,30 @@ model BlockUser {
   updatedAt     DateTime @updatedAt
   @@unique([blockedId, blockerId])
 @@map("blocked_users")
+}
+
+model ContactList {
+  id      String          @id @default(auto()) @map("_id") @db.ObjectId
+
+  ownerId    String      @db.ObjectId @unique
+
+  owner     User    @relation(fields: [ownerId], references: [id])
+
+  contacts    Contacts[]   
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  @@unique([ownerId,id])
+}
+
+model Contacts {
+  id          String        @id  @default(auto())  @map("_id") @db.ObjectId
+  contactListId    String    @db.ObjectId
+
+  contatctList    ContactList?     @relation(fields: [contactListId], references: [id])
+  contactId          String    @db.ObjectId
+
+  user            User?      @relation(fields: [contactId], references: [id])
 }
 
 

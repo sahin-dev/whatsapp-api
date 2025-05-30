@@ -17,6 +17,7 @@ router.put("/", auth(), validateRequest(userValidation.userUpdateValidationSchem
 //tested
 router.post("/toggole-block/:otherUserId", auth(), UserControllers.blockUser)
 router.get("/search/:phone", auth(),UserControllers.searchUser)
+router.get("/contacts", auth(), UserControllers.getContacts)
 
 //not required
 
