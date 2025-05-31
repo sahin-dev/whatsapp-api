@@ -9,7 +9,7 @@ const router = express.Router();
 
 
 //tested
-router.get("/:id", auth(), UserControllers.getSingleUser);
+
 //tested
 router.delete("/", auth(), UserControllers.deleteUser);
 //tested
@@ -18,7 +18,7 @@ router.put("/", auth(), validateRequest(userValidation.userUpdateValidationSchem
 router.post("/toggole-block/:otherUserId", auth(), UserControllers.blockUser)
 router.get("/search/:phone", auth(),UserControllers.searchUser)
 router.get("/contacts", auth(), UserControllers.getContacts)
-
+router.get("/:id", auth(), UserControllers.getSingleUser);
 //not required
 
 // router.get(

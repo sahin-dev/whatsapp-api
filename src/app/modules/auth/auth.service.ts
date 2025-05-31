@@ -84,7 +84,7 @@ const loginUserIntoDB = async (payload: {countryCode:string, phone:string, otp?:
     throw new ApiError(httpStatus.BAD_REQUEST, "Otp invalid")
   }
 
-  
+  console.log(config.jwt)
 
     accessToken = jwtHelpers.generateToken(
       {

@@ -34,6 +34,7 @@ const auth = (...roles: string[]) => {
         token,
         config.jwt.jwt_secret as Secret
       );
+ 
 
       req.user = verifiedUser;
 

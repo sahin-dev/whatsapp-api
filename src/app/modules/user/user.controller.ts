@@ -82,6 +82,7 @@ const searchUser = catchAsync(async (req:any, res:Response)=>{
 
 const getContacts = catchAsync(async (req:any, res:Response)=>{
   const user = req.user
+  console.log("user", user)
   const users = await userService.getContacts(user.id)
 
   sendResponse(res, {

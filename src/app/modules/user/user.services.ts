@@ -91,7 +91,7 @@ const blockUser = async (myId:string, blockingId:string)=>{
 }
 
 const searchUser = async (phone:string, userId:string)=>{
-  const user = await prisma.user.findUnique({where:{phone},select:{id:true, avatar:true,name:true,email:true}})
+  const user = await prisma.user.findUnique({where:{phone},select:{id:true, avatar:true,name:true,email:true,phone:true}})
   const contactList = await prisma.contactList.findUnique({where:{ownerId:userId}})
   if (!contactList || !contactList.id) {
     throw new ApiError(404, "Contact list not found for this user");
@@ -108,6 +108,7 @@ const searchUser = async (phone:string, userId:string)=>{
 }
 
 const getContacts = async (userId:string)=>{
+  console.log("userId", userId)
   const contactList = await prisma.contactList.findUnique({where:{ownerId:userId}})
   if (!contactList || !contactList.id) {
     throw new ApiError(404, "Contact list not found for this user");
@@ -117,7 +118,7 @@ const getContacts = async (userId:string)=>{
     select:{contactId:true}
   })
   const contactIds = contacts.map(c=>c.contactId)
-  const users = await prisma.user.findMany({where:{id:{in:contactIds}},select:{id:true, avatar:true,name:true,email:true}})
+  const users = await prisma.user.findMany({where:{id:{in:contactIds}},select:{id:true, avatar:true,name:true,email:true,phone:true}})
   return users
 }
 
