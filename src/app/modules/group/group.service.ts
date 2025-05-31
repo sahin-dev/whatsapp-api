@@ -336,6 +336,31 @@ const editGroupBio = async (userId:string, groupId:string, payload:any)=>{
 
 }
 
+const getGroupMessages = async (groupId: string) => {
+  const messages = await prisma.userMessage.findMany({  
+    where: { groupId },
+    orderBy: { createdAt: "desc" },
+    // include: {
+    //   user: {
+    //     select: {
+    //       id: true,
+    //       name: true,
+    //       avatar: true,
+    //     },
+    //   },
+    // },
+    
+  });
+
+  // const user = await prisma.groupUser.findFirst({
+  //   where: { groupId, userId:messages },  
+  //   include: { user: true },
+  // });
+  // if (messages.length === 0) {
+  //   throw new ApiError(404, "No messages found in this group");
+  // }
+  return messages
+}
 export const groupServices = {
   createGroupInDB,
   getGroupsInDB,
@@ -357,7 +382,7 @@ export const groupServices = {
   searchGroupUser,
   getGroupBio,
   editGroupBio,
-
+  getGroupMessages
 
 
 };

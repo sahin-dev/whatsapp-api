@@ -222,6 +222,20 @@ const updateGroupBio = catchAsync(async (req:any, res:Response)=>{
     })
 })
 
+const getGroupMessages = catchAsync(async (req:any, res:Response)=>{
+  const {groupId} = req.params
+  const userId = req.user.id
+
+  const messages = await groupServices.getGroupMessages(groupId)
+
+  sendResponse(res, {
+    success:true,
+    statusCode:httpStatus.OK,
+    message:"Group messages fetched successfully",
+    data:messages
+  })
+})
+
 export const groupControllers = {
   createGroup,
   getAllGroups,
@@ -241,7 +255,8 @@ export const groupControllers = {
   removeUserFromGroup,
   searchGroupUser,
   getGroupBio,
-  updateGroupBio
+  updateGroupBio,
+  getGroupMessages
   
 
 };

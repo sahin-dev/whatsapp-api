@@ -88,7 +88,7 @@ model UserMessage {
   isPinned  Boolean   @default(false)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  user      User?     @relation(fields: [senderId], references: [id])
+  user      User    @relation(fields: [senderId], references: [id])
   group   Group?      @relation(fields: [groupId], references: [id])
 
   @@map("user_messages")

@@ -35,7 +35,7 @@ router.get("/access/groups", auth(), groupControllers.accessGroups);
 //new routes
 
 router.get('/my-groups', auth(), groupControllers.getMyGroups)
-
+router.get('/messages/:groupId', auth(), groupControllers.getGroupMessages)
 
 router.post ("/add/:memberId/:groupId", auth(), groupControllers.addMember)
 
