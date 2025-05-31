@@ -77,6 +77,7 @@ async function main() {
             try{
               let verifiedUser = jwtHelpers.verifyToken(token, config.jwt.jwt_secret as Secret)
               user = verifiedUser
+              return
             }catch(err:any){
               sendJSON(ws, {error:"Token is Invalid!"})
               return
