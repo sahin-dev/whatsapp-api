@@ -10,7 +10,7 @@ const router = Router();
 //tested
 router.post(
   "/create/:groupId",
-  fileUploader.uploadChanelImage,
+  // fileUploader.uploadChanelImage,
   parseBodyData,
   auth(),
   chanelControllers.createChanel
@@ -37,7 +37,7 @@ router.get("/:chanelId", auth(), chanelControllers.getSingleChanel);
 
 router.put(
   "/:chanelId",
-  fileUploader.uploadChanelImage,
+  // fileUploader.uploadChanelImage,
   parseBodyData,
   auth(UserRole.SUPER_ADMIN),
   chanelControllers.updateChanel

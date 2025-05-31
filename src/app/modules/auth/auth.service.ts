@@ -13,6 +13,7 @@ import jwt from "jsonwebtoken";
 import httpStatus from "http-status";
 import { generateOtp } from "../../../helpers/generateOtp";
 import { sendMessage } from "../../../helpers/sendMessage";
+import { fileUploader } from "../../../helpers/fileUploader";
 
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
@@ -397,13 +398,19 @@ const updateProfileImageInDB = async (req: any) => {
   if (!user) {
     throw new ApiError(404, "User not found for edit user");
   }
-
+  let imageUrl: string | null = null;
+  if (file){
+    const uploadResult = await fileUploader.uploadToDigitalOcean(file);
+    imageUrl = typeof uploadResult === "string"
+      ? uploadResult
+      : uploadResult?.Location || null;
+  }
 
   // Update user's avatar with the new filename
   const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: {
-      avatar: `${config.backend_base_url}/uploads/${file.filename}`,
+      avatar: imageUrl || user.avatar, // Use the new filename or keep the existing one
     },
   });
 

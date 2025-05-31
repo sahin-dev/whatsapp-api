@@ -9,7 +9,7 @@ const router = express.Router();
 
 //new routes for new requirements
 
-router.post("send/:groupId",fileUploader.sendFiles, auth(), messageController.sendMessage)
+router.post("send/:groupId", auth(), messageController.sendMessage)
 
 
 router.get("/get-last-message/:channelId", auth(), )
@@ -24,7 +24,7 @@ router.get("/get-last-message/:channelId", auth(), )
 
 router.post(
   "/send-message/:channelId",
-  fileUploader.sendFiles,
+  // fileUploader.sendFiles,
   parseBodyData,
   auth(),
   messageController.createMessage

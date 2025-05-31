@@ -29,7 +29,7 @@ router.put(
 
 router.patch(
   "/update/profile-image",
-  fileUploader.updateProfileImage,
+  fileUploader.uploadSingle,
   auth(),
   authController.updateProfileImage
 );

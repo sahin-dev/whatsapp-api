@@ -5,6 +5,7 @@ import { Request } from "express";
 import { UserRole } from "@prisma/client";
 import httpStatus from "http-status";
 import { group } from "console";
+import { fileUploader } from "../../../helpers/fileUploader";
 
 const createGroupInDB = async (req: any) => {
   const payload = req.body;
@@ -13,9 +14,23 @@ const createGroupInDB = async (req: any) => {
   // if (!file) {
   //   throw new ApiError(400, "No file attached");
   // }
-  const imageUrl = file
-    ? `${config.backend_base_url}/uploads/${file.filename}`
-    : null;
+  // const imageUrl = file
+  //   ? `${config.backend_base_url}/uploads/${file.filename}`
+  //   : null;
+  let imageUrl = null;
+
+  if (file){
+    try{
+      let upload = await fileUploader.uploadToDigitalOcean(file)
+     imageUrl = upload.Location;
+    }catch(err:any){
+      console.log("Error uploading file:", err.message);
+    }
+    
+  }
+
+  console.log("Image URL:", imageUrl);
+  // Check if the group name already exists
   
   // const existingGroup = await prisma.group.findFirst({
   //   where: { groupName: payload.groupName },
@@ -29,7 +44,7 @@ const createGroupInDB = async (req: any) => {
     data: {
       ...payload,
       adminId: userId,
-      groupImage: imageUrl ? imageUrl : ""
+      groupImage: imageUrl ? imageUrl : null
     },
   });
   
@@ -74,14 +89,28 @@ const updateGroupInDB = async (req: Request) => {
   const payload = req.body;
   const groupId = req.params.groupId;
   const file = req.file;
-  const imageUrl = file
-    ? `${config.backend_base_url}/uploads/${file.filename}`
-    : null;
+  let imageUrl = null
+
+
+    // imageUrl = `${config.backend_base_url}/uploads/${file.filename}`;
+  
+
+
   const existingGroup = await prisma.group.findUnique({
     where: { id: groupId },
   });
   if (!existingGroup) {
     throw new ApiError(404, "Group not found for update");
+  }
+
+  if (file){
+    try{
+      let upload = await fileUploader.uploadToDigitalOcean(file)
+     imageUrl = upload.Location;
+    }catch(err:any){
+      console.log("Error uploading file:", err.message);
+    }
+    
   }
   const updatedGroup = await prisma.group.update({
     where: { id: groupId },

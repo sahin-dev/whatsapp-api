@@ -13,7 +13,7 @@ const router = Router();
 //tested
 router.post(
   "/create",
-  fileUploader.uploadGroupImage,
+  fileUploader.groupImageUploader,
   auth(),
   parseBodyData,
   groupControllers.createGroup
@@ -65,7 +65,7 @@ router.get("/:groupId", auth(), groupControllers.getSingleGroup);
 //tested
 router.put(
   "/:groupId",
-  fileUploader.uploadGroupImage,
+  fileUploader.groupImageUploader,
   auth(),
   parseBodyData,
   groupControllers.updateGroup
