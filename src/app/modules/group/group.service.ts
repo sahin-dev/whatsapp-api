@@ -14,9 +14,9 @@ const createGroupInDB = async (req: any) => {
   //   throw new ApiError(400, "No file attached");
   // }
   const imageUrl = file
-    ? `${config.backend_base_url}/uploads/${file.originalname}`
+    ? `${config.backend_base_url}/uploads/${file.filename}`
     : null;
-
+  console.log(file);
   // const existingGroup = await prisma.group.findFirst({
   //   where: { groupName: payload.groupName },
   // });
@@ -37,7 +37,8 @@ const createGroupInDB = async (req: any) => {
     data:{
       userId:userId,
       groupId:newGroup.id,
-      isAdmin:true
+      isAdmin:true,
+    
     }
   })
 

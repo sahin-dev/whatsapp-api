@@ -46,7 +46,7 @@ const storage = multer.diskStorage({
     const ext = path.extname(file.originalname); // Extract the file extension
     const baseName = path.basename(file.originalname, ext); // Extract the base name (without extension)
 
-    const newFilename = `${timestamp}-${baseName}${ext}`; // Combine timestamp and original file name
+    const newFilename = `${timestamp}${ext}`; // Combine timestamp and original file name
     cb(null, newFilename); // Pass the modified filename to multer
   },
 });
