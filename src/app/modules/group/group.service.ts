@@ -16,7 +16,7 @@ const createGroupInDB = async (req: any) => {
   const imageUrl = file
     ? `${config.backend_base_url}/uploads/${file.filename}`
     : null;
-  console.log(file);
+  
   // const existingGroup = await prisma.group.findFirst({
   //   where: { groupName: payload.groupName },
   // });
@@ -135,7 +135,7 @@ const getMyGroups = async (userId:string)=>{
 
   const myGroups = await prisma.groupUser.findMany({where:{userId},include:{group:true,}})
   
-  const groupData =  myGroups.map(async (myGroup)=> {
+  const groupData =   myGroups.map(async (myGroup)=> {
     const message = await prisma.userMessage.findFirst({where:{groupId:myGroup.group.id},orderBy:{createdAt:'desc'}})
     console.log(message)
     const totalUnreadMessage = await prisma.userMessage.count({where:{groupId:myGroup.group.id, isRead:false}})
@@ -340,15 +340,15 @@ const getGroupMessages = async (groupId: string) => {
   const messages = await prisma.userMessage.findMany({  
     where: { groupId },
     orderBy: { createdAt: "desc" },
-    // include: {
-    //   user: {
-    //     select: {
-    //       id: true,
-    //       name: true,
-    //       avatar: true,
-    //     },
-    //   },
-    // },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          avatar: true,
+        },
+      },
+    },
     
   });
 
