@@ -120,7 +120,7 @@ async function main() {
                 groupId,
                 message: parsedMessage.message,
               };
-              await prisma.userMessage.create({data:{groupId, senderId:user.id}})
+              await prisma.userMessage.create({data:{groupId, senderId:user.id, message: parsedMessage.message}})
 
               channelClients.get(groupId)?.forEach((client) =>
                 sendJSON(client, messagePayload)
