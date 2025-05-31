@@ -49,6 +49,7 @@ const uploadSingle = upload.single("image");
 const uploadFile = upload.single("file");
 
 const groupImageUploader = upload.single("groupImage");
+const uploadProfileImage = upload.single("avatar");
 // Upload multiple images
 const uploadMultipleImage = upload.fields([{ name: "images", maxCount: 15 }]);
 
@@ -134,5 +135,6 @@ export const fileUploader = {
   cloudinaryUpload,
   uploadToDigitalOcean,
   uploadToCloudinary,
-  groupImageUploader
+  groupImageUploader,
+  uploadProfileImage,
 };
