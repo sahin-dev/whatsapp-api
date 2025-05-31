@@ -75,7 +75,7 @@ const updateGroupInDB = async (req: Request) => {
   const groupId = req.params.groupId;
   const file = req.file;
   const imageUrl = file
-    ? `${config.backend_base_url}/uploads/${file.originalname}`
+    ? `${config.backend_base_url}/uploads/${file.filename}`
     : null;
   const existingGroup = await prisma.group.findUnique({
     where: { id: groupId },
