@@ -2,6 +2,7 @@
   "name": "whatsapp_chat_app",
   "version": "1.0.0",
   "main": "src/server.ts",
+  "type": "module",
   "scripts": {
     "start": "ts-node-dev src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
