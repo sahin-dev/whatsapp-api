@@ -278,7 +278,7 @@ const exitGroup  = async (groupId:string, userId:string)=>{
 
 //make  a user admin by a group admin
 
-const makeAdmin = async (adminId:string,groupId:string, userId:string)=>{
+const makeAdmin = async (adminId:string,groupId:string, groupUserId:string)=>{
 
   const groupUser = await prisma.groupUser.findUnique({where:{groupId_userId:{groupId,userId:adminId}}})
 
@@ -286,7 +286,8 @@ const makeAdmin = async (adminId:string,groupId:string, userId:string)=>{
     throw new ApiError(httpStatus.UNAUTHORIZED, 'You are authoized to make admin')
   }
 
-  const generalUser = await prisma.groupUser.findUnique({where:{groupId_userId:{groupId,userId}}})
+  const generalUser = await prisma.groupUser.findUnique({where:{id:groupUserId}})
+
   if (!generalUser){
     throw new ApiError(httpStatus.NOT_FOUND, "User not found")
   }
