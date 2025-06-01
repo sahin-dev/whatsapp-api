@@ -12,8 +12,8 @@ let wss: WebSocketServer;
 const channelClients = new Map<string, Set<WebSocket>>();
 let server: Server;
 
-const PORT = Number(config.port);
-// Helper function: Send JSON safely
+const PORT = Number(config.port) || 3000;
+// Helper function: Send JSON
 const sendJSON = (ws: WebSocket, data: any) => {
   if (ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify(data));
@@ -194,7 +194,10 @@ async function main() {
   });
 }
 
-main();
+
+  main();
+
+
 
 export { wss, channelClients, server };
 

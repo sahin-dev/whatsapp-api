@@ -204,7 +204,7 @@ const addMember = async (memberId:string, groupId:string, userId:string) => {
 const addMemberByPhone = async (phone:string, groupId:string, userId:string)=>{
   const groupUser = await prisma.groupUser.findUnique({where:{groupId_userId:{groupId,userId}}})
 
-  
+
   
   if (!groupUser?.isAdmin){
     throw new ApiError (httpStatus.UNAUTHORIZED, 'You are not allowed to add member to this group')
@@ -306,8 +306,12 @@ const removeUserFromGroup = async (adminId:string, groupId:string, userId:string
   }
 
   const generaluser = await prisma.groupUser.findUnique({where:{groupId_userId:{groupId,userId}}})
-  if(!generaluser || !generaluser.isAdmin){
-    throw new ApiError(httpStatus.BAD_REQUEST, "Could not remove the user")
+
+  if(!generaluser){
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found in the group")
+  }
+  if(generaluser.isAdmin){
+    throw new ApiError(httpStatus.BAD_REQUEST, "You cannot remove an admin from the group")
   }
   
   await prisma.groupUser.delete({where:{id:generaluser.id}})
