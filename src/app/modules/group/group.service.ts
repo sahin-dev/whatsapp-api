@@ -201,6 +201,29 @@ const addMember = async (memberId:string, groupId:string, userId:string) => {
   return {message:"User added to the group"}
 }
 
+const addMemberByPhone = async (phone:string, groupId:string, userId:string)=>{
+  const groupUser = await prisma.groupUser.findUnique({where:{groupId_userId:{groupId,userId}}})
+
+  
+  
+  if (!groupUser?.isAdmin){
+    throw new ApiError (httpStatus.UNAUTHORIZED, 'You are not allowed to add member to this group')
+  }
+
+  const user = await prisma.user.findUnique({where:{phone}})
+  if (!user){
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found")
+  }
+  
+  const existingGroupUser = await prisma.groupUser.findUnique({where:{groupId_userId:{groupId,userId:user.id}}})
+  if (existingGroupUser){
+    throw new ApiError(httpStatus.CONFLICT, "User already added to the group")
+  }
+  
+  await prisma.groupUser.create({data:{groupId, userId:user.id}})
+  return {message:"User added to the group"}
+}
+
 //get all members of a specific group
 
 const getAllGroupMembers = async (groupId:string,userId:string)=>{
@@ -214,7 +237,7 @@ const getAllGroupMembers = async (groupId:string,userId:string)=>{
   const groupUsers = await prisma.groupUser.findMany({where:{groupId},include:{user:true}})
 
   let mappedUsers = groupUsers.map(groupUser => {
-    return {name:groupUser.user.name,image:groupUser.user.avatar, phone:groupUser.user.phone, admin:groupUser.isAdmin}
+    return {id: groupUser.id,name:groupUser.user.name,image:groupUser.user.avatar, phone:groupUser.user.phone, admin:groupUser.isAdmin}
   })
 
   return mappedUsers
@@ -411,7 +434,8 @@ export const groupServices = {
   searchGroupUser,
   getGroupBio,
   editGroupBio,
-  getGroupMessages
+  getGroupMessages,
+  addMemberByPhone
 
 
 };

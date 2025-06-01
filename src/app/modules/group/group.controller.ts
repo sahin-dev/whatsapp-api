@@ -106,6 +106,22 @@ const addMember = catchAsync (async (req:any, res:Response)=>{
 
 })
 
+const addMemberByPhone = catchAsync (async (req:any, res:Response)=>{
+  const user = req.user
+  const groupId = req.params.groupId
+  const {phone} = req.body
+
+  const result = await groupServices.addMemberByPhone(phone,groupId, user.id)
+
+  sendResponse (res, {
+    statusCode:200,
+    success:true,
+    message:"Member add to the group",
+    data:result
+  })
+
+} )
+
 const getAllGroupMembers = catchAsync (async (req:any, res:Response)=>{
   const user = req.user
   const groupId = req.params.groupId
@@ -247,6 +263,7 @@ export const groupControllers = {
   //new
   getMyGroups,
   addMember,
+  addMemberByPhone,
   getAllGroupMembers,
 
   exitGroup,

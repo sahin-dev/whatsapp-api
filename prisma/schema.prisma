@@ -60,7 +60,7 @@ model Group {
   @@map("groups")
 }
 
-
+  
 model GroupUser {
   id      String   @id @default(auto()) @map("_id") @db.ObjectId
   groupId String   @db.ObjectId

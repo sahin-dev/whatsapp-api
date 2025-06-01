@@ -11,7 +11,7 @@
     "postinstall": "prisma generate"
   },
   "keywords": [],
-  "author": "Ruhul-Amin",
+  "author": "Md Sahin Siraj",
   "license": "ISC",
   "description": "web chat app",
   "devDependencies": {

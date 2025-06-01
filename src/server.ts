@@ -7,11 +7,12 @@ import prisma from "./shared/prisma";
 import { jwtHelpers } from "./helpers/jwtHelpers";
 import { Secret } from "jsonwebtoken";
 
+
 let wss: WebSocketServer;
 const channelClients = new Map<string, Set<WebSocket>>();
 let server: Server;
 
-const PORT = config.port
+const PORT = Number(config.port);
 // Helper function: Send JSON safely
 const sendJSON = (ws: WebSocket, data: any) => {
   if (ws.readyState === WebSocket.OPEN) {
