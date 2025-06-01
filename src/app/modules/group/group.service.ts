@@ -298,14 +298,14 @@ const makeAdmin = async (adminId:string,groupId:string, userId:string)=>{
 
 //remove a user by an admin
 
-const removeUserFromGroup = async (adminId:string, groupId:string, userId:string)=>{
+const removeUserFromGroup = async (adminId:string, groupId:string, groupUserId:string)=>{
   const groupUser = await prisma.groupUser.findUnique({where:{groupId_userId:{groupId,userId:adminId}}})
 
   if (!groupUser || !groupUser.isAdmin){
     throw new ApiError(httpStatus.UNAUTHORIZED, "You are not authroized to leave user from group")
   }
 
-  const generaluser = await prisma.groupUser.findUnique({where:{groupId_userId:{groupId,userId}}})
+  const generaluser = await prisma.groupUser.findUnique({where:{id:groupUserId}})
 
   if(!generaluser){
     throw new ApiError(httpStatus.NOT_FOUND, "User not found in the group")
