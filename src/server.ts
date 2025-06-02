@@ -61,6 +61,7 @@ async function main() {
         const {
           type,
           groupId,
+          roomType,
           messageId,
           messageIds,
           isPinned,

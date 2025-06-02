@@ -29,6 +29,7 @@ model User {
   status         UserStatus      @default(ACTIVE)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+  chats          ChatUser[]         @relation("chatUser")
   groupUser     GroupUser[]
   channel         Channel[]
   message        Message[]
@@ -41,6 +42,32 @@ model User {
   blockedBy      BlockUser[]  @relation(name: "blocked")
 
   @@map("users")
+}
+
+model Chat {
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  users   ChatUser[]
+  chatMessages UserMessage[]
+  isStreaming Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt     
+ 
+}
+
+
+model ChatUser {
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  chatId  String   @db.ObjectId
+  userId  String   @db.ObjectId
+  user    User     @relation(name: "chatUser", fields: [userId], references: [id])
+  chat    Chat     @relation(fields: [chatId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([chatId, userId])
+  @@map("chat_users")
 }
 
 
@@ -58,6 +85,11 @@ model Group {
   groupUsers  GroupUser[]
 
   @@map("groups")
+}
+
+enum GroupType {
+  ROOM
+  GROUP
 }
 
   
@@ -90,6 +122,7 @@ model UserMessage {
   updatedAt DateTime  @updatedAt
   user      User    @relation(fields: [senderId], references: [id])
   group   Group?      @relation(fields: [groupId], references: [id])
+  chat     Chat?       @relation(fields: [replyId], references: [id])
 
   @@map("user_messages")
 }

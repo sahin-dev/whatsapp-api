@@ -2,7 +2,7 @@ import prisma from "../../../shared/prisma";
 import ApiError from "../../errors/ApiErrors";
 import config from "../../../config";
 import { Request } from "express";
-import { UserRole } from "@prisma/client";
+import { GroupType, UserRole } from "@prisma/client";
 import httpStatus from "http-status";
 import { group } from "console";
 import { fileUploader } from "../../../helpers/fileUploader";
@@ -44,6 +44,7 @@ const createGroupInDB = async (req: any) => {
     data: {
       ...payload,
       adminId: userId,
+      GroupType:GroupType.GROUP,
       groupImage: imageUrl ? imageUrl : null
     },
   });
