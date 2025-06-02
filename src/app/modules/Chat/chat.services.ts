@@ -12,11 +12,15 @@ const createGroupInDB = async (req: any) => {
   const userId = req.user.id;
   const {participantId} = req.params
 
+  if(userId === participantId){
+    throw new ApiError(httpStatus.BAD_REQUEST, "You cannot create a chat with yourself");
+    }
+
 const existingChat = await prisma.group.findFirst({
   where: {
     groupType: GroupType.ROOM,
     groupUsers: {
-      some: {
+      every: {
         userId: {
           in: [userId, participantId],
         },
@@ -37,6 +41,7 @@ const existingChat = await prisma.group.findFirst({
         },
     },
 });
+console.log("Existing Chat:", existingChat);
   if (existingChat) {
     return {
       id: existingChat.id,
