@@ -44,7 +44,6 @@ const createGroupInDB = async (req: any) => {
     data: {
       ...payload,
       adminId: userId,
-      GroupType:GroupType.GROUP,
       groupImage: imageUrl ? imageUrl : null
     },
   });
