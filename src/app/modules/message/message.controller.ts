@@ -7,15 +7,15 @@ import prisma from "../../../shared/prisma";
 import { User } from "@prisma/client";
 
 const createMessage = catchAsync(async (req: Request, res: Response) => {
-  const { channelId } = req.params;
+  const { groupId } = req.params;
   await messageService.createMessageInDB(req);
 
   // Send the single message only to clients connected to the specific channel
   // const result = await messageService.createMessageInDB(req);
 
   //send all the messages only to clients connected to the specific channel
-  const results = await prisma.message.findMany({
-    where: { channelId: channelId },
+  const results = await prisma.userMessage.findMany({
+    where: { groupId },
     include: {
       user: {
         select: {
@@ -32,12 +32,12 @@ const createMessage = catchAsync(async (req: Request, res: Response) => {
 
   const messagePayload = {
     type: "message",
-    channelId: channelId,
+    groupId,
     message: results,
   };
 
   // Send the message only to clients connected to the specific channel
-  const channelClient = channelClients.get(channelId) || [];
+  const channelClient = channelClients.get(groupId) || [];
   channelClient.forEach((client: any) => {
     if (client.readyState === 1) {
       client.send(JSON.stringify(messagePayload));
@@ -76,8 +76,8 @@ const deleteSingleMessage = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deleteAllMessages = catchAsync(async (req: Request, res: Response) => {
-  const { channelId } = req.params;
-  await messageService.deleteAllMessagesFromChannel(channelId);
+  const { groupId } = req.params;
+  await messageService.deleteAllMessagesFromChannel(groupId);
 
   sendResponse(res, {
     statusCode: 200,
@@ -151,8 +151,8 @@ const pinUnpinMessage = catchAsync(async (req, res) => {
 });
 
 const pinnedMessage = catchAsync(async (req, res) => {
-  const { channelId } = req.params;
-  const result = await messageService.pinnedMessageInDB(channelId);
+  const { groupId } = req.params;
+  const result = await messageService.pinnedMessageInDB(groupId);
 
   sendResponse(res, {
     statusCode: 200,

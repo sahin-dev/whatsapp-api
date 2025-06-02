@@ -79,7 +79,7 @@ const accessGroups = catchAsync(async (req: any, res: Response) => {
 
 const getMyGroups = catchAsync(async (req:any, res:Response)=>{
   const user = req.user
-  console.log(user)
+ 
   const myGroupInfo = await groupServices.getMyGroups(user.id)
   console.log(myGroupInfo)
   sendResponse(res,{

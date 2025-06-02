@@ -173,6 +173,7 @@ const getMyGroups = async (userId:string)=>{
       console.log(message)
       totalUnreadMessage = await prisma.userMessage.count({where:{groupId:myGroup.group.id, isRead:false}})
     // }
+    console.log("message", message)
     return {
       id:myGroup.group.id,
       name:myGroup.group.groupName,

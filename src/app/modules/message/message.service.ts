@@ -4,36 +4,31 @@ import ApiError from "../../errors/ApiErrors";
 import { RtcTokenBuilder, RtcRole } from "agora-access-token";
 import axios from "axios";
 import httpStatus from "http-status";
+import { fileUploader } from "../../../helpers/fileUploader";
 
 const appID = config.agora.app_id as string;
 const appCertificate = config.agora.app_certificate as string;
 
 //using for socket in controllers
 const createMessageInDB = async (req: any) => {
-  const files = req.files;
-  const uploadFiles = files?.sendFiles || [];
+  const file = req.file;
   const payload = req.body;
   const senderId = req.user.id;
-  const chanelId = req.params.channelId;
+  const groupId = req.params.groupId;
 
-  if (payload?.message === undefined && files === undefined) {
+  if (payload?.message === undefined && file === undefined) {
     throw new ApiError(400, "Message or file is required");
   }
 
-  const imageUrls = uploadFiles?.map((e: any) => {
-    const result = e
-      ? `${config.backend_base_url}/uploads/${e.filename}`
-      : null;
-    return result;
-  });
-  console.log(senderId)
-  await prisma.userMessage.create({data:{groupId:chanelId,senderId,message:payload.message}})
+  const imageUrls = (await fileUploader.uploadToDigitalOcean(file)).Location
+  
+  // await prisma.userMessage.create({data:{groupId,senderId,message:payload.message}})
 
-  const newMessage = await prisma.message.create({
+  const newMessage = await prisma.userMessage.create({
     data: {
       ...payload,
       senderId,
-      channelId: chanelId,
+      groupId,
       files: imageUrls,
     },
     include: {
@@ -75,21 +70,21 @@ const getMessagesFromDB = async (groupId: string) => {
   return message;
 };
 
-const searchMessageFromDB = async (channelId: string, search: string) => {
+const searchMessageFromDB = async (groupId: string, search: string) => {
   if (search === undefined) {
     return [];
   }
 
-  const existingChannel = await prisma.channel.findUnique({
-    where: { id: channelId },
+  const existingChannel = await prisma.group.findUnique({
+    where: { id: groupId },
   });
   if (!existingChannel) {
     throw new ApiError(404, "Channel not found");
   }
 
-  const messages = await prisma.message.findMany({
+  const messages = await prisma.userMessage.findMany({
     where: {
-      channelId: channelId,
+      groupId: groupId,
       message: {
         contains: search,
         mode: "insensitive",
@@ -127,7 +122,7 @@ const deleteSingleMessageFromDB = async (messageId: string) => {
 };
 
 const getSingleMessageFromDB = async (messageId: string) => {
-  const message = await prisma.message.findUnique({
+  const message = await prisma.userMessage.findUnique({
     where: { id: messageId },
     include: {
       user: {
@@ -158,7 +153,7 @@ const deleteAllMessagesFromChannel = async (groupId: string) => {
 
 //using for socket
 const deleteMultipleMessagesFromDB = async (ids: string[]) => {
-  await prisma.message.deleteMany({ where: { id: { in: ids } } });
+  await prisma.userMessage.deleteMany({ where: { id: { in: ids } } });
   return;
 };
 
@@ -166,13 +161,13 @@ const updateSingleMessageInDB = async (
   messageId: string,
   updateText: string
 ) => {
-  const message = await prisma.message.findUnique({
+  const message = await prisma.userMessage.findUnique({
     where: { id: messageId },
   });
   if (!message) {
     throw new ApiError(404, "Message not found for update");
   }
-  const updatedMessage = await prisma.message.update({
+  const updatedMessage = await prisma.userMessage.update({
     where: { id: messageId },
     data: {
       message: updateText,
@@ -183,13 +178,13 @@ const updateSingleMessageInDB = async (
 
 //using for socket
 const pinUnpinMessage = async (messageId: string, isPinned: boolean) => {
-  const message = await prisma.message.findUnique({
+  const message = await prisma.userMessage.findUnique({
     where: { id: messageId },
   });
   if (!message) {
     throw new ApiError(404, "Message not found for pin/unpin");
   }
-  const result = await prisma.message.update({
+  const result = await prisma.userMessage.update({
     where: { id: messageId },
     data: { isPinned },
   });
@@ -366,9 +361,9 @@ const sendMessage = async (req:any,senderId:string, groupId:string, message:stri
 }
 
 
-const getLastMessage = async (userId:string, channelId:string)=>{
+const getLastMessage = async (userId:string, groupId:string)=>{
 
-  const message = await prisma.message.findFirst({where:{senderId:userId,channelId}, orderBy:[{updatedAt:"asc"}]})
+  const message = await prisma.userMessage.findFirst({where:{senderId:userId,groupId}, orderBy:[{updatedAt:"asc"}]})
   if (!message){
     return {message:"no message"}
   }

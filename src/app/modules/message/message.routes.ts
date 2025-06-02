@@ -23,8 +23,8 @@ router.get("/get-last-message/:channelId", auth(), )
 //old routes with channel
 
 router.post(
-  "/send-message/:channelId",
-  // fileUploader.sendFiles,
+  "/send/:groupId",
+  fileUploader.sendFile,
   parseBodyData,
   auth(),
   messageController.createMessage
@@ -34,23 +34,23 @@ router.post(
 router.get("/:messageId", auth(), messageController.getSingleMessage);
 
 router.delete(
-  "/delete-message/:messageId",
+  "/:messageId",
   auth(),
   messageController.deleteSingleMessage
 );
 router.delete(
-  "/delete/messages/:channelId",
+  "/group/:groupId",
   auth(),
   messageController.deleteAllMessages
 );
 router.patch(
-  "/update/message/:messageId",
+  "/:messageId",
   auth(),
   messageController.updateMessage
 );
 
 router.delete(
-  "/delete/multiple-messages",
+  "/multiple-messages",
   auth(),
   messageController.deleteMultipleMessages
 );
@@ -62,24 +62,24 @@ router.post(
 );
 
 router.post(
-  "/start/recording/:channelId",
+  "/start/recording/:groupId",
   auth(),
   messageController.startRecording
 );
 
 router.get(
-  "/pinned-message/:channelId",
+  "/pinned/:groupId",
   auth(),
   messageController.pinnedMessage
 );
 
 router.get(
-  "/search/messages/:channelId",
+  "/search/messages/:groupId",
   auth(),
   messageController.searchMessages
 );
 router.post(
-  "/pin-unpinned-message/:messageId",
+  "/toggole-pin/:messageId",
   auth(),
   messageController.pinUnpinMessage
 );
