@@ -29,7 +29,7 @@ model User {
   status         UserStatus      @default(ACTIVE)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
-  chats          ChatUser[]         @relation("chatUser")
+ 
   groupUser     GroupUser[]
   channel         Channel[]
   message        Message[]
@@ -44,10 +44,13 @@ model User {
   @@map("users")
 }
 
+
+
 model Chat {
   id      String   @id @default(auto()) @map("_id") @db.ObjectId
   
-  users   ChatUser[]
+  user1Id String   @db.ObjectId
+  user2Id String   @db.ObjectId
   chatMessages UserMessage[]
   isStreaming Boolean @default(false)
   createdAt DateTime @default(now())
@@ -56,18 +59,29 @@ model Chat {
 }
 
 
-model ChatUser {
-  id      String   @id @default(auto()) @map("_id") @db.ObjectId
-  chatId  String   @db.ObjectId
-  userId  String   @db.ObjectId
-  user    User     @relation(name: "chatUser", fields: [userId], references: [id])
-  chat    Chat     @relation(fields: [chatId], references: [id])
+// model ChatUser {
+//   id      String   @id @default(auto()) @map("_id") @db.ObjectId
+//   chatId  String   @db.ObjectId
+//   userId  String   @db.ObjectId
+//   user    User     @relation(name: "chatUser", fields: [userId], references: [id])
+//   chat    Chat     @relation(fields: [chatId], references: [id])
+
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@unique([chatId, userId])
+//   @@map("chat_users")
+// }
+model BlackList {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  ownerId  String   @db.ObjectId
+  recieverId    String   @db.ObjectId
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([chatId, userId])
-  @@map("chat_users")
+  @@map("black_list")
+  @@unique([ownerId, recieverId])
 }
 
 
@@ -76,6 +90,7 @@ model Group {
   about       String? 
   adminId     String  @db.ObjectId
   groupName   String? 
+  groupType   GroupType @default(ROOM)
   groupImage  String?
   isStreaming Boolean   @default(false)
   createdAt  DateTime @default(now())
@@ -141,6 +156,8 @@ model BlockUser {
   @@unique([blockedId, blockerId])
 @@map("blocked_users")
 }
+
+
 
 model ContactList {
   id      String          @id @default(auto()) @map("_id") @db.ObjectId

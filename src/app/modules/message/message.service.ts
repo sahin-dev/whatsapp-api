@@ -113,7 +113,7 @@ const searchMessageFromDB = async (channelId: string, search: string) => {
 
 //using for socket
 const deleteSingleMessageFromDB = async (messageId: string) => {
-  const message = await prisma.message.findUnique({
+  const message = await prisma.userMessage.findUnique({
     where: { id: messageId },
   });
   if (!message) {

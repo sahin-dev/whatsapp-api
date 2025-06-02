@@ -93,6 +93,19 @@ const getContacts = catchAsync(async (req:any, res:Response)=>{
   })
 })
 
+const searchMessageFromDB = catchAsync(async (req:any, res:Response)=>{
+  const user = req.user
+  const {search} = req.query
+  const results = await userService.searchMessageFromDB(user.id, search as string)
+
+  sendResponse(res, {
+    statusCode:httpStatus.OK,
+    success:true,
+    message:"Search messages retrived successfully",
+    data:results
+  })
+})
+
 export const UserControllers = {
   getUsers,
   getSingleUser,
@@ -100,5 +113,6 @@ export const UserControllers = {
   deleteUser,
   blockUser,
   searchUser,
-  getContacts
+  getContacts,
+  searchMessageFromDB
 };

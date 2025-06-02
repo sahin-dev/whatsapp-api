@@ -44,7 +44,8 @@ const createGroupInDB = async (req: any) => {
     data: {
       ...payload,
       adminId: userId,
-      groupImage: imageUrl ? imageUrl : null
+      groupImage: imageUrl ? imageUrl : null,
+      groupType: GroupType.GROUP, // Default to public group
     },
   });
   
@@ -162,13 +163,16 @@ const accessGroupInDB = async (userId: string) => {
 
 const getMyGroups = async (userId:string)=>{
 
-  const myGroups = await prisma.groupUser.findMany({where:{userId},include:{group:true,}})
+  const myGroups = await prisma.groupUser.findMany({where:{userId,},include:{group:true,}})
   
   const groupData =   myGroups.map(async (myGroup)=> {
-    const message = await prisma.userMessage.findFirst({where:{groupId:myGroup.group.id},orderBy:{createdAt:'desc'}})
-    console.log(message)
-    const totalUnreadMessage = await prisma.userMessage.count({where:{groupId:myGroup.group.id, isRead:false}})
-
+    let message = null
+    let totalUnreadMessage = 0
+    // if(myGroup.group.groupType === GroupType.GROUP){
+      message = await prisma.userMessage.findFirst({where:{groupId:myGroup.group.id},orderBy:{createdAt:'desc'}})
+      console.log(message)
+      totalUnreadMessage = await prisma.userMessage.count({where:{groupId:myGroup.group.id, isRead:false}})
+    // }
     return {
       id:myGroup.group.id,
       name:myGroup.group.groupName,
@@ -418,6 +422,22 @@ const getGroupMessages = async (groupId: string) => {
   // }
   return messages
 }
+
+const getGroupDetails = async (groupId: string) => {
+  const group = await prisma.group.findUnique({
+    where: { id: groupId },
+    
+    select:{groupImage:true,groupName:true}
+  });
+}
+
+const getCommonGroups = async (userId: string, friendId:string) => {
+  const userGroups = await prisma.groupUser.findMany({
+    where: { userId },
+    include: { group: true },
+  });
+}
+
 export const groupServices = {
   createGroupInDB,
   getGroupsInDB,
@@ -440,7 +460,8 @@ export const groupServices = {
   getGroupBio,
   editGroupBio,
   getGroupMessages,
-  addMemberByPhone
+  addMemberByPhone,
+  getGroupDetails
 
 
 };

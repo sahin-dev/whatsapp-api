@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { GroupType, PrismaClient } from "@prisma/client";
 import ApiError from "../../errors/ApiErrors";
 const prisma = new PrismaClient();
 import { ObjectId } from "mongodb";
@@ -6,6 +6,8 @@ import { Request } from "express";
 import { searchFilter } from "../../../shared/searchFilter";
 import httpStatus from "http-status";
 import { get } from "http";
+import { groupServices } from "../group/group.service";
+import { group } from "console";
 
 
 //get single user
@@ -13,7 +15,7 @@ const getSingleUserIntoDB = async (id: string) => {
   if (!ObjectId.isValid(id)) {
     throw new ApiError(400, "Invalid user ID format");
   }
-  const user = await prisma.user.findUnique({ where: { id } });
+  const user = await prisma.user.findUnique({ where: { id }, select:{name:true,id:true,phone:true,avatar:true}});
   if (!user) {
     throw new ApiError(404, "user not found!");
   }
@@ -122,6 +124,56 @@ const getContacts = async (userId:string)=>{
   return users
 }
 
+const searchMessageFromDB = async (userId: string, search: string) => {
+  if (search === undefined) { 
+    return [];
+  }
+  
+  const myGroups = await prisma.group.findMany({where:{groupUsers:{some:{userId}},groupType:GroupType.GROUP},select:{id:true}});
+  const myRooms = await prisma.group.findMany({where:{groupUsers:{some:{userId}},groupType:GroupType.ROOM},select:{id:true}});
+
+  console.log(myGroups, myRooms)
+  const groupsMessages  = await prisma.userMessage.findMany({
+    where: {
+      groupId: { in: myGroups.map(group => group.id) },
+  
+      message: {
+        contains: search || "",
+        mode: 'insensitive',
+      },
+    },include:{group:true}
+  });
+
+  // return groupsMessages
+
+  return groupsMessages.map((message) => {
+   
+    if (message.group?.groupType === GroupType.GROUP) {
+      return {
+        groupId: message.groupId,
+        message: message.message,
+        groupType: message.group?.groupType,
+        groupName: message.group?.groupName,
+        groupAvatar: message.group?.groupImage,
+      };
+    }
+      else if (message.group?.groupType === GroupType.ROOM) {
+
+        return {
+          groupId: message.groupId,
+          message: message.message,
+          groupType: message.group?.groupType,
+          groupName: message.group?.groupName,
+          groupAvatar: message.group?.groupImage,
+        };
+      }
+    })
+  
+   
+      
+ 
+  }; 
+
 export const userService = {
   getUsersIntoDB,
   getSingleUserIntoDB,
@@ -129,5 +181,6 @@ export const userService = {
   deleteUserIntoDB,
   blockUser,
   searchUser,
-  getContacts
+  getContacts,
+  searchMessageFromDB
 };

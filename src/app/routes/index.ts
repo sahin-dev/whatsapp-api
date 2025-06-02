@@ -9,6 +9,8 @@ import { homeContentRoute } from "../modules/home/home.routes";
 import { sessionRoute } from "../modules/session/session.route";
 import { paymentRoute } from "../modules/payment/payment.routes";
 import { authZeroRoutes } from "../modules/auth-zero/auth-zero.routes";
+import path from "path";
+import { chatRoutes } from "../modules/Chat/chat.routes";
 
 const router = express.Router();
 
@@ -54,6 +56,10 @@ const moduleRoutes = [
     path: "/auth-zero",
     route: authZeroRoutes,
   },
+  {
+    path: "/chats",
+    route:chatRoutes
+  }
 ];
 
 moduleRoutes.forEach((route) => router.use(route.path, route.route));

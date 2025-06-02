@@ -18,7 +18,10 @@ router.put("/", auth(), validateRequest(userValidation.userUpdateValidationSchem
 router.post("/toggole-block/:otherUserId", auth(), UserControllers.blockUser)
 router.get("/search/:phone", auth(),UserControllers.searchUser)
 router.get("/contacts", auth(), UserControllers.getContacts)
+router.get("/find", auth(), UserControllers.searchMessageFromDB);
 router.get("/:id", auth(), UserControllers.getSingleUser);
+
+
 //not required
 
 // router.get(

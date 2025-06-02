@@ -35,6 +35,7 @@ router.get("/access/groups", auth(), groupControllers.accessGroups);
 //new routes
 
 router.get('/my-groups', auth(), groupControllers.getMyGroups)
+// router.get('/common-groups/:userId', auth(), groupControllers.getCommonGroups)
 router.get('/messages/:groupId', auth(), groupControllers.getGroupMessages)
 
 
@@ -55,6 +56,7 @@ router.post("/remove/:groupId/:userId", auth(), groupControllers.removeUserFromG
 router.get("/search/:groupId", auth(), groupControllers.searchGroupUser)
 
 router.get("/bio/:groupId", auth(), groupControllers.getGroupBio)
+
 
 router.put('/bio/:groupId', auth(), groupControllers.updateGroupBio)
 
