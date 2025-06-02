@@ -178,6 +178,7 @@ const getMyGroups = async (userId:string)=>{
       id:myGroup.group.id,
       name:myGroup.group.groupName,
       image:myGroup.group.groupImage,
+      groupType:myGroup.group.groupType,
       recentMessage:{
         message:message?.message,
         createdAt:message?.createdAt
