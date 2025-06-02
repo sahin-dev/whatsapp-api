@@ -6,6 +6,7 @@ import { GroupType, UserRole } from "@prisma/client";
 import httpStatus from "http-status";
 import { group } from "console";
 import { fileUploader } from "../../../helpers/fileUploader";
+import { chatServices } from "../Chat/chat.services";
 
 const createGroupInDB = async (req: any) => {
   const payload = req.body;
@@ -164,17 +165,17 @@ const accessGroupInDB = async (userId: string) => {
 const getMyGroups = async (userId:string)=>{
 
   const myGroups = await prisma.groupUser.findMany({where:{userId,},include:{group:true,}})
+
+let result:any[]= []
   
   const groupData =   myGroups.map(async (myGroup)=> {
     let message = null
     let totalUnreadMessage = 0
-    // if(myGroup.group.groupType === GroupType.GROUP){
+    if(myGroup.group.groupType === GroupType.GROUP){
       message = await prisma.userMessage.findFirst({where:{groupId:myGroup.group.id},orderBy:{createdAt:'desc'}})
       console.log(message)
       totalUnreadMessage = await prisma.userMessage.count({where:{groupId:myGroup.group.id, isRead:false}})
-    // }
-    console.log("message", message)
-    return {
+      return({
       id:myGroup.group.id,
       name:myGroup.group.groupName,
       image:myGroup.group.groupImage,
@@ -185,11 +186,31 @@ const getMyGroups = async (userId:string)=>{
       },
       totalUnreadMessage
 
+    })
+    }else{
+      const roomDetails = await chatServices.getRoomById(userId,myGroup.group.id)
+      message = await prisma.userMessage.findFirst({where:{groupId:myGroup.group.id},orderBy:{createdAt:'desc'}})
+      console.log("roomDetails", roomDetails)
+      totalUnreadMessage = await prisma.userMessage.count({where:{groupId:myGroup.group.id, isRead:false}})
+      return({
+        id:myGroup.group.id,
+        name:roomDetails.roomName,
+        image:roomDetails.roomImage,
+        groupType:myGroup.group.groupType,
+        recentMessage:{
+          message:message?.message,
+          createdAt:message?.createdAt
+        },
+        totalUnreadMessage
+      })
     }
+   
+
+    
   })
 
   // const groupMessage = await prisma.userMessage.findMany({where:{id:{in:groupIds}},orderBy:{createdAt:"desc"}, include:{group:true}})
-  
+ 
   return Promise.all(groupData)
 }
 
