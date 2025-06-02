@@ -125,6 +125,8 @@ const getContacts = async (userId:string)=>{
 }
 
 const searchMessageFromDB = async (userId: string, search: string) => {
+  console.log("search", search)
+  console.log("userId", userId)
   if (search === undefined) { 
     return [];
   }
@@ -133,11 +135,11 @@ const searchMessageFromDB = async (userId: string, search: string) => {
   const myRooms = await prisma.group.findMany({where:{groupUsers:{some:{userId}},groupType:GroupType.ROOM},select:{id:true}});
 
   
-  console.log(myGroups, myRooms)
+ 
   const groupsMessages  = await prisma.userMessage.findMany({
     where: {
       groupId: { in: myGroups.map(group => group.id) },
-      senderId:{not:userId},
+     
   
       message: {
         contains: search || "",
@@ -145,6 +147,8 @@ const searchMessageFromDB = async (userId: string, search: string) => {
       },
     },include:{group:true}
   });
+
+  console.log("groupsMessages", groupsMessages)
 
   // return groupsMessages
 
