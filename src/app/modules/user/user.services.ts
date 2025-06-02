@@ -129,14 +129,15 @@ const searchMessageFromDB = async (userId: string, search: string) => {
     return [];
   }
   
-  const myGroups = await prisma.group.findMany({where:{groupUsers:{some:{userId}},groupType:GroupType.GROUP},select:{id:true}});
+  const myGroups = await prisma.group.findMany({where:{groupUsers:{some:{userId}}},select:{id:true}});
   const myRooms = await prisma.group.findMany({where:{groupUsers:{some:{userId}},groupType:GroupType.ROOM},select:{id:true}});
 
   
   console.log(myGroups, myRooms)
   const groupsMessages  = await prisma.userMessage.findMany({
     where: {
-      groupId: { },
+      groupId: { in: myGroups.map(group => group.id) },
+      senderId:{not:userId},
   
       message: {
         contains: search || "",
@@ -186,7 +187,6 @@ const searchMessageFromDB = async (userId: string, search: string) => {
           groupType: message.group?.groupType,
           groupName: otherParticipant?.user.name || "Unknown",
           groupImage: otherParticipant?.user.avatar || "",
-          groupAvatar: message.group?.groupImage,
         };
       }
     })
