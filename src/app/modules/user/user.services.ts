@@ -132,10 +132,11 @@ const searchMessageFromDB = async (userId: string, search: string) => {
   const myGroups = await prisma.group.findMany({where:{groupUsers:{some:{userId}},groupType:GroupType.GROUP},select:{id:true}});
   const myRooms = await prisma.group.findMany({where:{groupUsers:{some:{userId}},groupType:GroupType.ROOM},select:{id:true}});
 
+  
   console.log(myGroups, myRooms)
   const groupsMessages  = await prisma.userMessage.findMany({
     where: {
-      groupId: { in: myGroups.map(group => group.id) },
+      groupId: { },
   
       message: {
         contains: search || "",
@@ -146,7 +147,9 @@ const searchMessageFromDB = async (userId: string, search: string) => {
 
   // return groupsMessages
 
-  return groupsMessages.map((message) => {
+  console.log("groupsMessages", groupsMessages)
+
+  const messages =  await groupsMessages.map(async (message) => {
    
     if (message.group?.groupType === GroupType.GROUP) {
       return {
@@ -158,18 +161,37 @@ const searchMessageFromDB = async (userId: string, search: string) => {
       };
     }
       else if (message.group?.groupType === GroupType.ROOM) {
+        const otherParticipant = await prisma.groupUser.findFirst({
+        where: {
+          userId: { not: userId },
+          groupId: message.groupId,
+        
+        },
+        select: {
+          groupId: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              avatar: true,
+            },
+          },
+        },
+  });
+
 
         return {
           groupId: message.groupId,
           message: message.message,
           groupType: message.group?.groupType,
-          groupName: message.group?.groupName,
+          groupName: otherParticipant?.user.name || "Unknown",
+          groupImage: otherParticipant?.user.avatar || "",
           groupAvatar: message.group?.groupImage,
         };
       }
     })
-  
-   
+  console.log("messages", messages)
+   return Promise.all(messages).then(results => results.filter(result => result !== undefined));
       
  
   }; 

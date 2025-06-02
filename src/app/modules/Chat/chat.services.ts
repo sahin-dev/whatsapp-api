@@ -73,13 +73,20 @@ const existingChat = await prisma.group.findFirst({
   // if (existingGroup) {
   //   throw new ApiError(409, "Group with the same name already exists");
   // }
+
+  const participant = await prisma.user.findUnique({
+    where: { id: participantId },   select:{id:true,name:true,avatar:true}
+    });
+    if (!participant) {
+      throw new ApiError(404, "Participant not found");
+    }
   
   const newGroup = await prisma.group.create({
     data: {
       ...payload,
       adminId: userId,
       groupType: GroupType.ROOM, // Default to public group
-    },
+    }
   });
   
   await prisma.groupUser.create({
@@ -98,7 +105,7 @@ const existingChat = await prisma.group.findFirst({
         }
     })
 
-  return newGroup;
+  return {id:newGroup.id,roomName:participant.name,roomImage:participant.avatar};
 };
 
 
