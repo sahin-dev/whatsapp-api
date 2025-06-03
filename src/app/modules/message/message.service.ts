@@ -19,8 +19,9 @@ const createMessageInDB = async (req: any) => {
   if (payload?.message === undefined && file === undefined) {
     throw new ApiError(400, "Message or file is required");
   }
-
-  const imageUrls = (await fileUploader.uploadToDigitalOcean(file)).Location
+  let imageUrl = null
+  if (file)
+    imageUrl = (await fileUploader.uploadToDigitalOcean(file)).Location
   
   // await prisma.userMessage.create({data:{groupId,senderId,message:payload.message}})
 
@@ -29,7 +30,7 @@ const createMessageInDB = async (req: any) => {
       ...payload,
       senderId,
       groupId,
-      files: imageUrls,
+      files: imageUrl,
     },
     include: {
       user: {
