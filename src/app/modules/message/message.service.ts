@@ -20,6 +20,17 @@ const createMessageInDB = async (req: any) => {
   console.log("Payload:", payload);
   console.log(senderId)
 
+  const groupUser = await prisma.groupUser.findFirst({
+    where: {
+      groupId,
+      userId: senderId,
+    },
+  });
+  
+  if (!groupUser) {
+    throw new ApiError(404, "You are not a member of this group");
+  }
+
   if (payload?.message === undefined && file === undefined) {
     throw new ApiError(400, "Message or file is required");
   }
@@ -55,6 +66,13 @@ const createMessageInDB = async (req: any) => {
 };
 //using for socket
 const getMessagesFromDB = async (groupId: string) => {
+  const group = await prisma.group.findUnique({where:{id:groupId}})
+  if (!group){
+    throw new ApiError(httpStatus.NOT_FOUND, "group not found")
+  }
+  //make all the unread message read
+  await makeAllRead(groupId);
+
   const message = await prisma.userMessage.findMany({
     where: {
       groupId
@@ -75,6 +93,18 @@ const getMessagesFromDB = async (groupId: string) => {
 
   return message;
 };
+
+const makeAllRead = async (groupId:string)=>{
+  const group = await prisma.group.findUnique({where:{id:groupId}});
+
+  if (!group){
+    throw new ApiError(httpStatus.NOT_FOUND, "group not found")
+
+  }
+
+  await prisma.userMessage.updateMany({where:{groupId:group.id, isRead:false}, data:{isRead:true}})
+
+}
 
 const searchMessageFromDB = async (groupId: string, search: string) => {
   if (search === undefined) {
