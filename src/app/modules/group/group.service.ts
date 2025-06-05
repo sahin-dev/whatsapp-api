@@ -175,6 +175,7 @@ let result:any[]= []
       message = await prisma.userMessage.findFirst({where:{groupId:myGroup.group.id},orderBy:{createdAt:'desc'}})
       console.log(message)
       totalUnreadMessage = await prisma.userMessage.count({where:{groupId:myGroup.group.id, isRead:false}})
+
       return({
       id:myGroup.group.id,
       name:myGroup.group.groupName,
@@ -204,9 +205,6 @@ let result:any[]= []
         totalUnreadMessage
       })
     }
-   
-
-    
   })
 
   // const groupMessage = await prisma.userMessage.findMany({where:{id:{in:groupIds}},orderBy:{createdAt:"desc"}, include:{group:true}})
