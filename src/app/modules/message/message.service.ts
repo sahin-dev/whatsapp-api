@@ -82,28 +82,55 @@ const startCall = async (userId:string,groupId:string)=>{
 const endCall = async (userId:string, callId:string)=>{
   const call = await prisma.call.update({where:{id:callId},data:{updatedAt: new Date()}})
   return call
-}   
+}  
 
-const getCallHistory = async (userId:string,groupId:string)=>{
-  const group = await prisma.group.findUnique({where:{id:groupId}})
-  if (!group){
-    throw new ApiError(httpStatus.NOT_FOUND, "group not found")
-  }
+const getCallHistory = async (userId: string) => {
+  // Step 1: Find all groups the user belongs to
+  const userGroups = await prisma.group.findMany({
+    where: {
+      groupUsers: {
+        some: { userId: userId },
+      },
+    },
+    select: {
+      id: true,
+    },
+  });
 
-  // const groupDetails = await groupServices.getMyGroup(userId,groupId)
+  // Step 2: For each group, get the latest call
+  const groupHistories = await Promise.all(
+    userGroups.map(async ({ id: groupId }) => {
+      const latestCall = await prisma.call.findFirst({
+        where: {
+          groupId,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
 
-  const callHistory  = await prisma.call.findMany({where:{groupId}, orderBy:{createdAt:"desc"}})
+      if (!latestCall) return null;
 
-  const groupDetails = await  Promise.all(callHistory.map(async (call)=>{
-    const groupDetails = await groupServices.getMyGroup(userId,call.groupId)
+      const groupDetails = await groupServices.getMyGroup(userId, groupId);
 
-    const duration = call.updatedAt.getTime() - call.createdAt.getTime()
+      const duration =
+        latestCall.updatedAt.getTime() - latestCall.createdAt.getTime();
 
-    return {groupDetails, callDetails:{call, duration}}
-  }))
+      return {
+        groupDetails,
+        callDetails: {
+          call: latestCall,
+          duration,
+        },
+      };
+    })
+  );
 
-  return groupDetails
-}
+  // Step 3: Filter out any groups with no calls
+  return groupHistories.filter((entry) => entry !== null);
+};
+
+
 
 //using for socket
 const getMessagesFromDB = async (groupId: string) => {

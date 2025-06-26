@@ -62,7 +62,7 @@ router.post(
 );
 router.post("/start/call/:groupId", auth(),messageController.startCall )
 router.post("/call/end/:callId", auth(), messageController.endCall)
-router.get("/call/history/:groupId", auth(), messageController.getCallHistory)
+router.get("/call/history", auth(), messageController.getCallHistory)
 
 router.post(
   "/start/recording/:groupId",

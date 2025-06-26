@@ -156,9 +156,8 @@ const endCall  = catchAsync(async (req:any, res)=>{
 })
 const getCallHistory = catchAsync(async (req:any, res)=>{
   const user = req.user
-  const {groupId} = req.params
 
-  const callHistory = await messageService.getCallHistory(user.id, groupId)
+  const callHistory = await messageService.getCallHistory(user.id)
 
   
   sendResponse(res, {
