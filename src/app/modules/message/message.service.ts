@@ -5,6 +5,9 @@ import { RtcTokenBuilder, RtcRole } from "agora-access-token";
 import axios from "axios";
 import httpStatus from "http-status";
 import { fileUploader } from "../../../helpers/fileUploader";
+import { group } from "console";
+import { groupServices } from "../group/group.service";
+import sendResponse from "../../../shared/sendResponse";
 
 const appID = config.agora.app_id as string;
 const appCertificate = config.agora.app_certificate as string;
@@ -64,6 +67,44 @@ const createMessageInDB = async (req: any) => {
 
   return newMessage;
 };
+
+const startCall = async (userId:string,groupId:string)=>{
+  const group = await prisma.group.findUnique({where:{id:groupId}})
+
+  if (!group){
+    throw new ApiError(httpStatus.NOT_FOUND, 'group not found')
+  }
+  const createdCall = await prisma.call.create({data:{groupId}})
+
+  return createdCall
+}
+
+const endCall = async (userId:string, callId:string)=>{
+  const call = await prisma.call.update({where:{id:callId},data:{updatedAt: new Date()}})
+  return call
+}   
+
+const getCallHistory = async (userId:string,groupId:string)=>{
+  const group = await prisma.group.findUnique({where:{id:groupId}})
+  if (!group){
+    throw new ApiError(httpStatus.NOT_FOUND, "group not found")
+  }
+
+  // const groupDetails = await groupServices.getMyGroup(userId,groupId)
+
+  const callHistory  = await prisma.call.findMany({where:{groupId}, orderBy:{createdAt:"desc"}})
+
+  const groupDetails = await  Promise.all(callHistory.map(async (call)=>{
+    const groupDetails = await groupServices.getMyGroup(userId,call.groupId)
+
+    const duration = call.updatedAt.getTime() - call.createdAt.getTime()
+
+    return {groupDetails, callDetails:{call, duration}}
+  }))
+
+  return groupDetails
+}
+
 //using for socket
 const getMessagesFromDB = async (groupId: string) => {
   const group = await prisma.group.findUnique({where:{id:groupId}})
@@ -243,10 +284,10 @@ const pinnedMessageInDB = async (groupId: string) => {
 // generate agora access token
 const generateAccessTokenInAgora = async (payload: {
   role: string;
-  roomId: string;
+  groupId: string;
   uid: number;
 }) => {
-  const channelName = payload.roomId;
+  const channelName = payload.groupId;
   const uid = payload.uid;
   const expiredTimeInSeconds = 3600; // 1 hour
   const currentTime = Math.floor(Date.now() / 1000);
@@ -267,11 +308,11 @@ const generateAccessTokenInAgora = async (payload: {
   return token;
 };
 
-const getResourceId = async (roomId: string, uid: number) => {
-  console.log(roomId)
+const getResourceId = async (groupId: string, uid: number) => {
+  console.log(groupId)
   const url = `https://api.agora.io/v1/apps/${appID}/cloud_recording/acquire`;
   const payload = {
-    cname: roomId,
+    cname: groupId,
     uid: uid.toString(),
     clientRequest: {},
   };
@@ -419,6 +460,9 @@ export const messageService = {
   pinnedMessageInDB,
   searchMessageFromDB,
   startRecordingInAgora,
+  startCall,
+  getCallHistory,
+  endCall,
 
 //new
   sendMessage,

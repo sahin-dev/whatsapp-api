@@ -212,6 +212,70 @@ let result:any[]= []
   return Promise.all(groupData)
 }
 
+const getMyGroup = async (userId: string, groupId: string) => {
+  const myGroup = await prisma.groupUser.findFirst({
+    where: {
+      userId,
+      groupId,
+    },
+    include: {
+      group: true,
+    },
+  });
+
+  if (!myGroup || !myGroup.group) return null;
+
+  let message = null;
+  let totalUnreadMessage = 0;
+
+  if (myGroup.group.groupType === GroupType.GROUP) {
+    message = await prisma.userMessage.findFirst({
+      where: { groupId: myGroup.group.id },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    totalUnreadMessage = await prisma.userMessage.count({
+      where: { groupId: myGroup.group.id, isRead: false },
+    });
+
+    return {
+      id: myGroup.group.id,
+      name: myGroup.group.groupName,
+      image: myGroup.group.groupImage,
+      groupType: myGroup.group.groupType,
+      recentMessage: {
+        message: message?.message,
+        createdAt: message?.createdAt,
+      },
+      totalUnreadMessage,
+    };
+  } else {
+    const roomDetails = await chatServices.getRoomById(userId, myGroup.group.id);
+
+    message = await prisma.userMessage.findFirst({
+      where: { groupId: myGroup.group.id },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    totalUnreadMessage = await prisma.userMessage.count({
+      where: { groupId: myGroup.group.id, isRead: false },
+    });
+
+    return {
+      id: myGroup.group.id,
+      name: roomDetails.roomName,
+      image: roomDetails.roomImage,
+      groupType: myGroup.group.groupType,
+      recentMessage: {
+        message: message?.message,
+        createdAt: message?.createdAt,
+      },
+      totalUnreadMessage,
+    };
+  }
+};
+
+
 const addMember = async (memberId:string, groupId:string, userId:string) => {
   const groupUser = await prisma.groupUser.findUnique({where:{groupId_userId:{groupId,userId}}})
   
@@ -482,7 +546,8 @@ export const groupServices = {
   editGroupBio,
   getGroupMessages,
   addMemberByPhone,
-  getGroupDetails
+  getGroupDetails,
+  getMyGroup
 
 
 };

@@ -98,6 +98,7 @@ model Group {
   message    UserMessage[]
   channel     Channel[]
   groupUsers  GroupUser[]
+  calls       Call[]
 
   @@map("groups")
 }
@@ -203,6 +204,16 @@ model Channel {
   notifications Notifications[]
 
   @@map("channels")
+}
+
+model Call {
+  id          String    @id  @default(auto())  @map("_id") @db.ObjectId
+
+  groupId     String    @db.ObjectId
+
+  group     Group     @relation(fields: [groupId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model Recording {

@@ -7,7 +7,6 @@ import { searchFilter } from "../../../shared/searchFilter";
 import httpStatus from "http-status";
 import { get } from "http";
 import { groupServices } from "../group/group.service";
-import { group } from "console";
 
 
 //get single user
@@ -28,9 +27,11 @@ const getSingleUserIntoDB = async (id: string) => {
 const getUsersIntoDB = async (req: Request) => {
   const { search } = req.query as any;
   const searchFilters = search ? searchFilter(search) : {};
+
   const users = await prisma.user.findMany({
     where: searchFilters
   });
+
   const sanitizedUsers = users.map((user) => {
     const {  accessToken, ...sanitizedUser } = user;
     return sanitizedUser;
@@ -103,6 +104,7 @@ const searchUser = async (phone:string, userId:string)=>{
   }
 
     await prisma.contacts.create({data:{contactListId:contactList.id, contactId:user.id}})
+    await prisma.group.create({data:{adminId:userId}})
   
 
   return user

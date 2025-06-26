@@ -125,6 +125,52 @@ const generateAccessToken = catchAsync(async (req, res) => {
   });
 });
 
+const startCall  = catchAsync(async (req:any, res)=>{
+
+  const user = req.user
+  const {groupId} =  req.params
+  const callData = await messageService.startCall(user.id, groupId)
+
+  sendResponse(res, {
+    statusCode:201,
+    success:true,
+    message:"Call created successfully", 
+    data:callData
+  })
+})
+
+
+const endCall  = catchAsync(async (req:any, res)=>{
+
+  const user = req.user
+  const {callId} =  req.params
+  const callData = await messageService.endCall(user.id, callId)
+  const duration = callData.updatedAt.getTime() - callData.createdAt.getTime()
+
+  sendResponse(res, {
+    statusCode:201,
+    success:true,
+    message:"Call created successfully", 
+    data:{callData, duration}
+  })
+})
+const getCallHistory = catchAsync(async (req:any, res)=>{
+  const user = req.user
+  const {groupId} = req.params
+
+  const callHistory = await messageService.getCallHistory(user.id, groupId)
+
+  
+  sendResponse(res, {
+    statusCode:200,
+    success:true,
+    message:"Call created successfully", 
+    data:callHistory
+  })
+})
+
+
+
 const startRecording = catchAsync(async (req, res) => {
   const { channelId } = req.params;
   const uid = req.body.uid;
@@ -229,4 +275,7 @@ export const messageController = {
   searchMessages,
   startRecording,
   pinUnpinMessage,
+  startCall, 
+  getCallHistory,
+  endCall
 };

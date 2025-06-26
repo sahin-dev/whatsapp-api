@@ -60,6 +60,9 @@ router.post(
   auth(),
   messageController.generateAccessToken
 );
+router.post("/start/call/:groupId", auth(),messageController.startCall )
+router.post("/call/end/:callId", auth(), messageController.endCall)
+router.get("/call/history/:groupId", auth(), messageController.getCallHistory)
 
 router.post(
   "/start/recording/:groupId",
