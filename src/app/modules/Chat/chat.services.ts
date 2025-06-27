@@ -45,8 +45,8 @@ console.log("Existing Chat:", existingChat);
   if (existingChat) {
     return {
       id: existingChat.id,
-      roomName: existingChat.groupUsers[0].user.name || "Unknown",
-      roomImage: existingChat.groupUsers[0].user.avatar || "Default",
+      roomName: existingChat.groupUsers[0].user.name,
+      roomImage: existingChat.groupUsers[0].user.avatar,
     };
   }
 //   const file = req.file;
