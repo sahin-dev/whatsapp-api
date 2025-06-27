@@ -42,14 +42,12 @@ const existingChat = await prisma.group.findFirst({
     },
 });
 console.log("Existing Chat:", existingChat);
-  if (existingChat && existingChat.groupUsers.length > 0) {
+  if (existingChat) {
     return {
       id: existingChat.id,
-      roomName: existingChat.groupUsers[0].user.name,
-      roomImage: existingChat.groupUsers[0].user.avatar,
+      roomName: existingChat.groupUsers[0].user.name || "Unknown",
+      roomImage: existingChat.groupUsers[0].user.avatar || "Default",
     };
-  }else {
-    return existingChat
   }
 //   const file = req.file;
   // if (!file) {
