@@ -11,16 +11,6 @@ const router = Router();
 
 
 //tested
-router.post(
-  "/:participantId",
-  auth(),
-  parseBodyData,
-  chatControllers.createGroup
-);
-
-router.get("/:roomId", auth(), chatControllers.getRoomById);
-
-//tested
 router.get(
   "/",
   auth(),
@@ -38,6 +28,17 @@ router.get("/access/chats", auth(), chatControllers.accessGroups);
 router.get('/my-chats', auth(), chatControllers.getMyGroups)
 
 router.get('/messages/:chatId', auth(), chatControllers.getGroupMessages)
+
+//tested
+router.post(
+  "/:participantId",
+  auth(),
+  parseBodyData,
+  chatControllers.createGroup
+);
+
+router.get("/:roomId", auth(), chatControllers.getRoomById);
+
 
 
 // router.post ("/add/:memberId/:chatId", auth(), chatControllers.addMember)
