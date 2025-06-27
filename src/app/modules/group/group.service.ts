@@ -164,9 +164,11 @@ const accessGroupInDB = async (userId: string) => {
 
 const getMyGroups = async (userId:string)=>{
 
-  const myGroups = await prisma.groupUser.findMany({where:{userId,},include:{group:true,}})
+  console.log(userId)
+  const myGroups = await prisma.groupUser.findMany({where:{userId},include:{group:true,}})
 
-let result:any[]= []
+
+  let result:any[]= []
   
   const groupData =   myGroups.map(async (myGroup)=> {
     let message = null

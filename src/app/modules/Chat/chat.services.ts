@@ -43,6 +43,7 @@ const existingChat = await prisma.group.findFirst({
 });
 console.log("Existing Chat:", existingChat);
   if (existingChat) {
+    if (existingChat.groupUsers.length <= 0) return existingChat
     return {
       id: existingChat.id,
       roomName: existingChat.groupUsers[0].user.name,
