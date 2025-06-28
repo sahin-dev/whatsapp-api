@@ -7,8 +7,10 @@ const emailSender = async (email: string, html: string, subject: string) => {
     port: 587,
     secure: false,
     auth: {
-      user: config.emailSender.email,
-      pass: config.emailSender.app_pass,
+      user: "capitalgain1llc@gmail.com",
+      pass: "fndh jncl ejcx hqnk",
+      // user: config.emailSender.email,
+      // pass: config.emailSender.app_pass,
     },
     tls: {
       rejectUnauthorized: false,
